@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
+      <ProjectReference Include="..\Model\Model.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Repository\.DS_Store" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="LockRepository\Implementation\" />
+      <Folder Include="LockRepository\Interfaces\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="EFCore.BulkExtensions" Version="8.1.2" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Properties\launchSettings.json" />
+    </ItemGroup>
+
+</Project>

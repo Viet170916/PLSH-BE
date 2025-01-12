@@ -1,0 +1,43 @@
+# Build folders
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+
+# Visual Studio
+.vs/
+
+# Visual Studio Code
+.vscode/
+
+# Log and temporary files
+*.log
+*.tmp
+*.temp
+
+# NuGet packages
+*.nupkg
+*.snupkg
+project.lock.json
+artifacts/
+
+# Node.js dependencies
+node_modules/
+
+# Backup files
+*.bak
+*.old
+*.backup
+
+# Application settings
+appsettings.Development.json
+local.settings.json
+
+# JetBrains Rider/Resharper
+.idea/
+*.DotSettings.user
+./plsh-fe-borrower
+./plsh-fe-librarian
