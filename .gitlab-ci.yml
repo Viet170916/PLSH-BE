@@ -93,7 +93,8 @@ deploy_be:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
   script:
     - echo "Deploying application to server"
-    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \"cp -r ./PLSH-BE/publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
+      "cp -r ./PLSH-BE/publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
   environment:
     name: production
   
