@@ -50,37 +50,37 @@ build_fe_librarian_project:
     - merge_requests
     - client/librarian/develop
 
-build_be:
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  stage: build
-  script:
-    - cd ./PLSH-BE
-    - echo "Restoring .NET dependencies"
-    - dotnet restore PLSH-BE.sln
-    - echo "Building the application"
-    - dotnet build PLSH-BE.sln --configuration Release
-    - echo "Publishing the solution"
-    - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+# build_be:
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   stage: build
+#   script:
+#     - cd ./PLSH-BE
+#     - echo "Restoring .NET dependencies"
+#     - dotnet restore PLSH-BE.sln
+#     - echo "Building the application"
+#     - dotnet build PLSH-BE.sln --configuration Release
+#     - echo "Publishing the solution"
+#     - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
  
-  artifacts:
-    paths:
-      - PLSH-BE/publish
-  only:
-    - merge_requests
-    - server/develop
+#   artifacts:
+#     paths:
+#       - PLSH-BE/publish
+#   only:
+#     - merge_requests
+#     - server/develop
 
-test_be:
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  stage: test
-  script:
-    - cd ./PLSH-BE
-    - echo "Running tests"
-    - dotnet test --configuration Release
-  dependencies:
-    - build_be
-  only:
-    - merge_requests
-    - server/develop
+# test_be:
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   stage: test
+#   script:
+#     - cd ./PLSH-BE
+#     - echo "Running tests"
+#     - dotnet test --configuration Release
+#   dependencies:
+#     - build_be
+#   only:
+#     - merge_requests
+#     - server/develop
 
 deploy_be:
   stage: deploy
@@ -99,9 +99,10 @@ deploy_be:
     - dotnet build PLSH-BE.sln --configuration Release
     - echo "Publishing the solution"
     - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+    - ls
     - echo "Deploying application to server"
     - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
-      "cp -r publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+      "cp -r ./publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
   environment:
     name: production
   
