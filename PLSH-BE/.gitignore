@@ -41,3 +41,5 @@ local.settings.json
 *.DotSettings.user
 ./plsh-fe-borrower
 ./plsh-fe-librarian
+./API/appsettings.Development.json
+./API/appsettings.Production.json

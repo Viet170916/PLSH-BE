@@ -20,6 +20,7 @@ using Microsoft.OpenApi.Models;
 using Model.Entity.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
+var environment = builder.Environment.EnvironmentName;
 
 // Add builder.Services to the container.
 builder.Services.AddControllersWithViews();
@@ -58,9 +59,11 @@ builder.Services.AddCors(option =>
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
-  options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)));
+  options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
+    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)),
+    options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
+      ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))),
   ServiceLifetime.Scoped);
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
        .AddEntityFrameworkStores<AppDbContext>()
