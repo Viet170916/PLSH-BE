@@ -97,7 +97,7 @@ deploy_be:
         mkdir -p /var/www/PLBH_App
         cp -r /path/to/artifacts/* /var/www/PLBH_App/
         systemctl restart PLBH_App.service
-      EOF
+        EOF
   environment:
     name: production
   
