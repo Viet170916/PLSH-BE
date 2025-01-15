@@ -54,7 +54,7 @@ build_be:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   stage: build
   script:
-    -echo "Restoring .NET dependencies"
+    - echo "Restoring .NET dependencies"
     - dotnet restore
     - echo "Building the application"
     - dotnet build --configuration Release
@@ -73,7 +73,7 @@ test_be:
     - echo "Running tests"
     - dotnet test --configuration Release
   dependencies:
-    - build
+    - build_be
   only:
     - merge_requests
     - server/develop
