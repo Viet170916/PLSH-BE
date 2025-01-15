@@ -54,14 +54,19 @@ build_be:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   stage: build
   script:
+    - cd ./PLSH-BE
     - echo "Restoring .NET dependencies"
-    - dotnet restore
+    - dotnet restore PLSH-BE.sln
+    - echo "Migrating the database"
+    - dotnet ef database update --connection "$DefaultConnection" --project ./Data --startup-project ./API
     - echo "Building the application"
-    - dotnet build --configuration Release
+    - dotnet build PLSH-BE.sln --configuration Release
+    - echo "Publishing the solution"
+    - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+ 
   artifacts:
     paths:
-      - bin/
-      - obj/
+      - PLSH-BE/publish
   only:
     - merge_requests
     - server/develop
@@ -70,6 +75,7 @@ test_be:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   stage: test
   script:
+    - cd ./PLSH-BE
     - echo "Running tests"
     - dotnet test --configuration Release
   dependencies:
@@ -81,14 +87,14 @@ test_be:
 deploy_be:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   stage: deploy
-  script:
-    - echo "Publishing the application"
-    - dotnet publish --configuration Release --output ./publish
-    - echo "Migrating the database"
-    - dotnet ef database update --connection "$DefaultConnection" --project ./Data --startup-project ./API
-    - echo "Deploying the application"
-    - scp -r ./publish ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com:/var/www/PLBH_App
-
+  script:    
+    - echo "Deploying application"
+    - mkdir -p /var/www/PLBH_App
+    - cp -r PLSH-BE/publish/* /var/www/PLBH_App/
+    - sudo systemctl restart PLBH_App.service
+  environment:
+    name: production
+  
   only:
     - merge_requests
     - server/develop
