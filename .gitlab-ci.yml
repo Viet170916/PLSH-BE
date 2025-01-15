@@ -98,10 +98,10 @@ deploy_be:
     - echo "Building the application"
     - dotnet build PLSH-BE.sln --configuration Release
     - echo "Publishing the solution"
-    - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+    - dotnet publish API/API.csproj --configuration Release --output ./publish
     - ls
     - echo "Deploying application to server"
-    - ./publish ls 
+    - ls ./publish
     - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
       "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
   environment:
