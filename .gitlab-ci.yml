@@ -93,7 +93,7 @@ deploy_be:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
   script:
     - echo "Deploying application to server"
-    - ssh ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com << 'EOF'
+    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com << 'EOF'
         mkdir -p /var/www/PLBH_App
         cp -r ./PLSH-BE/publish/* /var/www/PLBH_App/
         systemctl restart PLBH_App.service
