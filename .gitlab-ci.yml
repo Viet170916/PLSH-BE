@@ -57,8 +57,6 @@ build_be:
     - cd ./PLSH-BE
     - echo "Restoring .NET dependencies"
     - dotnet restore PLSH-BE.sln
-    - echo "Migrating the database"
-    - dotnet ef database update --connection "$DefaultConnection" --project ./Data --startup-project ./API
     - echo "Building the application"
     - dotnet build PLSH-BE.sln --configuration Release
     - echo "Publishing the solution"
