@@ -101,8 +101,8 @@ deploy_be:
     - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
     - ls
     - echo "Deploying application to server"
-    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
     - ./public ls 
+    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
       "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
   environment:
     name: production
