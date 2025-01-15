@@ -83,13 +83,21 @@ test_be:
     - server/develop
 
 deploy_be:
-  image: mcr.microsoft.com/dotnet/sdk:8.0
   stage: deploy
-  script:    
-    - echo "Deploying application"
-    - mkdir -p /var/www/PLBH_App
-    - cp -r PLSH-BE/publish/* /var/www/PLBH_App/
-    - sudo systemctl restart PLBH_App.service
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+  script:
+    - echo "Deploying application to server"
+    - ssh ec2-user@<YOUR_EC2_IP> << 'EOF'
+        mkdir -p /var/www/PLBH_App
+        cp -r /path/to/artifacts/* /var/www/PLBH_App/
+        systemctl restart PLBH_App.service
+      EOF
   environment:
     name: production
   
