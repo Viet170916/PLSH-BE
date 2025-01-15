@@ -6,7 +6,12 @@
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-- test
+  - build
+  - test
+  - deploy
+
+variables:
+  DOTNET_VERSION: 8.0
 
 build_fe_borrower_project:
   stage: test
@@ -44,3 +49,46 @@ build_fe_librarian_project:
   only:
     - merge_requests
     - client/librarian/develop
+
+build_be:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: build
+  script:
+    -echo "Restoring .NET dependencies"
+    - dotnet restore
+    - echo "Building the application"
+    - dotnet build --configuration Release
+  artifacts:
+    paths:
+      - bin/
+      - obj/
+  only:
+    - merge_requests
+    - server/develop
+
+test_be:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: test
+  script:
+    - echo "Running tests"
+    - dotnet test --configuration Release
+  dependencies:
+    - build
+  only:
+    - merge_requests
+    - server/develop
+
+deploy_be:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: deploy
+  script:
+    - echo "Publishing the application"
+    - dotnet publish --configuration Release --output ./publish
+    - echo "Migrating the database"
+    - dotnet ef database update --connection "$DefaultConnection" --project ./Data --startup-project ./API
+    - echo "Deploying the application"
+    - scp -r ./publish ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com:/var/www/PLBH_App
+
+  only:
+    - merge_requests
+    - server/develop

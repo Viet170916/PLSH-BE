@@ -10,7 +10,7 @@ namespace Common.Library
         public static readonly string SwaggerEndpointUrl = "/swagger/v1/swagger.json";
         public static readonly string ApiVersion = "v1";
         public static readonly string ApiTitle = "BRP API";
-        public static readonly string ConnStr = "ConnStr";
+        public static readonly string ConnStr = "DefaultConnection";
         public static readonly string JwtDescription = "JWT Authorization header using the Bearer scheme.";
         public static readonly string Bearer = "Bearer";
         public static readonly string Authorization = "Authorization";
