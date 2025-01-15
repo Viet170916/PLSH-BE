@@ -92,9 +92,16 @@ deploy_be:
     - mkdir -p ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
   script:
+    - cd ./PLSH-BE
+    - echo "Restoring .NET dependencies"
+    - dotnet restore PLSH-BE.sln
+    - echo "Building the application"
+    - dotnet build PLSH-BE.sln --configuration Release
+    - echo "Publishing the solution"
+    - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
     - echo "Deploying application to server"
     - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
-      "cp -r ./PLSH-BE/publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+      "cp -r publish/* /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
   environment:
     name: production
   
