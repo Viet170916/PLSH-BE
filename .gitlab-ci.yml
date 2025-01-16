@@ -102,8 +102,10 @@ deploy_be:
     - ls
     - echo "Deploying application to server"
     - ls ./publish
-    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
-      "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+    # - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
+    #   "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+    - scp -r ./publish/* ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com:/var/www/PLBH_App/
+      ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com "systemctl restart PLBH_App.service"
   environment:
     name: production
   
