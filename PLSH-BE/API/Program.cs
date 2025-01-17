@@ -58,13 +58,24 @@ builder.Services.AddCors(option =>
                       .AllowCredentials());
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-builder.Services.AddDbContext<AppDbContext>(options =>
-  options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
-    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
-      ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))),
-  ServiceLifetime.Scoped);
+if (builder.Environment.IsDevelopment())
+{
+  builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)));
+  builder.Services.AddDbContextFactory<AppDbContext>(options =>
+      options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)),
+    ServiceLifetime.Scoped);
+}
+else
+  if (builder.Environment.IsProduction())
+  {
+    builder.Services.AddDbContext<AppDbContext>(options =>
+      options.UseSqlServer(Environment.GetEnvironmentVariable(Constants.ConnStr)));
+    builder.Services.AddDbContextFactory<AppDbContext>(options =>
+        options.UseSqlServer(Environment.GetEnvironmentVariable(Constants.ConnStr)),
+      ServiceLifetime.Scoped);
+  }
+
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
        .AddEntityFrameworkStores<AppDbContext>()
        .AddDefaultTokenProviders();

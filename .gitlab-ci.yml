@@ -6,7 +6,12 @@
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-- test
+  - build
+  - test
+  - deploy
+
+variables:
+  DOTNET_VERSION: 8.0
 
 build_fe_borrower_project:
   stage: test
@@ -44,3 +49,75 @@ build_fe_librarian_project:
   only:
     - merge_requests
     - client/librarian/develop
+
+# build_be:
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   stage: build
+#   script:
+#     - cd ./PLSH-BE
+#     - echo "Restoring .NET dependencies"
+#     - dotnet restore PLSH-BE.sln
+#     - echo "Building the application"
+#     - dotnet build PLSH-BE.sln --configuration Release
+#     - echo "Publishing the solution"
+#     - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+ 
+#   artifacts:
+#     paths:
+#       - PLSH-BE/publish
+#   only:
+#     - merge_requests
+#     - server/develop
+
+# test_be:
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   stage: test
+#   script:
+#     - cd ./PLSH-BE
+#     - echo "Running tests"
+#     - dotnet test --configuration Release
+#   dependencies:
+#     - build_be
+#   only:
+#     - merge_requests
+#     - server/develop
+
+deploy_be:
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY"
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    # - mkdir -p ~/.ssh
+    # # Tạo private key từ GitLab CI/CD variable
+    # - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    # # Đảm bảo rằng private key có quyền truy cập đúng
+    # - chmod 600 ~/.ssh/id_rsa
+    # # Thêm khóa công khai của server vào known_hosts để tránh cảnh báo xác minh khi kết nối lần đầu
+    # - ssh-keyscan -H ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+  script:
+    - cd ./PLSH-BE
+    - echo "Restoring .NET dependencies"
+    - dotnet restore PLSH-BE.sln
+    - echo "Building the application"
+    - dotnet build PLSH-BE.sln --configuration Release
+    - echo "Publishing the solution"
+    - dotnet publish API/API.csproj --configuration Release --output ./publish
+    - ls
+    - echo "Deploying application to server"
+    - ls ./publish
+    # - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
+    #   "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
+    - which scp
+    - scp -o StrictHostKeyChecking=no -r ./publish/* ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com:/var/www/PLBH_App/
+    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com "docker -v"
+  environment:
+    name: production
+  
+  only:
+    - merge_requests
+    - server/develop
