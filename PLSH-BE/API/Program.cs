@@ -20,6 +20,7 @@ using Microsoft.OpenApi.Models;
 using Model.Entity.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
+var environment = builder.Environment.EnvironmentName;
 
 // Add builder.Services to the container.
 builder.Services.AddControllersWithViews();
