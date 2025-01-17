@@ -27,9 +27,12 @@ build_fe_borrower_project:
     - cd ./plsh-fe-borrower
     - yarn install
     - npm run build
-  only:
-    - merge_requests
-    - client/borrower/develop
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/borrower/develop"'
+      when: always
+  # only:
+  #   - merge_requests
+  #   - client/borrower/develop
 
 
 build_fe_librarian_project:
@@ -46,9 +49,12 @@ build_fe_librarian_project:
     - cd ./plsh-fe-librarian
     - yarn install
     - npm run build
-  only:
-    - merge_requests
-    - client/librarian/develop
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/librarian/develop"'
+      when: always
+  # only:
+  #   - merge_requests
+  #   - client/librarian/develop
 
 # build_be:
 #   image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -117,7 +123,9 @@ deploy_be:
     - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com "docker -v"
   environment:
     name: production
-  
-  only:
-    - merge_requests
-    - server/develop
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+      when: always
+  # only:
+  #   - merge_requests
+  #   - server/develop
