@@ -85,12 +85,12 @@ build_fe_librarian_project:
 deploy_be:
   stage: deploy
   image: mcr.microsoft.com/dotnet/sdk:8.0
-  before_script:
-    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent -s)
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
-    - mkdir -p ~/.ssh
-    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+  # before_script:
+  #   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  #   - eval $(ssh-agent -s)
+  #   - ssh-add <(echo "$SSH_PRIVATE_KEY")
+  #   - mkdir -p ~/.ssh
+  #   - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
   script:
     - cd ./PLSH-BE
     - echo "Restoring .NET dependencies"
