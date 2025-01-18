@@ -56,37 +56,37 @@ build_fe_librarian_project:
   #   - merge_requests
   #   - client/librarian/develop
 
-# build_be:
-#   image: mcr.microsoft.com/dotnet/sdk:8.0
-#   stage: build
-#   script:
-#     - cd ./PLSH-BE
-#     - echo "Restoring .NET dependencies"
-#     - dotnet restore PLSH-BE.sln
-#     - echo "Building the application"
-#     - dotnet build PLSH-BE.sln --configuration Release
-#     - echo "Publishing the solution"
-#     - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
+build_be:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: build
+  script:
+    - cd ./PLSH-BE
+    - echo "Restoring .NET dependencies"
+    - dotnet restore PLSH-BE.sln
+    - echo "Building the application"
+    - dotnet build PLSH-BE.sln --configuration Release
+    - echo "Publishing the solution"
+    - dotnet publish PLSH-BE.sln --configuration Release --output ./publish
  
-#   artifacts:
-#     paths:
-#       - PLSH-BE/publish
-#   only:
-#     - merge_requests
-#     - server/develop
+  artifacts:
+    paths:
+      - PLSH-BE/publish
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+      when: always
 
-# test_be:
-#   image: mcr.microsoft.com/dotnet/sdk:8.0
-#   stage: test
-#   script:
-#     - cd ./PLSH-BE
-#     - echo "Running tests"
-#     - dotnet test --configuration Release
-#   dependencies:
-#     - build_be
-#   only:
-#     - merge_requests
-#     - server/develop
+test_be:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
+  stage: test
+  script:
+    - cd ./PLSH-BE
+    - echo "Running tests"
+    - dotnet test --configuration Release
+  dependencies:
+    - build_be
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+      when: always
 
 deploy_be:
   stage: deploy
@@ -124,7 +124,7 @@ deploy_be:
   environment:
     name: production
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
       when: always
   # only:
   #   - merge_requests
