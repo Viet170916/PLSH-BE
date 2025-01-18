@@ -61,18 +61,22 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 if (builder.Environment.IsDevelopment())
 {
   builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)));
+    options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
+      ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
   builder.Services.AddDbContextFactory<AppDbContext>(options =>
-      options.UseSqlServer(builder.Configuration.GetConnectionString(Constants.ConnStr)),
-    ServiceLifetime.Scoped);
+      options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr)))
+    , ServiceLifetime.Scoped);
 }
 else
   if (builder.Environment.IsProduction())
   {
     builder.Services.AddDbContext<AppDbContext>(options =>
-      options.UseSqlServer(Environment.GetEnvironmentVariable(Constants.ConnStr)));
+      options.UseMySql(Environment.GetEnvironmentVariable(Constants.ConnStr),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
     builder.Services.AddDbContextFactory<AppDbContext>(options =>
-        options.UseSqlServer(Environment.GetEnvironmentVariable(Constants.ConnStr)),
+        options.UseMySql(Environment.GetEnvironmentVariable(Constants.ConnStr),
+          ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))),
       ServiceLifetime.Scoped);
   }
 

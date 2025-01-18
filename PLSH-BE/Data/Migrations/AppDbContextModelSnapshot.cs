@@ -30,8 +30,11 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AvataUrl")
+                    b.Property<string>("Address")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AvataUrl")
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("CardMemberExpiredDate")
@@ -58,10 +61,15 @@ namespace Data.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("GoogleToken")
-                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("GoogleUserId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("IdentityCardNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Password")
                         .HasColumnType("longtext");
 
                     b.Property<string>("PhoneNumber")
@@ -71,12 +79,14 @@ namespace Data.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<bool>("isVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
