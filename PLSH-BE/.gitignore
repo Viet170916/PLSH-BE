@@ -34,6 +34,7 @@ node_modules/
 
 # Application settings
 appsettings.Development.json
+appsettings.Production.json
 local.settings.json
 
 # JetBrains Rider/Resharper
@@ -43,3 +44,4 @@ local.settings.json
 ./plsh-fe-librarian
 ./API/appsettings.Development.json
 ./API/appsettings.Production.json
+.env
