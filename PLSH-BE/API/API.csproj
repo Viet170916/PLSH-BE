@@ -5,6 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DotNetEnv" Version="3.1.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.11" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
         <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
@@ -12,16 +14,12 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Model\Model.csproj" />
       <ProjectReference Include="..\BU\BU.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Controllers\" />
     </ItemGroup>
 
 </Project>

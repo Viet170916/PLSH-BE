@@ -23,18 +23,18 @@ namespace Data.Repository.Implementation
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<int> Add(T entity,string employeeId)
+        public virtual async Task<int> Add(T entity)
         {
             await Context.Set<T>().AddAsync(entity);
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<int> AddRange(IEnumerable<T> entities, string employeeId)
+        public virtual async Task<int> AddRange(IEnumerable<T> entities)
         {
             await Context.Set<T>().AddRangeAsync(entities).ConfigureAwait(false);
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
-
+        
         public virtual IEnumerable<T> Find(Expression<Func<T, bool>> expression)
         {
             return Context.Set<T>().Where(expression);
@@ -81,19 +81,19 @@ namespace Data.Repository.Implementation
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<int> Update(T entity, string employeeId)
+        public virtual async Task<int> Update(T entity)
         {
             Context.Set<T>().Update(entity);
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<int> BulkUpdate(IList<T> items, string employeeId)
+        public virtual async Task<int> BulkUpdate(IList<T> items)
         {
             await Context.BulkUpdateAsync(items).ConfigureAwait(false);
             return await Context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public virtual async Task<int> BulkInsert(IList<T> items, string employeeId)
+        public virtual async Task<int> BulkInsert(IList<T> items)
         {
             await Context.BulkInsertAsync(items).ConfigureAwait(false);
             return await Context.SaveChangesAsync().ConfigureAwait(false);
