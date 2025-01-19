@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
@@ -27,6 +28,12 @@ var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "";
 var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "";
 var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "";
+Log.Logger = new LoggerConfiguration()
+             .WriteTo.Console() // Ghi log ra console
+             .WriteTo.File("Logs/pl-book-hive.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
+             .CreateLogger();
+builder.Host.UseSerilog();
+
 // builder.Services.AddAuthentication(options =>
 //        {
 //          options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
