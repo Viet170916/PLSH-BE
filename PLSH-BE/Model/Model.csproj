@@ -15,7 +15,10 @@
     <ItemGroup>
       <Folder Include="LockModels\" />
       <Folder Include="RequestModel\" />
-      <Folder Include="ResponseModel\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
 
 </Project>

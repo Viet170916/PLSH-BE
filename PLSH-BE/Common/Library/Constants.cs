@@ -6,6 +6,9 @@ namespace Common.Library
   public static class Constants
   {
     public static readonly string CorsPolicy = "CorsPolicy";
+    public static readonly string Issuer = "https://localhost:5000";
+    public static readonly string Audience = "https://localhost:3000";
+    public static readonly string JWT_SECRET = "JWT_SECRET";
     public static readonly string SwaggerEndpointName = "Kpmg BRP API";
     public static readonly string SwaggerEndpointUrl = "/swagger/v1/swagger.json";
     public static readonly string ApiVersion = "v1";
