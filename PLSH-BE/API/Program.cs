@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using API.Middlewares;
 using BU.Extensions;
 using BU.Mappings;
@@ -9,12 +10,14 @@ using Data.UnitOfWork;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,18 +26,42 @@ var environment = builder.Environment.EnvironmentName;
 var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "";
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "";
 var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "";
+var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "";
+// builder.Services.AddAuthentication(options =>
+//        {
+//          options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//          options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+//        })
+//        .AddCookie()
+//        .AddGoogle(options =>
+//        {
+//          options.ClientId = googleClientId;
+//          options.ClientSecret = googleClientSecret!;
+//          options.CallbackPath = "/signin-google";
+//        });
 builder.Services.AddAuthentication(options =>
        {
-         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-         options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
        })
-       .AddCookie()
-       .AddGoogle(options =>
+       .AddJwtBearer(options =>
        {
-         options.ClientId = googleClientId;
-         options.ClientSecret = googleClientSecret!;
-         options.CallbackPath = "/signin-google";
+         options.TokenValidationParameters = new TokenValidationParameters
+         {
+           ValidateIssuer = true,
+           ValidateAudience = true,
+           ValidateLifetime = true,
+           ValidateIssuerSigningKey = true,
+           ValidIssuer = "your_issuer",
+           ValidAudience = "your_audience",
+           IssuerSigningKey =
+             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+         };
        });
+builder.Services.AddAuthorization(options =>
+{
+  options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
 
 // Add builder.Services to the container.
 // builder.Services.Configure<IISOptions>(options => { options.AutomaticAuthentication = true; });

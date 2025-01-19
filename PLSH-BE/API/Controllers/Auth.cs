@@ -5,38 +5,72 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using BU.Services.Interface;
+using Common.Enums;
+using Common.Helper;
 using Common.Library;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Model.Entity;
+using Model.ResponseModel;
 using Newtonsoft.Json;
 
 namespace API.Controllers;
 
 [ApiController]
 [Route("api/v1/auth")]
-public class AuthController(IAccountService accountService) : Controller
+public class AuthController(IAccountService accountService, ILogger<AuthController> logger) : Controller
 {
-  [HttpGet()] public IActionResult Get() { return Ok(new { message = "OK" }); }
 
   [HttpPost("sign-in")] public async Task<IActionResult> SignIn([FromBody] GoogleLoginRequest request)
   {
-    var googleUser = await GetGoogleUserInfo(request.GoogleToken);
-    if (googleUser == null) { return Unauthorized("Invalid token."); }
-
-    var user = await accountService.GetOrCreateUserAsync(googleUser.Email);
-    if (user == null)
+    try
     {
-      return NotFound(new { message = "User not found.", isAuthorized = false, account = googleUser, });
+      var googleUser = await GetGoogleUserInfo(request.GoogleToken);
+      if (googleUser == null)
+      {
+        return Ok(new ErrorResponse
+        {
+          Status = HttpStatus.UNAUTHORIZED.GetDescription(),
+          StatusCode = HttpStatus.UNAUTHORIZED,
+          Message = "Unauthorized access.",
+        });
+      }
+
+      var user = await accountService.GetOrCreateUserAsync(googleUser.Email);
+      if (user == null)
+      {
+        return Ok(new ErrorResponse
+        {
+          Status = HttpStatus.NOT_FOUND.GetDescription(),
+          StatusCode = HttpStatus.NOT_FOUND,
+          Message = "User not found.",
+          Data = new { IsAuthorized = false, account = googleUser.RemoveNullProperties(), },
+        });
+      }
+
+      var token = GenerateJwt(user);
+      return Ok(new OkResponse
+      {
+        Status = HttpStatus.OK.GetDescription(),
+        StatusCode = HttpStatus.OK,
+        Message = "Login successful.",
+        Data = new { IsAuthenticated = true, Account = user.RemoveNullProperties(), AccessToken = token, },
+      });
     }
-
-    var token = GenerateJwt(user);
-    return Ok(new
+    catch (HttpRequestException e)
     {
-      message = "Login successful.", isAuthenticated = true, account = user, accessToken = token,
-    });
+      logger.LogError(e, "An error occured");
+      return Ok(new ErrorResponse
+      {
+        Status = HttpStatus.UNAUTHORIZED.GetDescription(),
+        StatusCode = HttpStatus.UNAUTHORIZED,
+        Message = "Unauthorized access.",
+      });
+    }
   }
 
+  // [Authorize(Policy = "Bearer")] 
   private async Task<GoogleUserInfo> GetGoogleUserInfo(string googleToken)
   {
     var client = new HttpClient();
@@ -52,10 +86,10 @@ public class AuthController(IAccountService accountService) : Controller
       new Claim(ClaimTypes.Name, user.FullName), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
     };
     var key = new SymmetricSecurityKey(
-      Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? string.Empty));
+      Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(Constants.JWT_SECRET) ?? string.Empty));
     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-    var token = new JwtSecurityToken(issuer: "your-issuer",
-      audience: "your-audience",
+    var token = new JwtSecurityToken(issuer: Constants.Issuer,
+      audience: Constants.Audience,
       claims: claims,
       expires: DateTime.Now.AddDays(1),
       signingCredentials: creds);
