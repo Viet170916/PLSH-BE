@@ -46,3 +46,4 @@ local.settings.json
 ./API/appsettings.Production.json
 .env
 publish
+Logs
