@@ -26,6 +26,7 @@ public class AuthController(IAccountService accountService, ILogger<AuthControll
   {
     try
     {
+      logger.LogInformation($">>>>>>>Request: /api/v1/auth/sign-in...............");
       var googleUser = await GetGoogleUserInfo(request.GoogleToken);
       if (googleUser == null)
       {
@@ -60,7 +61,7 @@ public class AuthController(IAccountService accountService, ILogger<AuthControll
     }
     catch (HttpRequestException e)
     {
-      logger.LogError(e, "An error occured");
+      logger.LogError(e, ">>>>>>>Request: /api/v1/auth/sign-in...............An error occured");
       return Ok(new ErrorResponse
       {
         Status = HttpStatus.UNAUTHORIZED.GetDescription(),
