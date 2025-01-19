@@ -1,6 +1,4 @@
 using System;
-using API.Common;
-using API.Configs;
 using API.Middlewares;
 using BU.Extensions;
 using BU.Mappings;
@@ -11,20 +9,13 @@ using Data.UnitOfWork;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-using Model.Entity;
-using Model.Entity.Authentication;
+using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
@@ -80,28 +71,13 @@ builder.Services.AddCors(option =>
                                   .AllowCredentials());
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-if (builder.Environment.IsDevelopment())
-{
-  builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
-      ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
-  builder.Services.AddDbContextFactory<AppDbContext>(options =>
-      options.UseMySql(builder.Configuration.GetConnectionString(Constants.ConnStr),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr)))
-    , ServiceLifetime.Scoped);
-}
-else
-  if (builder.Environment.IsProduction())
-  {
-    builder.Services.AddDbContext<AppDbContext>(options =>
-      options.UseMySql(Environment.GetEnvironmentVariable(Constants.ConnStr),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))));
-    builder.Services.AddDbContextFactory<AppDbContext>(options =>
-        options.UseMySql(Environment.GetEnvironmentVariable(Constants.ConnStr),
-          ServerVersion.AutoDetect(builder.Configuration.GetConnectionString(Constants.ConnStr))),
-      ServiceLifetime.Scoped);
-  }
-
+builder.Services.AddDbContext<AppDbContext>(options =>
+  options.UseMySql(dbConnectionString,
+    ServerVersion.AutoDetect(dbConnectionString)));
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseMySql(dbConnectionString,
+      ServerVersion.AutoDetect(dbConnectionString)),
+  ServiceLifetime.Scoped);
 // builder.Services.AddIdentity<Account, Role>()
 //        .AddEntityFrameworkStores<AppDbContext>()
 //        .AddDefaultTokenProviders();
@@ -114,15 +90,8 @@ builder.Services.AddLockBusinessLayer();
 //
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
-// builder.Services.AddSwaggerGenNewtonsoftSupport();
-// builder.Services.AddMvc()
-//        .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new DateTimeConverter()); });
-// DiConfiguration.Initialize(builder.Services);
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddBusinessLayer();
-// builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -133,7 +102,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCorsMiddleware();
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers()
