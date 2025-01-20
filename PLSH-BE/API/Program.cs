@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading.Tasks;
 using API.Middlewares;
 using BU.Extensions;
 using BU.Mappings;
@@ -8,17 +9,12 @@ using Data.DatabaseContext;
 using Data.Repository.Implementation;
 using Data.UnitOfWork;
 using DotNetEnv;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using MySqlConnector;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,10 +23,10 @@ var environment = builder.Environment.EnvironmentName;
 var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "";
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "";
 var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "";
-var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "";
+var secretKey = Environment.GetEnvironmentVariable(Constants.JWT_SECRET) ?? "";
 Log.Logger = new LoggerConfiguration()
              .WriteTo.Console() // Ghi log ra console
-             .WriteTo.File("Logs/pl-book-hive.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
+             .WriteTo.File("Logs/pl-book-hive-.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
              .CreateLogger();
 builder.Host.UseSerilog();
 
@@ -46,29 +42,6 @@ builder.Host.UseSerilog();
 //          options.ClientSecret = googleClientSecret!;
 //          options.CallbackPath = "/signin-google";
 //        });
-builder.Services.AddAuthentication(options =>
-       {
-         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-       })
-       .AddJwtBearer(options =>
-       {
-         options.TokenValidationParameters = new TokenValidationParameters
-         {
-           ValidateIssuer = true,
-           ValidateAudience = true,
-           ValidateLifetime = true,
-           ValidateIssuerSigningKey = true,
-           ValidIssuer = Constants.Issuer,
-           ValidAudience = Constants.Audience,
-           IssuerSigningKey =
-             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-         };
-       });
-builder.Services.AddAuthorization(options =>
-{
-  options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
-});
 
 // Add builder.Services to the container.
 // builder.Services.Configure<IISOptions>(options => { options.AutomaticAuthentication = true; });
@@ -122,6 +95,38 @@ builder.Services.AddBusinessLayer();
 builder.Services.AddLockBusinessLayer();
 
 //
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+       .AddJwtBearer(options =>
+       {
+         options.TokenValidationParameters = new TokenValidationParameters
+         {
+           ValidateIssuer = true,
+           ValidateAudience = true,
+           ValidateLifetime = true,
+           ValidateIssuerSigningKey = true,
+           ValidIssuer = Constants.Issuer,
+           ValidAudience = Constants.Audience,
+           IssuerSigningKey =
+             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+         };
+         options.Events = new JwtBearerEvents
+         {
+           OnAuthenticationFailed = context =>
+           {
+             return Task.CompletedTask;
+           },
+           OnTokenValidated = context =>
+           {
+             Console.WriteLine("Token is valid!");
+             return Task.CompletedTask;
+           }
+         };
+       });
+builder.Services.AddAuthorization(options =>
+{
+  options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
+
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -135,10 +140,11 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
+// app.UseRouting();
 app.UseCorsMiddleware();
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers()
-   .WithMetadata(new RouteAttribute("/api/v1/[controller]"));
+
+app.UseHttpsRedirection();
+app.MapControllers();
 app.Run();

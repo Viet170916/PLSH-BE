@@ -13,10 +13,10 @@ public class AccountService(IUnitOfWork unitOfWork) : IAccountService
   public async Task<Account?> GetOrCreateUserAsync(string email)
   {
     var user = await unitOfWork.AccountRepository.FindQueryable(acc => acc.Email == email)
-                               .Select(acc => new Account()
+                               .Select(acc => new Account
                                {
-                                 Email = acc.Email, 
-                                 Id = acc.Id, 
+                                 Email = acc.Email,
+                                 Id = acc.Id,
                                  FullName = acc.FullName,
                                  isVerified = acc.isVerified,
                                  AvataUrl = acc.AvataUrl,
