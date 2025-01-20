@@ -1,5 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using Microsoft.IdentityModel.Tokens;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
@@ -8,21 +10,29 @@ using BU.Services.Interface;
 using Common.Enums;
 using Common.Helper;
 using Common.Library;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Model.Entity;
 using Model.ResponseModel;
 using Newtonsoft.Json;
 
 namespace API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/auth")]
 public class AuthController(IAccountService accountService, ILogger<AuthController> logger) : Controller
 {
+  [HttpGet("check-token")] public IActionResult CheckToken()
+  {
+    var email = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+    var id = int.Parse(HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "-1");
+    var fullname = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+    return Ok(new OkResponse { Data = new { Id = id, Fullname = fullname, Email = email }, });
+  }
 
-  [HttpPost("sign-in")] public async Task<IActionResult> SignIn([FromBody] GoogleLoginRequest request)
+  [AllowAnonymous] [HttpPost("sign-in")] public async Task<IActionResult> SignIn([FromBody] GoogleLoginRequest request)
   {
     try
     {
@@ -39,7 +49,7 @@ public class AuthController(IAccountService accountService, ILogger<AuthControll
       }
 
       var user = await accountService.GetOrCreateUserAsync(googleUser.Email);
-      if (user == null)
+      if (user is null)
       {
         return Ok(new ErrorResponse
         {
@@ -84,7 +94,8 @@ public class AuthController(IAccountService accountService, ILogger<AuthControll
   {
     var claims = new[]
     {
-      new Claim(ClaimTypes.Name, user.FullName), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+      new Claim(ClaimTypes.Name, user.FullName), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+      new Claim(ClaimTypes.Email, user.Email),
     };
     var key = new SymmetricSecurityKey(
       Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(Constants.JWT_SECRET) ?? string.Empty));
