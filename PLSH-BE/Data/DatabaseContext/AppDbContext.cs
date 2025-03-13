@@ -1,26 +1,158 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Model;
 using Model.Entity;
 
 namespace Data.DatabaseContext
 {
-  [ExcludeFromCodeCoverage]
-  public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
-  {
-    protected override void OnModelCreating(ModelBuilder modelBuilder) { base.OnModelCreating(modelBuilder); }
-    public DbSet<Account> Accounts { get; set; }
-    public DbSet<Admin> Admins { get; set; }
-    public DbSet<Book> Books { get; set; }
-    public DbSet<BookBorrowing> BookBorrowings { get; set; }
-    public DbSet<BookDetail> BookDetails { get; set; }
-    public DbSet<Borrower> Borrowers { get; set; }
-    public DbSet<Fine> Fines { get; set; }
-    public DbSet<Librarian> Librarians { get; set; }
-    public DbSet<Loan> Loans { get; set; }
-    public DbSet<Notification> Notifications { get; set; }
-    public DbSet<Page> Pages { get; set; }
-    public DbSet<PaymentMethod> PaymentMethods { get; set; }
-    public DbSet<Role> Roles { get; set; }
-    public DbSet<Transaction> Transactions { get; set; }
-  }
+    [ExcludeFromCodeCoverage]
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    {
+        public DbSet<Account> Accounts { get; set; }    
+        public DbSet<Book> Books { get; set; }
+        public DbSet<BookBorrowing> BookBorrowings { get; set; }
+        public DbSet<BookDetail> BookDetails { get; set; }
+        public DbSet<BookReview> BookReviews { get; set; }
+        public DbSet<HistoryReview> HistoryReviews { get; set; }
+        public DbSet<Favorite> Favorites { get; set; }
+        public DbSet<Borrower> Borrowers { get; set; }
+        public DbSet<Fine> Fines { get; set; }
+        public DbSet<Librarian> Librarians { get; set; }
+        public DbSet<Loan> Loans { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Page> Pages { get; set; }
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<PasswordAudit> PasswordAudits { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Shelf> Shelves { get; set; }
+        public DbSet<Bookshelf> Bookshelves { get; set; }
+        public DbSet<BookLocation> BookLocations { get; set; }
+        public DbSet<Profile> Profiles { get; set; }
+        public DbSet<Album> Albums { get; set; }
+        public DbSet<AudioBook> AudioBooks { get; set; }
+        public DbSet<EBook> EBooks { get; set; }
+        public DbSet<Lecture> Lectures { get; set; }
+        public DbSet<LifeSkill> LifeSkills { get; set; }
+        public DbSet<Magazine> Magazines { get; set; }
+        public DbSet<PhysicalBook> PhysicalBooks { get; set; }
+        public DbSet<Video> Videos { get; set; }
+
+        //public DbSet<Availability> Availabilities { get; set; } 
+        public DbSet<Resource> Resources { get; set; }
+
+        public DbSet<Author> Authors { get; set; }  
+
+        public DbSet<ShortBookInfo> ShortBookInfos { get; set; }    
+
+        public DbSet<BookReservation> BookReservations { get; set; }    
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Profile - Account (1 - 1)
+            //modelBuilder.Entity<Profile>()
+            //    .HasOne(p => p.Account)
+            //    .WithOne(a => a.Profile)
+            //    .HasForeignKey<Profile>(p => p.AccountId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// PasswordAudit - Account (1 - N)
+            //modelBuilder.Entity<PasswordAudit>()
+            //    .HasOne(p => p.Account)
+            //    .WithMany(a => a.PasswordAudits)
+            //    .HasForeignKey(p => p.AccountId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// Book - Category (1 - N)
+            //modelBuilder.Entity<Book>()
+            //    .HasOne(b => b.Category)
+            //    .WithMany(c => c.Books)
+            //    .HasForeignKey(b => b.CategoryId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            //// Borrower - Favorite - Book
+            //modelBuilder.Entity<Favorite>()
+            //    .HasOne(f => f.Borrower)
+            //    .WithMany(b => b.Favorites)
+            //    .HasForeignKey(f => f.BorrowerId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //modelBuilder.Entity<Favorite>()
+            //    .HasOne(f => f.Book)
+            //    .WithMany(b => b.Favorites)
+            //    .HasForeignKey(f => f.BookId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// Librarian - Loan (1 - N)
+            //modelBuilder.Entity<Loan>()
+            //    .HasOne(l => l.Librarian)
+            //    .WithMany(lb => lb.Loans)
+            //    .HasForeignKey(l => l.LibrarianId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            //// Borrower - Loan (1 - N)
+            //modelBuilder.Entity<Loan>()
+            //    .HasOne(l => l.Borrower)
+            //    .WithMany(b => b.Loans)
+            //    .HasForeignKey(l => l.BorrowerId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// Loan - BookBorrowing (1 - N)
+            //modelBuilder.Entity<BookBorrowing>()
+            //    .HasOne(bb => bb.Loan)
+            //    .WithMany(l => l.BookBorrowings)
+            //    .HasForeignKey(bb => bb.LoanId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// BookBorrowing - BookDetail (N - 1)
+            //modelBuilder.Entity<BookBorrowing>()
+            //    .HasOne(bb => bb.BookDetail)
+            //    .WithMany()
+            //    .HasForeignKey(bb => bb.BookDetailId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            //// Account - Role (N - 1)
+            //modelBuilder.Entity<Account>()
+            //    .HasOne(a => a.Role)
+            //    .WithMany(r => r.Accounts)
+            //    .HasForeignKey(a => a.RoleId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            //// BookDetail - Book (N - 1)
+            //modelBuilder.Entity<BookDetail>()
+            //    .HasOne(bd => bd.Book)
+            //    .WithMany(b => b.BookDetails)
+            //    .HasForeignKey(bd => bd.BookId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// Notification - Account (N - 1)
+            //modelBuilder.Entity<Notification>()
+            //    .HasOne(n => n.Account)
+            //    .WithMany(a => a.Notifications)
+            //    .HasForeignKey(n => n.AccountId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            //// Bookshelves & Book Locations
+            //modelBuilder.Entity<Book>()
+            //    .HasMany(b => b.BookLocations)
+            //    .WithOne(bl => bl.Book);
+
+            //modelBuilder.Entity<Shelf>()
+            //    .HasMany(s => s.Bookshelves)
+            //    .WithOne(bs => bs.Shelf);
+
+            //modelBuilder.Entity<Bookshelf>()
+            //    .HasMany(bs => bs.BookLocations)
+            //    .WithOne(bl => bl.Bookshelf);
+
+            //modelBuilder.Entity<Borrower>()
+            //     .HasOne(b => b.Account)
+            //     .WithOne(a => a.Borrower)
+            //     .HasForeignKey<Borrower>(b => b.AccountId)
+            //     .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 }

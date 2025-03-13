@@ -9,4 +9,6 @@ public class Notification
   public int Status { get; set; } = 0; //(chưa đọc, đã đọc)
   public int Reference { get; set; } = 0; //(loại thông báo cho chức năng gì)
   public int AccountId { get; set; }
+
+  //public virtual Account Account { get; set; }
 }
