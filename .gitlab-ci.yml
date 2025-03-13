@@ -51,20 +51,18 @@ build_be:
   stage: build
   script:
     - cd ./PLSH-BE
-    - echo "Restoring .NET dependencies"
+    - dotnet clean ./PLSH-BE.sln
     - dotnet restore PLSH-BE.sln
-    - echo "Building the application"
-    - dotnet build PLSH-BE.sln --configuration Release
-    - echo "Publishing the solution"
-    - dotnet publish -c Release -r linux-x64 --self-contained false -o ./publish
+    - dotnet build ./PLSH-BE.sln -c Release
+    - dotnet publish ./API/API.csproj -c Release -o ./publish --self-contained false
  
   artifacts:
     paths:
       - PLSH-BE/publish
     expire_in: 1 hours 
   rules:
-    # - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    #   when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
     - if: '$CI_COMMIT_REF_NAME == "server/develop"'
       when: always
 
@@ -86,14 +84,13 @@ deploy_be:
     - cd ./PLSH-BE
     - echo "Deploying application to server"
     - ls ./publish
-    - which scp
     - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@104.197.134.164:/var/www/PLBH_App/
-    - ssh -o StrictHostKeyChecking=no namson023@104.197.134.164 "systemctl restart PLBH_App.service"
+    - ssh -o StrictHostKeyChecking=no namson023@104.197.134.164 "sudo systemctl restart PLBH_App.service"
   environment:
     name: production
   rules:
-    # - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    #   when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
     - if: '$CI_COMMIT_REF_NAME == "server/develop"'
       when: always
 
