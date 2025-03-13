@@ -111,10 +111,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
          };
          options.Events = new JwtBearerEvents
          {
-           OnAuthenticationFailed = context =>
-           {
-             return Task.CompletedTask;
-           },
+           OnAuthenticationFailed = context => { return Task.CompletedTask; },
            OnTokenValidated = context =>
            {
              Console.WriteLine("Token is valid!");
@@ -126,7 +123,6 @@ builder.Services.AddAuthorization(options =>
 {
   options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
 });
-
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -134,17 +130,26 @@ builder.Services.AddEndpointsApiExplorer();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-  app.UseSwagger();
-  app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+app.UseSwagger();
+app.UseSwaggerUI();
+// }
 
 // app.UseRouting();
+app.Use(async (context, next) =>
+{
+  if (context.Request.Path == "/")
+  {
+    context.Response.Redirect("/swagger");
+    return;
+  }
+
+  await next();
+});
 app.UseCorsMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
