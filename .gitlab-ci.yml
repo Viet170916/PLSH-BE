@@ -61,9 +61,9 @@ build_be:
   artifacts:
     paths:
       - PLSH-BE/publish
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
-      when: always
+  # rules:
+  #   - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+  #     when: always
 
 
 deploy_be:
@@ -87,7 +87,7 @@ deploy_be:
     - ssh -o StrictHostKeyChecking=no namson023@104.197.134.164 "systemctl restart PLBH_App.service"
   environment:
     name: production
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
-      when: always
+  # rules:
+  #   - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
+  #     when: always
 
