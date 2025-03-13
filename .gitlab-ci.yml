@@ -1,20 +1,12 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/pipeline/#customization
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
   - build
-  - test
   - deploy
 
 variables:
   DOTNET_VERSION: 8.0
 
 build_fe_borrower_project:
-  stage: test
+  stage: build
   image: node:22.13.0
   cache:
     paths:
@@ -30,13 +22,10 @@ build_fe_borrower_project:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/borrower/develop"'
       when: always
-  # only:
-  #   - merge_requests
-  #   - client/borrower/develop
 
 
 build_fe_librarian_project:
-  stage: test
+  stage: build
   image: node:22.13.0
   cache:
     paths:
@@ -100,6 +89,4 @@ deploy_be:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
       when: always
-  # only:
-  #   - merge_requests
-  #   - server/develop
+
