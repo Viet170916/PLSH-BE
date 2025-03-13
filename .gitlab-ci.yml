@@ -61,6 +61,7 @@ build_be:
   artifacts:
     paths:
       - PLSH-BE/publish
+    expire_in: 1 hours 
   rules:
     # - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     #   when: always
