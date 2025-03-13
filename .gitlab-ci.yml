@@ -75,18 +75,6 @@ build_be:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
       when: always
 
-test_be:
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  stage: test
-  script:
-    - cd ./PLSH-BE
-    - echo "Running tests"
-    - dotnet test --configuration Release
-  dependencies:
-    - build_be
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
-      when: always
 
 deploy_be:
   stage: deploy
@@ -97,34 +85,19 @@ deploy_be:
     - echo "$SSH_PRIVATE_KEY"
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ~/.ssh
-    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-    # - mkdir -p ~/.ssh
-    # # Tạo private key từ GitLab CI/CD variable
-    # - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    # # Đảm bảo rằng private key có quyền truy cập đúng
-    # - chmod 600 ~/.ssh/id_rsa
-    # # Thêm khóa công khai của server vào known_hosts để tránh cảnh báo xác minh khi kết nối lần đầu
-    # - ssh-keyscan -H ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+    - echo "104.197.134.164" > ~/.ssh/known_hosts
+  
   script:
     - cd ./PLSH-BE
-    - echo "Restoring .NET dependencies"
-    - dotnet restore PLSH-BE.sln
-    - echo "Building the application"
-    - dotnet build PLSH-BE.sln --configuration Release
-    - echo "Publishing the solution"
-    - dotnet publish API/API.csproj --configuration Release --output ./publish
-    - ls
     - echo "Deploying application to server"
     - ls ./publish
-    # - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com \
-    #   "cp -r ./publish/ /var/www/PLBH_App/ && systemctl restart PLBH_App.service"
     - which scp
-    - scp -o StrictHostKeyChecking=no -r ./publish/* ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com:/var/www/PLBH_App/
-    - ssh -o StrictHostKeyChecking=no ubuntu@ec2-54-252-159-167.ap-southeast-2.compute.amazonaws.com "sudo systemctl restart PLBH_App.service"
+    - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@104.197.134.164:/var/www/PLBH_App/
+    - ssh -o StrictHostKeyChecking=no namson023@104.197.134.164 "systemctl restart PLBH_App.service"
   environment:
     name: production
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "server/develop"'
       when: always
   # only:
   #   - merge_requests
