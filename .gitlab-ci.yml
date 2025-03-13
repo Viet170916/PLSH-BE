@@ -81,11 +81,12 @@ deploy_be:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY"
-    - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ~/.ssh
-    - echo "104.197.134.164" > ~/.ssh/known_hosts
+    - eval "$(ssh-agent -s)"
+    - 'echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/google_compute_engine'
+    - chmod 600 ~/.ssh/google_compute_engine
+    - ssh-add ~/.ssh/google_compute_engine
+    - ssh-keyscan -H 104.197.134.164 >> ~/.ssh/known_hosts
   
   script:
     - cd ./PLSH-BE
