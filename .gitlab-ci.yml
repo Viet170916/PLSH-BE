@@ -74,9 +74,9 @@ deploy_be:
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - mkdir -p ~/.ssh
-    - eval "$(ssh-agent -s)"
     - 'echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/google_compute_engine'
     - chmod 600 ~/.ssh/google_compute_engine
+    - eval "$(ssh-agent -s)"
     - ssh-add ~/.ssh/google_compute_engine
     - ssh-keyscan -H 104.197.134.164 >> ~/.ssh/known_hosts
   
