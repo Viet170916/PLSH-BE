@@ -11,6 +11,7 @@ build_fe_borrower_project:
   cache:
     paths:
       - node_modules/
+      
   before_script:
     - source ~/.profile
     - source ~/.bashrc
