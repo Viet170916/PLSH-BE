@@ -6,7 +6,7 @@ namespace Model.Entity.LibraryRoom
   {
     public int Id { get; set; }
     public string? Name { get; set; }
-    public int ColumSize { get; set; } = 6;
+    public int ColumnSize { get; set; } = 6;
     public int RowSize { get; set; } = 3;
 
     [NotMapped]
