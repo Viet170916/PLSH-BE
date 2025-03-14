@@ -17,11 +17,11 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
     var libraryRoom =
       from lib in context.LibraryRooms
       join sh in context.Shelves on lib.Id equals sh.RoomId
-      group sh by new { lib.Id, lib.ColumnSize, lib.RowSize, lib.Name } into groupedLib
+      group sh by new { lib.Id, ColumnSize = lib.ColumSize, lib.RowSize, lib.Name } into groupedLib
       select new LibraryRoom
       {
         Id = groupedLib.Key.Id,
-        ColumnSize = groupedLib.Key.ColumnSize,
+        ColumSize = groupedLib.Key.ColumnSize,
         RowSize = groupedLib.Key.RowSize,
         Name = groupedLib.Key.Name,
         Shelves = groupedLib.ToList(),
@@ -47,7 +47,7 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
     else
     {
       // Cập nhật thông tin phòng
-      existingRoom.ColumnSize = request.ColumnSize;
+      existingRoom.ColumSize = request.ColumSize;
       existingRoom.RowSize = request.RowSize;
 
       // Xóa Shelves cũ trước khi thêm mới

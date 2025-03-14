@@ -692,7 +692,7 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ColumnSize")
+                    b.Property<int>("ColumSize")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
