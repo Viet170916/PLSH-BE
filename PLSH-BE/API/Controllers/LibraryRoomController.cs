@@ -36,7 +36,7 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
   {
     if (request is null) return BadRequest("Invalid data.");
     var existingRoom = await context.LibraryRooms
-                                    .FirstOrDefaultAsync(l => l.Id == request.Id);
+                                    .FirstOrDefaultAsync();
     if (existingRoom is null)
     {
       var room = await context.LibraryRooms.AddAsync(request);
