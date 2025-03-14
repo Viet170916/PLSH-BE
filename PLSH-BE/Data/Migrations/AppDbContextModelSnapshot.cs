@@ -197,12 +197,6 @@ namespace Data.Migrations
                     b.Property<int>("AuthorId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Availabilities")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Availability")
-                        .HasColumnType("int");
-
                     b.Property<int>("AvailableCopies")
                         .HasColumnType("int");
 
@@ -225,22 +219,28 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                        .HasColumnType("text");
 
                     b.Property<double?>("Fine")
                         .HasColumnType("double");
 
-                    b.Property<string>("ISBNumber")
-                        .HasColumnType("longtext");
+                    b.Property<string>("ISBNumber12")
+                        .HasMaxLength(12)
+                        .HasColumnType("varchar(12)");
 
                     b.Property<bool>("IsChecked")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("IsbNumber10")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<int>("Kind")
                         .HasColumnType("int");
 
                     b.Property<string>("Language")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("PageCount")
                         .HasColumnType("int");
@@ -255,13 +255,22 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Publisher")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<float?>("Rating")
+                        .HasColumnType("float");
 
                     b.Property<string>("Thumbnail")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Title")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("TotalCopies")
                         .HasColumnType("int");
@@ -270,10 +279,8 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Version")
-                        .HasColumnType("longtext");
-
-                    b.Property<float?>("rating")
-                        .HasColumnType("float");
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
 
                     b.HasKey("Id");
 
@@ -446,28 +453,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("BookReviews");
-                });
-
-            modelBuilder.Entity("Model.Entity.Bookshelf", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("ShelfId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Bookshelves");
                 });
 
             modelBuilder.Entity("Model.Entity.Borrower", b =>
@@ -669,6 +654,118 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Librarians");
+                });
+
+            modelBuilder.Entity("Model.Entity.LibraryRoom.Bookshelf", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("BookId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ColName")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<long>("RowShelfId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ShelfId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Bookshelves");
+                });
+
+            modelBuilder.Entity("Model.Entity.LibraryRoom.LibraryRoom", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ColumnSize")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("RowSize")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LibraryRooms");
+                });
+
+            modelBuilder.Entity("Model.Entity.LibraryRoom.RowShelf", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("MaxCol")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<long>("ShelfId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RowShelves");
+                });
+
+            modelBuilder.Entity("Model.Entity.LibraryRoom.Shelf", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Column")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Row")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("X")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Y")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Shelves");
                 });
 
             modelBuilder.Entity("Model.Entity.LifeSkill", b =>
@@ -950,30 +1047,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("Model.Entity.Shelf", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Shelves");
                 });
 
             modelBuilder.Entity("Model.Entity.ShortBookInfo", b =>

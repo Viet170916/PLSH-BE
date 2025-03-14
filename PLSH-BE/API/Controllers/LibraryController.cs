@@ -18,19 +18,11 @@ using Model.Entity;
 
 namespace API.Controllers
 {
-    public class LibraryController : ControllerBase
+    public class LibraryController(AppDbContext context, ILogger<ManageAccountController> logger)
+        : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly ILogger<ManageAccountController> _logger;
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient = new();
         //private readonly string _tesseractDataPath = @"./tessdata"; // Đường dẫn thư mục dữ liệu Tesseract
-
-        public LibraryController(AppDbContext context, ILogger<ManageAccountController> logger)
-        {
-            _context = context;
-            _logger = logger;
-            _httpClient = new HttpClient();
-        }
 
         //Thêm mới Category
         [HttpPost("addCategory")]
@@ -51,8 +43,8 @@ namespace API.Controllers
             };
 
             // Thêm vào DB
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            context.Categories.Add(category);
+            await context.SaveChangesAsync();
 
             // Trả về kết quả thành công
             return Ok(new { message = "Category created successfully", categoryId = category.Id });
@@ -69,7 +61,7 @@ namespace API.Controllers
             }
 
             // Kiểm tra danh mục có tồn tại không
-            var category = await _context.Categories.FindAsync(bookDto.CategoryId);
+            var category = await context.Categories.FindAsync(bookDto.CategoryId);
             if (category == null)
             {
                 return NotFound(new { message = "Category not found." });
@@ -87,7 +79,7 @@ namespace API.Controllers
                 //Position = bookDto.Position,
                 PageCount = bookDto.PageCount,
                 CategoryId = bookDto.CategoryId,
-                ISBNumber = bookDto.ISBNumber,
+                ISBNumber12 = bookDto.ISBNumber,
                 TotalCopies = bookDto.TotalCopies,
                 AvailableCopies = bookDto.AvailableCopies,
                 Price = bookDto.Price,
@@ -101,7 +93,7 @@ namespace API.Controllers
             // Sinh QR Code và lưu base64 vào sách
             var qrContent = $"Title: {book.Title}, " +
                 //$"Author: {book.Author}, " +
-                $"ISBNumber: {book.ISBNumber}";
+                $"ISBNumber: {book.ISBNumber12}";
             if (!string.IsNullOrEmpty(qrContent))
             {
                 var qrGenerator = new QRCodeGenerator();
@@ -116,8 +108,8 @@ namespace API.Controllers
             }
 
             // Thêm sách vào database
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
+            context.Books.Add(book);
+            await context.SaveChangesAsync();
 
             return Ok(new { message = "Book added successfully."
                 //, QRCode = book.QRCode 
@@ -126,7 +118,7 @@ namespace API.Controllers
 
         ////Chuyển hóa Base64 sang QRCode
         //[HttpPost("generate")]
-        //public IActionResult GenerateQRCode([FromBody] string base64String)
+        //public IActionResult GenerateQrCode([FromBody] string base64String)
         //{
         //    if (string.IsNullOrWhiteSpace(base64String))
         //    {
@@ -154,22 +146,22 @@ namespace API.Controllers
         //        return StatusCode(500, $"Internal server error: {ex.Message}");
         //    }
         //}
-        public class GenerateQRRequest
+        public class GenerateQrRequest
         {
             public string Title { get; set; }
             public string Author { get; set; }
-            public string ISBNumber { get; set; }
+            public string IsbNumber { get; set; }
         }
 
         [HttpPost("generate")]
-        public IActionResult GenerateQRCode([FromBody] GenerateQRRequest request)
+        public IActionResult GenerateQrCode([FromBody] GenerateQrRequest request)
         {
             if (request == null)
             {
                 return BadRequest("Request data is required.");
             }
 
-            var qrContent = $"Title: {request.Title}, Author: {request.Author}, ISBNumber: {request.ISBNumber}";
+            var qrContent = $"Title: {request.Title}, Author: {request.Author}, ISBNumber: {request.IsbNumber}";
 
             try
             {
@@ -260,14 +252,14 @@ namespace API.Controllers
                     //Author = bookAuthor,
                     Publisher = bookPublisher,
                     PublishDate = publishDate,
-                    ISBNumber = isbn,
+                    ISBNumber12 = isbn,
                     Thumbnail = bookThumbnail,
                     CreateDate = DateTime.Now
                 };
 
                 // 📌 Thêm sách vào database
-                _context.Books.Add(newBook);
-                await _context.SaveChangesAsync();
+                context.Books.Add(newBook);
+                await context.SaveChangesAsync();
 
                 return Ok(new OkResponse
                 {
@@ -280,7 +272,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("Lỗi khi thêm sách từ ISBN: " + ex.Message);
+                logger.LogError("Lỗi khi thêm sách từ ISBN: " + ex.Message);
                 return StatusCode(500, new ErrorResponse
                 {
                     Message = "Lỗi khi xử lý yêu cầu ISBN.",
@@ -398,7 +390,7 @@ namespace API.Controllers
         {
             try
             {
-                var existingBook = await _context.Books
+                var existingBook = await context.Books
                     //.Include(c => c.Category)
                     .FirstOrDefaultAsync(b => b.Id == id);
                 if (existingBook == null)
@@ -422,7 +414,7 @@ namespace API.Controllers
                 existingBook.Language = bookDTO.Language ?? existingBook.Language;
                 //existingBook.Position = bookDTO.Position ?? existingBook.Position;
                 existingBook.PageCount = bookDTO.PageCount != 0 ? bookDTO.PageCount : existingBook.PageCount;
-                existingBook.ISBNumber = bookDTO.ISBNumber ?? existingBook.ISBNumber;
+                existingBook.ISBNumber12 = bookDTO.ISBNumber ?? existingBook.ISBNumber12;
                 existingBook.TotalCopies = bookDTO.TotalCopies != 0 ? bookDTO.TotalCopies : existingBook.TotalCopies;
                 existingBook.AvailableCopies = bookDTO.AvailableCopies != 0 ? bookDTO.AvailableCopies : existingBook.AvailableCopies;
                 existingBook.Price = bookDTO.Price ?? existingBook.Price;
@@ -433,7 +425,7 @@ namespace API.Controllers
                 // Cập nhật danh mục sách nếu có thay đổi
                 if (bookDTO.CategoryId != 0 && bookDTO.CategoryId != existingBook.CategoryId)
                 {
-                    var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == bookDTO.CategoryId);
+                    var category = await context.Categories.FirstOrDefaultAsync(c => c.Id == bookDTO.CategoryId);
                     if (category == null)
                     {
                         return BadRequest(new ErrorResponse
@@ -449,8 +441,8 @@ namespace API.Controllers
                     //existingBook.Category = category;
                 }
 
-                _context.Books.Update(existingBook);
-                await _context.SaveChangesAsync();
+                context.Books.Update(existingBook);
+                await context.SaveChangesAsync();
 
                 // Trả về thông tin sách sau khi cập nhật
                 var updatedBookDTO = new BookDto
@@ -466,7 +458,7 @@ namespace API.Controllers
                     PageCount = existingBook.PageCount,
                     CategoryId = existingBook.CategoryId,
                     //CategoryName = existingBook.Category?.Name, // Lấy tên danh mục
-                    ISBNumber = existingBook.ISBNumber,
+                    ISBNumber = existingBook.ISBNumber12,
                     TotalCopies = existingBook.TotalCopies,
                     AvailableCopies = existingBook.AvailableCopies,
                     Price = existingBook.Price,
@@ -512,7 +504,7 @@ namespace API.Controllers
             try
             {
                 // Lấy thông tin sách từ cơ sở dữ liệu
-                var book = await _context.Books
+                var book = await context.Books
                    // .Include(b => b.Category)
                     .Where(b => b.Id == id)
                     .Select(b => new BookDto
@@ -520,7 +512,7 @@ namespace API.Controllers
                         Id = b.Id,
                         Title = b.Title,
                        // Author = b.Author,
-                        ISBNumber = b.ISBNumber,
+                        ISBNumber = b.ISBNumber12,
                         //Category = new CategoryDTOResponse
                         //{
                         //    Id = b.Category.Id,
@@ -558,7 +550,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while generating the QR code.");
+                logger.LogError(ex, "An error occurred while generating the QR code");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -566,7 +558,7 @@ namespace API.Controllers
 
         // 1. Tạo QRCode cho sách lưu vào base64
         [HttpPost("generate-qrcode")]
-        public IActionResult GenerateQRCode([FromBody] BookDto bookDto)
+        public IActionResult GenerateQrCode([FromBody] BookDto bookDto)
         {
             try
             {
@@ -611,7 +603,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while generating QR Code.");
+                logger.LogError(ex, "Error occurred while generating QR Code");
                 return Ok(new ErrorResponse
                 {
                     Status = HttpStatus.INTERNAL_ERROR.GetDescription(),
@@ -671,7 +663,7 @@ namespace API.Controllers
                 }
 
                 // Truy vấn danh sách sách
-                var query = _context.Books
+                var query = context.Books
                     .AsNoTracking()
                     //.Include(b => b.Category) // Lấy thông tin CategoryName
                     .AsQueryable();
@@ -699,7 +691,7 @@ namespace API.Controllers
                         b.PublishDate,
                         b.Language,
                         b.PageCount,
-                        b.ISBNumber,
+                        b.ISBNumber12,
                         b.TotalCopies,
                         b.AvailableCopies,
                         b.Price,
@@ -740,7 +732,7 @@ namespace API.Controllers
             try
             {
                 // 1. Lấy thông tin sách từ database
-                var book = await _context.Books.FindAsync(id);
+                var book = await context.Books.FindAsync(id);
                 if (book == null)
                 {
                     return NotFound(new ErrorResponse
@@ -784,8 +776,8 @@ namespace API.Controllers
                 // 4. Cập nhật lại category cho sách (tùy chọn)
                // book.Category = predictedCategory;
                 book.UpdateDate = DateTime.Now;
-                _context.Books.Update(book);
-                await _context.SaveChangesAsync();
+                context.Books.Update(book);
+                await context.SaveChangesAsync();
 
                 // Trả về kết quả
                 return Ok(new OkResponse
@@ -799,7 +791,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("Lỗi trong quá trình phân loại sách bằng GENAI: " + ex.Message);
+                logger.LogError("Lỗi trong quá trình phân loại sách bằng GENAI: " + ex.Message);
                 return StatusCode(500, new ErrorResponse
                 {
                     Message = "Lỗi trong quá trình phân loại sách bằng GENAI.",
