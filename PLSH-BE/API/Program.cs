@@ -67,13 +67,14 @@ builder.Host.UseSerilog();
 //   options.ExpireTimeSpan = TimeSpan.FromDays(Constants.StartUp.TimeSpanDays);
 //   options.SlidingExpiration = true;
 // });
-builder.Services.AddCors(option =>
+builder.Services.AddCors(options =>
 {
-  option.AddPolicy(Constants.CorsPolicy,
-    policyBuilder => policyBuilder.SetIsOriginAllowed(_ => true)
-                                  .AllowAnyMethod()
-                                  .AllowAnyHeader()
-                                  .AllowCredentials());
+  options.AddPolicy("AllowSpecificOrigins",
+    policy => policy.WithOrigins("https://book-hive.space",
+                      "https://www.book-hive.space",
+                      "http://localhost:3000")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -145,7 +146,8 @@ app.Use(async (context, next) =>
 
   await next();
 });
-app.UseCorsMiddleware();
+app.UseCors("AllowSpecificOrigins");
+// app.UseCorsMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
