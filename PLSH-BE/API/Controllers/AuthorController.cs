@@ -2,6 +2,7 @@ using API.Common;
 using API.DTO.Book;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Model.Entity;
 using Model.helper;
 
@@ -19,7 +20,7 @@ public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fil
 
     var uniqueFileName = $"{Guid.NewGuid()}_{request.AuthorImageResource.FileName}";
     var uploadsFolder = await fileHelper.UploadFileAsync(request.AuthorImageResource.OpenReadStream(),
-      uniqueFileName, StaticFolder.DIRPath_AUTHOR, request.AuthorImageResource?.ContentType);
+      uniqueFileName, StaticFolder.DIRPath_AUTHOR, request.AuthorImageResource.ContentType);
     var resource = await context.Resources.AddAsync(new Resource()
     {
       Name = request.AuthorImageResource?.FileName,
@@ -28,6 +29,7 @@ public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fil
       SizeByte = request.AuthorImageResource?.Length,
       Type = Status.ResourceType.Image,
     });
+    await context.SaveChangesAsync();
     var newAuthor = new Author
     {
       FullName = request.FullName,
@@ -40,5 +42,20 @@ public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fil
     context.Authors.Add(newAuthor);
     await context.SaveChangesAsync();
     return Ok(newAuthor);
+  }
+
+  [HttpGet] public async Task<IActionResult> SearchAuthors([FromQuery] string? keyword)
+  {
+    var query = context.Authors.AsQueryable();
+    if (!string.IsNullOrWhiteSpace(keyword))
+    {
+      query = query.Where(a =>
+        a.FullName.Contains(keyword) ||
+        (a.BirthYear != null && a.BirthYear.Contains(keyword)) ||
+        (a.BirthYear != null && a.BirthYear.Contains(keyword)));
+    }
+
+    var authors = await query.Take(100).ToListAsync();
+    return Ok(authors);
   }
 }
