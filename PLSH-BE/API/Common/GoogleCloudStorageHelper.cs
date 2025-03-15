@@ -6,7 +6,7 @@ namespace API.Common;
 public class GoogleCloudStorageHelper(StorageClient storageClient)
 {
 
-  private readonly string _bucketName = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_BUCKET");
+  private readonly string? _bucketName = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_BUCKET");
 
   public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string folderPath, string contentType)
   {
