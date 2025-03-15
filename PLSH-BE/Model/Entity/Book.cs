@@ -12,17 +12,15 @@ public class Book
   [MaxLength(255)]
   public string? Title { get; set; }
 
+  public BookType BookType { get; set; }
+
   [Column(TypeName = "text")]
   public string? Description { get; set; }
 
   public int AuthorId { get; set; }
   public AvailabilityKind Kind { get; set; }
   public int? CoverImageResourceId { get; set; } //Anh bia
-
-  //Kiem tra co phai PDF => ebook
   public int? PreviewPdfResourceId { get; set; }
-
-  //Kiem tra co phai mp3, ... => audio
   public int? AudioResourceId { get; set; }
 
   [MaxLength(30)]
@@ -37,7 +35,8 @@ public class Book
   public string? Language { get; set; }
 
   public int PageCount { get; set; }
-  public BookType? BookType { get; set; }
+
+  // public BookType? BookType { get; set; }
   public int CategoryId { get; set; }
 
   [MaxLength(12)]
@@ -60,8 +59,10 @@ public class Book
   public DateTime? DeletedAt { get; set; }
   public bool IsChecked { get; set; }
   public int BookReviewId { get; set; }
-  public int Quantity { get; set; } //Các trạng thái sách có sẵn
-  // public int Availabilities { get; set; }
+  public int Quantity { get; set; }
+
+  [NotMapped]
+  public Category? Category { get; set; }
 
   [NotMapped]
   public Author? Author { get; set; }

@@ -1,4 +1,5 @@
-﻿using Common.Helper;
+﻿using System.Collections.Generic;
+using Common.Helper;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,8 @@ using Model.ResponseModel;
 using System.IO;
 using API.DTO.Book;
 using System.Net;
+using System.Net.Http;
+using System.Text.Json;
 using Common.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -15,24 +18,21 @@ namespace API.Controllers
 {
   [Route("api/v1/book")]
   [ApiController]
-  public class BookController : ControllerBase
+  public class BookController(
+    AppDbContext context,
+    ILogger<ManageAccountController> logger,
+    IHttpClientFactory httpClientFactory
+  )
+    : ControllerBase
   {
-    private readonly AppDbContext _context;
-    private readonly ILogger<ManageAccountController> _logger;
+    private readonly ILogger<ManageAccountController> _logger = logger;
 
-    public BookController(AppDbContext context, ILogger<ManageAccountController> logger)
-    {
-      _context = context;
-      _logger = logger;
-    }
-
-    //Lấy sách theo id
     [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
     {
       var bookDto = await (
-        from book in _context.Books
-        join author in _context.Authors on book.AuthorId equals author.Id
-        join category in _context.Categories on book.CategoryId equals category.Id
+        from book in context.Books
+        join author in context.Authors on book.AuthorId equals author.Id
+        join category in context.Categories on book.CategoryId equals category.Id
         where book.Id == id
         select new BookNewDto
         {
@@ -90,7 +90,6 @@ namespace API.Controllers
       });
     }
 
-    //Add book chung
     [HttpPost("add")] public async Task<IActionResult> AddBook([FromForm] BookNewDto bookDto)
     {
       try
@@ -149,8 +148,8 @@ namespace API.Controllers
           CreateDate = DateTime.UtcNow,
           UpdateDate = DateTime.UtcNow
         };
-        _context.Books.Add(book);
-        await _context.SaveChangesAsync();
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
         return Ok(new OkResponse
         {
           Status = HttpStatus.OK.GetDescription(),
@@ -170,6 +169,137 @@ namespace API.Controllers
             Data = new { Error = ex.Message }
           });
       }
+    }
+
+    [HttpGet("global/search")] public async Task<IActionResult> GetIsbn(string? isbn, string? keyword)
+    {
+      if (string.IsNullOrWhiteSpace(isbn) && string.IsNullOrWhiteSpace(keyword))
+      {
+        return BadRequest("Bạn phải cung cấp isbn hoặc keyword để tìm kiếm.");
+      }
+
+      // Xây dựng query: ưu tiên sử dụng isbn nếu có
+      var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : keyword!;
+
+      // Lấy API key từ cấu hình (nếu có)
+      var apiKey = Environment.GetEnvironmentVariable("GOOGLE_BOOK_API_KEY");
+      var url = string.IsNullOrWhiteSpace(apiKey) ?
+        $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
+        $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}&key={apiKey}";
+      var client = httpClientFactory.CreateClient();
+      var response = await client.GetAsync(url);
+      if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API."); }
+
+      var json = await response.Content.ReadAsStringAsync();
+      using JsonDocument doc = JsonDocument.Parse(json);
+      var root = doc.RootElement;
+
+      // Danh sách chứa các đối tượng Book được ánh xạ từ Google Books API
+      List<Book> books = [];
+
+      // Nếu phản hồi có thuộc tính "items"
+      if (root.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Array)
+      {
+        foreach (var item in items.EnumerateArray())
+        {
+          if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
+
+          // Ánh xạ dữ liệu từ volumeInfo sang đối tượng Book
+          var book = new Book
+          {
+            Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
+            Description = volumeInfo.TryGetProperty("description", out var descElem) ? descElem.GetString() : null,
+            Publisher =
+              volumeInfo.TryGetProperty("publisher", out var publisherElem) ? publisherElem.GetString() : null,
+            Language = volumeInfo.TryGetProperty("language", out var langElem) ? langElem.GetString() : null,
+            PageCount = volumeInfo.TryGetProperty("pageCount", out var pageCountElem) ? pageCountElem.GetInt32() : 0,
+            Rating = volumeInfo.TryGetProperty("averageRating", out var ratingElem) ?
+              (float?)ratingElem.GetDouble() :
+              null,
+            Thumbnail = volumeInfo.TryGetProperty("imageLinks", out var imageLinksElem) &&
+                        imageLinksElem.TryGetProperty("thumbnail", out var thumbElem) ?
+              thumbElem.GetString() :
+              null,
+            PublishDate = volumeInfo.TryGetProperty("publishedDate", out var dateElem) &&
+                          DateTime.TryParse(dateElem.GetString(), out DateTime pubDate) ?
+              pubDate :
+              null,
+            // Các trường không được ánh xạ từ API được gán mặc định
+            AuthorId = 0,
+            // Kind = AvailabilityKind.Default,
+            CoverImageResourceId = null,
+            PreviewPdfResourceId = null,
+            AudioResourceId = null,
+            Version = null,
+            CategoryId = 0,
+            ISBNumber12 = null,
+            IsbNumber10 = null,
+            TotalCopies = 0,
+            AvailableCopies = 0,
+            Price = null,
+            Fine = null,
+            CreateDate = DateTime.UtcNow,
+            UpdateDate = null,
+            DeletedAt = null,
+            IsChecked = false,
+            BookReviewId = 0,
+            Quantity = 0,
+            Availabilities = [],
+          };
+
+          // Ánh xạ ISBN từ industryIdentifiers
+          if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
+              identifiers.ValueKind == JsonValueKind.Array)
+          {
+            foreach (var identifier in identifiers.EnumerateArray())
+            {
+              if (!identifier.TryGetProperty("type", out var typeElem) ||
+                  !identifier.TryGetProperty("identifier", out var idElem))
+                continue;
+              var type = typeElem.GetString() ?? "";
+              var idValue = idElem.GetString() ?? "";
+              switch (type)
+              {
+                case "ISBN_13": book.ISBNumber12 = idValue; break;
+                case "ISBN_10": book.IsbNumber10 = idValue; break;
+              }
+            }
+          }
+
+          // Lấy tác giả: chỉ lấy tên tác giả đầu tiên
+          if (volumeInfo.TryGetProperty("authors", out JsonElement authorsElem) &&
+              authorsElem.ValueKind == JsonValueKind.Array)
+          {
+            string? firstAuthor = authorsElem[0].GetString();
+            if (!string.IsNullOrWhiteSpace(firstAuthor))
+            {
+              // Giả sử lớp Author có thuộc tính Name
+              book.Author = new Author { FullName = firstAuthor };
+            }
+          }
+
+          // Nếu có, ánh xạ danh mục (categories)
+          if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
+              categoriesElem.ValueKind == JsonValueKind.Array)
+          {
+            var categories = new List<string>();
+            foreach (var cat in categoriesElem.EnumerateArray())
+            {
+              if (cat.ValueKind == JsonValueKind.String) categories.Add(cat.GetString()!);
+            }
+
+            book.Category = new Category() { Name = categories.FirstOrDefault() };
+          }
+
+          // Nếu có, ánh xạ contentVersion
+          if (volumeInfo.TryGetProperty("contentVersion", out JsonElement contentVersionElem) &&
+              contentVersionElem.ValueKind == JsonValueKind.String) { book.Version = contentVersionElem.GetString(); }
+
+          books.Add(book);
+        }
+      }
+
+      return Ok(books);
     }
   }
 }

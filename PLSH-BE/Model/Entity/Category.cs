@@ -7,8 +7,8 @@ namespace Model.Entity
         public int Id { get; set; } 
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow; // Ngày tạo danh mục
-        public DateTime? UpdatedDate { get; set; } // Ngày cập nhật danh mục
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow; 
+        public DateTime? UpdatedDate { get; set; }
         public CategoryStatus Status { get; set; } = CategoryStatus.Active;
 
         //public virtual ICollection<Book> Books { get; set; } = new List<Book>();

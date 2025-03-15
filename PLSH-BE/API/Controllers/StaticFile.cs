@@ -9,7 +9,7 @@ namespace API.Controllers;
 [Route("static/v1")]
 public class FileController(StorageClient storageClient) : ControllerBase
 {
-  private readonly string _bucketName = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_BUCKET");
+  private readonly string? _bucketName = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_BUCKET");
 
   [HttpGet("file/{*path}")] public async Task<IActionResult> GetFile(string path)
   {

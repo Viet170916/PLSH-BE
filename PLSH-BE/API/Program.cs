@@ -81,7 +81,6 @@ builder.Services.AddCors(options =>
                     .AllowAnyMethod()
                     .AllowAnyHeader());
 });
-builder.Services.AddSingleton(StorageClient.Create());
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
   options.UseMySql(dbConnectionString,
@@ -95,10 +94,12 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 //        .AddDefaultTokenProviders();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //DI
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton(StorageClient.Create());
+builder.Services.AddSingleton<GoogleCloudStorageHelper>();
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddBusinessLayer();
 builder.Services.AddLockBusinessLayer();
-builder.Services.AddTransient<GoogleCloudStorageHelper>();
 
 //
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
