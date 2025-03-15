@@ -184,7 +184,6 @@ namespace API.Controllers
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}&key={apiKey}";
       var client = httpClientFactory.CreateClient();
-
       string urlWithLang = baseUrl + "&langRestrict=vi";
       var response = await client.GetAsync(urlWithLang);
       if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API với langRestrict=vi."); }
@@ -219,13 +218,13 @@ namespace API.Controllers
       }
 
       List<Book> books = [];
-
+      var booksCount = 0;
       foreach (var item in items)
       {
         if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
-
         var book = new Book
         {
+          Id = booksCount++,
           Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
           Description = volumeInfo.TryGetProperty("description", out var descElem) ? descElem.GetString() : null,
           Publisher =
@@ -263,7 +262,6 @@ namespace API.Controllers
           Quantity = 0,
           Availabilities = [],
         };
-
         if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
             identifiers.ValueKind == JsonValueKind.Array)
         {
@@ -287,10 +285,7 @@ namespace API.Controllers
             authorsElem.ValueKind == JsonValueKind.Array)
         {
           string? firstAuthor = authorsElem[0].GetString();
-          if (!string.IsNullOrWhiteSpace(firstAuthor))
-          {
-            book.Author = new Author { FullName = firstAuthor };
-          }
+          if (!string.IsNullOrWhiteSpace(firstAuthor)) { book.Author = new Author { FullName = firstAuthor }; }
         }
 
         if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
