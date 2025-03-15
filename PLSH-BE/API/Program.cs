@@ -74,8 +74,10 @@ builder.Host.UseSerilog();
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowSpecificOrigins",
-    policy => policy.WithOrigins("https://book-hive.space",
+    policy => policy
+              .WithOrigins("https://book-hive.space",
                       "https://www.book-hive.space",
+                      "http://104.197.134.164",
                       "http://localhost:5281",
                       "http://localhost:3000")
                     .AllowAnyMethod()
@@ -139,6 +141,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 // if (app.Environment.IsDevelopment())
 // {
+app.UseCors("AllowSpecificOrigins");
 app.UseSwagger();
 app.UseSwaggerUI();
 // }
@@ -154,7 +157,6 @@ app.Use(async (context, next) =>
 
   await next();
 });
-app.UseCors("AllowSpecificOrigins");
 // app.UseCorsMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
