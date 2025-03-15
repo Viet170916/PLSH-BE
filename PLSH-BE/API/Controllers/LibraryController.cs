@@ -79,7 +79,7 @@ namespace API.Controllers
                 //Position = bookDto.Position,
                 PageCount = bookDto.PageCount,
                 CategoryId = bookDto.CategoryId,
-                ISBNumber12 = bookDto.ISBNumber,
+                ISBNumber13 = bookDto.ISBNumber,
                 TotalCopies = bookDto.TotalCopies,
                 AvailableCopies = bookDto.AvailableCopies,
                 Price = bookDto.Price,
@@ -93,7 +93,7 @@ namespace API.Controllers
             // Sinh QR Code và lưu base64 vào sách
             var qrContent = $"Title: {book.Title}, " +
                 //$"Author: {book.Author}, " +
-                $"ISBNumber: {book.ISBNumber12}";
+                $"ISBNumber: {book.ISBNumber13}";
             if (!string.IsNullOrEmpty(qrContent))
             {
                 var qrGenerator = new QRCodeGenerator();
@@ -252,7 +252,7 @@ namespace API.Controllers
                     //Author = bookAuthor,
                     Publisher = bookPublisher,
                     PublishDate = publishDate,
-                    ISBNumber12 = isbn,
+                    ISBNumber13 = isbn,
                     Thumbnail = bookThumbnail,
                     CreateDate = DateTime.Now
                 };
@@ -414,7 +414,7 @@ namespace API.Controllers
                 existingBook.Language = bookDTO.Language ?? existingBook.Language;
                 //existingBook.Position = bookDTO.Position ?? existingBook.Position;
                 existingBook.PageCount = bookDTO.PageCount != 0 ? bookDTO.PageCount : existingBook.PageCount;
-                existingBook.ISBNumber12 = bookDTO.ISBNumber ?? existingBook.ISBNumber12;
+                existingBook.ISBNumber13 = bookDTO.ISBNumber ?? existingBook.ISBNumber13;
                 existingBook.TotalCopies = bookDTO.TotalCopies != 0 ? bookDTO.TotalCopies : existingBook.TotalCopies;
                 existingBook.AvailableCopies = bookDTO.AvailableCopies != 0 ? bookDTO.AvailableCopies : existingBook.AvailableCopies;
                 existingBook.Price = bookDTO.Price ?? existingBook.Price;
@@ -458,7 +458,7 @@ namespace API.Controllers
                     PageCount = existingBook.PageCount,
                     CategoryId = existingBook.CategoryId,
                     //CategoryName = existingBook.Category?.Name, // Lấy tên danh mục
-                    ISBNumber = existingBook.ISBNumber12,
+                    ISBNumber = existingBook.ISBNumber13,
                     TotalCopies = existingBook.TotalCopies,
                     AvailableCopies = existingBook.AvailableCopies,
                     Price = existingBook.Price,
@@ -512,7 +512,7 @@ namespace API.Controllers
                         Id = b.Id,
                         Title = b.Title,
                        // Author = b.Author,
-                        ISBNumber = b.ISBNumber12,
+                        ISBNumber = b.ISBNumber13,
                         //Category = new CategoryDTOResponse
                         //{
                         //    Id = b.Category.Id,
@@ -691,7 +691,7 @@ namespace API.Controllers
                         b.PublishDate,
                         b.Language,
                         b.PageCount,
-                        b.ISBNumber12,
+                        b.ISBNumber13,
                         b.TotalCopies,
                         b.AvailableCopies,
                         b.Price,
