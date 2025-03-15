@@ -47,7 +47,7 @@ namespace API.Controllers
           PublishDate = book.PublishDate ?? DateTime.MinValue,
           Language = book.Language,
           PageCount = book.PageCount,
-          IsbnNumber = book.ISBNumber12,
+          IsbnNumber = book.ISBNumber13,
           Price = book.Price ?? 0.0,
           TotalCopies = book.TotalCopies,
           AvailableCopies = book.AvailableCopies,
@@ -141,7 +141,7 @@ namespace API.Controllers
           PublishDate = bookDto.PublishDate,
           Language = bookDto.Language,
           PageCount = bookDto.PageCount,
-          ISBNumber12 = bookDto.IsbnNumber,
+          ISBNumber13 = bookDto.IsbnNumber,
           Price = bookDto.Price,
           TotalCopies = bookDto.TotalCopies,
           AvailableCopies = bookDto.AvailableCopies,
@@ -179,14 +179,12 @@ namespace API.Controllers
       }
 
       var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : keyword!;
-      _logger.LogInformation("Book: ", Uri.EscapeDataString(query));
       var apiKey = Environment.GetEnvironmentVariable("GOOGLE_BOOK_API_KEY");
       var baseUrl = string.IsNullOrWhiteSpace(apiKey) ?
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}&key={apiKey}";
       var client = httpClientFactory.CreateClient();
 
-      // Trước tiên, ưu tiên kết quả tiếng Việt bằng cách thêm langRestrict=vi
       string urlWithLang = baseUrl + "&langRestrict=vi";
       var response = await client.GetAsync(urlWithLang);
       if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API với langRestrict=vi."); }
@@ -200,7 +198,6 @@ namespace API.Controllers
         foreach (var item in itemsElem.EnumerateArray()) { items.Add(item); }
       }
 
-      // Nếu không có kết quả tiếng Việt, gọi lại API không ràng buộc ngôn ngữ
       if (items.Count == 0)
       {
         string urlNoLang = baseUrl;
@@ -223,12 +220,10 @@ namespace API.Controllers
 
       List<Book> books = [];
 
-      // Nếu phản hồi có thuộc tính "items"
       foreach (var item in items)
       {
         if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
 
-        // Ánh xạ dữ liệu từ volumeInfo sang đối tượng Book
         var book = new Book
         {
           Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
@@ -248,15 +243,13 @@ namespace API.Controllers
                         DateTime.TryParse(dateElem.GetString(), out DateTime pubDate) ?
             pubDate :
             null,
-          // Các trường không được ánh xạ từ API được gán mặc định
           AuthorId = 0,
-          // Kind = AvailabilityKind.Default,
           CoverImageResourceId = null,
           PreviewPdfResourceId = null,
           AudioResourceId = null,
           Version = null,
           CategoryId = 0,
-          ISBNumber12 = null,
+          ISBNumber13 = null,
           IsbNumber10 = null,
           TotalCopies = 0,
           AvailableCopies = 0,
@@ -271,7 +264,6 @@ namespace API.Controllers
           Availabilities = [],
         };
 
-        // Ánh xạ ISBN từ industryIdentifiers
         if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
             identifiers.ValueKind == JsonValueKind.Array)
         {
@@ -284,25 +276,23 @@ namespace API.Controllers
             var idValue = idElem.GetString() ?? "";
             switch (type)
             {
-              case "ISBN_13": book.ISBNumber12 = idValue; break;
+              case "ISBN_13": book.ISBNumber13 = idValue; break;
               case "ISBN_10": book.IsbNumber10 = idValue; break;
+              default: book.OtherIdentifier = idValue; break;
             }
           }
         }
 
-        // Lấy tác giả: chỉ lấy tên tác giả đầu tiên
         if (volumeInfo.TryGetProperty("authors", out JsonElement authorsElem) &&
             authorsElem.ValueKind == JsonValueKind.Array)
         {
           string? firstAuthor = authorsElem[0].GetString();
           if (!string.IsNullOrWhiteSpace(firstAuthor))
           {
-            // Giả sử lớp Author có thuộc tính Name
             book.Author = new Author { FullName = firstAuthor };
           }
         }
 
-        // Nếu có, ánh xạ danh mục (categories)
         if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
             categoriesElem.ValueKind == JsonValueKind.Array)
         {
@@ -315,7 +305,6 @@ namespace API.Controllers
           book.Category = new Category() { Name = categories.FirstOrDefault() };
         }
 
-        // Nếu có, ánh xạ contentVersion
         if (volumeInfo.TryGetProperty("contentVersion", out JsonElement contentVersionElem) &&
             contentVersionElem.ValueKind == JsonValueKind.String) { book.Version = contentVersionElem.GetString(); }
 

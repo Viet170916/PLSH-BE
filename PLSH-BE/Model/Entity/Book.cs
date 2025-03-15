@@ -39,8 +39,11 @@ public class Book
   // public BookType? BookType { get; set; }
   public int CategoryId { get; set; }
 
-  [MaxLength(12)]
-  public string? ISBNumber12 { get; set; }
+  [MaxLength(13)]
+  public string? ISBNumber13 { get; set; }
+
+  [MaxLength(100)]
+  public string? OtherIdentifier { get; set; }
 
   [MaxLength(10)]
   public string? IsbNumber10 { get; set; }
