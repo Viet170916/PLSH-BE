@@ -84,7 +84,8 @@ builder.Services.AddCors(options =>
               .AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials());
+              // .AllowCredentials()
+              );
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
