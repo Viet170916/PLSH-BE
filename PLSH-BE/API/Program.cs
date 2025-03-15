@@ -75,12 +75,13 @@ builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowSpecificOrigins",
     policy => policy
-              .WithOrigins(
-                "https://www.book-hive.space",
-                "http://104.197.134.164",
-                "http://localhost:5281",
-                "http://localhost:3000",
-                "https://book-hive.space")
+              // .WithOrigins(
+              //   "https://www.book-hive.space",
+              //   "http://104.197.134.164",
+              //   "http://localhost:5281",
+              //   "http://localhost:3000",
+              //   "https://book-hive.space")
+              .AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials());
