@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "fluent-cyclist-453606-u8",
+  "private_key_id": "e039d7cc49ba8fb3f823ebeb0baa1cb71cd99d3a",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDIOTa62ZIQAeH9\nXS2BvoBIT3e/XAgWy1P985OdkYAAM9FgJmUPt8tDGgjQOu1iAZ5JczEVHwd+P9i7\nCOPro3mw1zvzrducTYQq//07hRWInTzqZHchglPvAgN5XSl6+8E37Q/ODC+Iw0/s\naH0G4K1qd3N3t0kkUST4mgILgWlUnvDHizp2+RF+sVBXzovwWx8UJtDVyRXbVAUf\n77VCGmCdQJII4p0djUIRm383Q9Pxv/sxZp37t+dn7CZxWMKU2l0KGyROCXSfZyEP\nWtWKrXmxBbP77S/p1nlq4x9atP4TFm1t1IkoiNQRfs0T6lPWOFbn/AgRYe82SZB0\nNmk7U607AgMBAAECggEADY/KhDdubEUkYHvqNCqKF9vCGaULKzgUdVQFQJv1Vo4r\n9V5EZB8n1mCyDiCfqY7AgOsbfPnAES4T6P8+KNzGxlKdzfCNunWJqTvzlA98mOdF\nk/7ADvX752l0gMjtoVXiDX6yHlu28IWCKVoeddPMCzUSDh7NBne0kF4mG09lqgSH\nK7/dUpi/8s6+n3gLJ0niFwzHK7CpBGUPT3zra/X5u3Ebf2W8R8umYI2oUiy+P8SJ\nvU6CUdiFROTm8StCxlM7nl/c5jqTJsGmcXs7vV5hilLICGFBZfdCc7G+BuZiyIio\n3nqpAoljXk6s5Gk64LKkJXKBFI7ugT9LsRRjBdOvyQKBgQD5kh1NmiShVM5PiTxR\nih9nGkrC9yUWvUdac+bLSGdY5wOTkbeWByB+XPdnL2049ehlbF+HStebGs/txqp6\nif4+rLlKag6ARutXej75aWKyv5Up7JnvHeimZbzipvo39TkfcKcTF/cPKgPVekRW\nelyO4DLQxGEcZKnv3GTaCW89fwKBgQDNYakmGlw4mDp29jXNyU8wgvNIYN7lKZRE\ncrJpx8qT09Uh9iU4th5wEkvOrugOH2Eob19YpUsnts+HYg/ORBGVIZuQTCnvItx9\nVZMNZ1rfWtfOkDPV3MnfE3DDf76ZMiOU+Tm3gnIrzmQePAq5QQMBo2bMqgZ4uhr9\nBHcu/OjmRQKBgA0HCIqNek4FnENgmYp0GFGMeMyWlBQMy1W4aRrBa8ujO3ePirLF\nKngOKEf1nND1XS02LAJm8LxC+QmjbjC5VVE2OPHeeWVOzmghlHn2e1VzVLj8hciK\nmiNdei+mobccEOBIRCBmBtp+yfZxzHFrL7uxjlWBesQ9qPVBXu5WwbzHAoGBAMUX\nr2dtbIqzK4f2BvQQ9/mp8SXIMJ7iI/L7ztNMc88hPit1N4sQ2mzaYf1aRD8pReez\n2WAMX+8gtE9Lf7eGAwmGUu9K6AMhBU8RzCjUwpQNbYRBRj05wFBfK5uw/4usXhEc\nipLckAwR6GpLXE8jYGs2D/TgRY2dq0CcBHQHKMmxAoGBAOaUM99QDg1MZVQH6zqH\nNX9G+gka0EaFpOvZ+dl4qdfGF6KPr9tn/O/yeBd1QZUh6Ly5C3zZcaWw/MeT2EQm\nFV5W0A+DXvp8PDcmcllzLwm8KXpgvESqaZAyxNLMFzfLDYKMN+lmg/8B2cVB5p1q\nW12NNOtuQS7YpHdxc0lQb8ki\n-----END PRIVATE KEY-----\n",
+  "client_email": "dev-602@fluent-cyclist-453606-u8.iam.gserviceaccount.com",
+  "client_id": "107546396739812243136",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/dev-602%40fluent-cyclist-453606-u8.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

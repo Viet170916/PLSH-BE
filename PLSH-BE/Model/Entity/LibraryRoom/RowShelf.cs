@@ -17,4 +17,7 @@ public class RowShelf
 
   public int? Position { get; set; }
   public int MaxCol { get; set; }
+
+  [NotMapped]
+  public List<Bookshelf> booksOnRowShelf { get; set; }
 }

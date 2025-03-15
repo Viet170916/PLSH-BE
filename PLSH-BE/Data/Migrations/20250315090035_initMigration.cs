@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Data.Migrations
 {
     /// <inheritdoc />
-    public partial class IdentityAuthV4 : Migration
+    public partial class initMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -100,12 +100,12 @@ namespace Data.Migrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     FullName = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    AvatarUrl = table.Column<string>(type: "longtext", nullable: false)
+                    AvatarUrl = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    ResourceAuthorId = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "longtext", nullable: false)
+                    AuthorResourceId = table.Column<int>(type: "int", nullable: true),
+                    Description = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    SummaryDescription = table.Column<string>(type: "longtext", nullable: false)
+                    SummaryDescription = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     BirthYear = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -231,32 +231,34 @@ namespace Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Title = table.Column<string>(type: "longtext", nullable: true)
+                    Title = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Description = table.Column<string>(type: "longtext", nullable: true)
+                    Description = table.Column<string>(type: "text", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     AuthorId = table.Column<int>(type: "int", nullable: false),
                     Kind = table.Column<int>(type: "int", nullable: false),
                     CoverImageResourceId = table.Column<int>(type: "int", nullable: true),
                     PreviewPdfResourceId = table.Column<int>(type: "int", nullable: true),
                     AudioResourceId = table.Column<int>(type: "int", nullable: true),
-                    Version = table.Column<string>(type: "longtext", nullable: true)
+                    Version = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Publisher = table.Column<string>(type: "longtext", nullable: true)
+                    Publisher = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PublishDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    Language = table.Column<string>(type: "longtext", nullable: true)
+                    Language = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PageCount = table.Column<int>(type: "int", nullable: false),
                     BookType = table.Column<int>(type: "int", nullable: true),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
-                    ISBNumber = table.Column<string>(type: "longtext", nullable: true)
+                    ISBNumber12 = table.Column<string>(type: "varchar(12)", maxLength: 12, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    rating = table.Column<float>(type: "float", nullable: true),
+                    IsbNumber10 = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Rating = table.Column<float>(type: "float", nullable: true),
                     TotalCopies = table.Column<int>(type: "int", nullable: false),
                     AvailableCopies = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<double>(type: "double", nullable: true),
-                    Thumbnail = table.Column<string>(type: "longtext", nullable: true)
+                    Thumbnail = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Fine = table.Column<double>(type: "double", nullable: true),
                     CreateDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
@@ -264,8 +266,7 @@ namespace Data.Migrations
                     DeletedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     IsChecked = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     BookReviewId = table.Column<int>(type: "int", nullable: false),
-                    Availability = table.Column<int>(type: "int", nullable: false),
-                    Availabilities = table.Column<int>(type: "int", nullable: false)
+                    Quantity = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -277,12 +278,14 @@ namespace Data.Migrations
                 name: "Bookshelves",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: true)
+                    ColName = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Level = table.Column<int>(type: "int", nullable: false),
-                    ShelfId = table.Column<int>(type: "int", nullable: false)
+                    Position = table.Column<int>(type: "int", nullable: false),
+                    BookId = table.Column<long>(type: "bigint", nullable: true),
+                    ShelfId = table.Column<long>(type: "bigint", nullable: true),
+                    RowShelfId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -431,6 +434,23 @@ namespace Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Librarians", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "LibraryRooms",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ColumnSize = table.Column<int>(type: "int", nullable: false),
+                    RowSize = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LibraryRooms", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -616,15 +636,15 @@ namespace Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Type = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Name = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     SizeByte = table.Column<long>(type: "bigint", nullable: true),
                     FileType = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     LocalUrl = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    File = table.Column<byte[]>(type: "longblob", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {
@@ -651,16 +671,42 @@ namespace Data.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "RowShelves",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ShelfId = table.Column<long>(type: "bigint", nullable: false),
+                    Position = table.Column<int>(type: "int", nullable: true),
+                    MaxCol = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RowShelves", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Shelves",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    Name = table.Column<string>(type: "longtext", nullable: false)
+                    RoomId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Location = table.Column<string>(type: "longtext", nullable: false)
+                    Label = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Capacity = table.Column<int>(type: "int", nullable: false)
+                    Column = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Row = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    X = table.Column<int>(type: "int", nullable: false),
+                    Y = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -787,6 +833,9 @@ namespace Data.Migrations
                 name: "Librarians");
 
             migrationBuilder.DropTable(
+                name: "LibraryRooms");
+
+            migrationBuilder.DropTable(
                 name: "LifeSkills");
 
             migrationBuilder.DropTable(
@@ -818,6 +867,9 @@ namespace Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Roles");
+
+            migrationBuilder.DropTable(
+                name: "RowShelves");
 
             migrationBuilder.DropTable(
                 name: "Shelves");

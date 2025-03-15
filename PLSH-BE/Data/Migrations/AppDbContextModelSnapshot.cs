@@ -147,14 +147,16 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Model.Entity.Author", b =>
                 {
-                    b.Property<int?>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int?>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AuthorResourceId")
+                        .HasColumnType("int");
 
                     b.Property<string>("AvatarUrl")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("BirthYear")
@@ -164,18 +166,13 @@ namespace Data.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("ResourceAuthorId")
-                        .HasColumnType("int");
-
                     b.Property<string>("SummaryDescription")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -1003,10 +1000,6 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int?>("Id"));
 
-                    b.Property<byte[]>("File")
-                        .IsRequired()
-                        .HasColumnType("longblob");
-
                     b.Property<string>("FileType")
                         .HasColumnType("longtext");
 
@@ -1019,8 +1012,9 @@ namespace Data.Migrations
                     b.Property<long?>("SizeByte")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 

@@ -55,7 +55,7 @@ namespace API.Controllers
           // Thông tin tác giả
           Author = new AuthorDto
           {
-            Id = author.Id ?? 0,
+            Id = author.Id,
             FullName = author.FullName,
             AvatarUrl = author.AvatarUrl,
             Description = author.Description,

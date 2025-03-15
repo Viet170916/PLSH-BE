@@ -1,4 +1,5 @@
 using System.Text;
+using API.Common;
 using API.Middlewares;
 using BU.Extensions;
 using BU.Mappings;
@@ -7,6 +8,7 @@ using Data.DatabaseContext;
 using Data.Repository.Implementation;
 using Data.UnitOfWork;
 using DotNetEnv;
+using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +24,8 @@ var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "
 var googleClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "";
 var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "";
 var secretKey = Environment.GetEnvironmentVariable(Constants.JWT_SECRET) ?? "";
+// var googleCloudConfig = builder.Configuration.GetSection("GoogleCloud");
+// var credentialsPath = googleCloudConfig["CredentialsPath"];
 Log.Logger = new LoggerConfiguration()
              .WriteTo.Console() // Ghi log ra console
              .WriteTo.File("Logs/pl-book-hive-.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
@@ -72,10 +76,12 @@ builder.Services.AddCors(options =>
   options.AddPolicy("AllowSpecificOrigins",
     policy => policy.WithOrigins("https://book-hive.space",
                       "https://www.book-hive.space",
+                      "http://localhost:5281",
                       "http://localhost:3000")
                     .AllowAnyMethod()
                     .AllowAnyHeader());
 });
+builder.Services.AddSingleton(StorageClient.Create());
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
   options.UseMySql(dbConnectionString,
@@ -92,6 +98,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddBusinessLayer();
 builder.Services.AddLockBusinessLayer();
+builder.Services.AddTransient<GoogleCloudStorageHelper>();
 
 //
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
