@@ -178,125 +178,148 @@ namespace API.Controllers
         return BadRequest("Bạn phải cung cấp isbn hoặc keyword để tìm kiếm.");
       }
 
-      // Xây dựng query: ưu tiên sử dụng isbn nếu có
       var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : keyword!;
-
-      // Lấy API key từ cấu hình (nếu có)
+      _logger.LogInformation("Book: ", Uri.EscapeDataString(query));
       var apiKey = Environment.GetEnvironmentVariable("GOOGLE_BOOK_API_KEY");
-      var url = string.IsNullOrWhiteSpace(apiKey) ?
+      var baseUrl = string.IsNullOrWhiteSpace(apiKey) ?
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
         $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}&key={apiKey}";
       var client = httpClientFactory.CreateClient();
-      var response = await client.GetAsync(url);
-      if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API."); }
+
+      // Trước tiên, ưu tiên kết quả tiếng Việt bằng cách thêm langRestrict=vi
+      string urlWithLang = baseUrl + "&langRestrict=vi";
+      var response = await client.GetAsync(urlWithLang);
+      if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API với langRestrict=vi."); }
 
       var json = await response.Content.ReadAsStringAsync();
       using JsonDocument doc = JsonDocument.Parse(json);
       var root = doc.RootElement;
+      List<JsonElement> items = [];
+      if (root.TryGetProperty("items", out JsonElement itemsElem) && itemsElem.ValueKind == JsonValueKind.Array)
+      {
+        foreach (var item in itemsElem.EnumerateArray()) { items.Add(item); }
+      }
 
-      // Danh sách chứa các đối tượng Book được ánh xạ từ Google Books API
+      // Nếu không có kết quả tiếng Việt, gọi lại API không ràng buộc ngôn ngữ
+      if (items.Count == 0)
+      {
+        string urlNoLang = baseUrl;
+        response = await client.GetAsync(urlNoLang);
+        if (!response.IsSuccessStatusCode)
+        {
+          return NotFound("Lỗi khi gọi Google Books API mà không có langRestrict.");
+        }
+
+        json = await response.Content.ReadAsStringAsync();
+        using JsonDocument docFallback = JsonDocument.Parse(json);
+        var rootFallback = docFallback.RootElement;
+        if (rootFallback.TryGetProperty("items", out JsonElement itemsElemFallback) &&
+            itemsElemFallback.ValueKind == JsonValueKind.Array)
+        {
+          items.Clear();
+          foreach (var item in itemsElemFallback.EnumerateArray()) { items.Add(item); }
+        }
+      }
+
       List<Book> books = [];
 
       // Nếu phản hồi có thuộc tính "items"
-      if (root.TryGetProperty("items", out JsonElement items) && items.ValueKind == JsonValueKind.Array)
+      foreach (var item in items)
       {
-        foreach (var item in items.EnumerateArray())
+        if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
+
+        // Ánh xạ dữ liệu từ volumeInfo sang đối tượng Book
+        var book = new Book
         {
-          if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
+          Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
+          Description = volumeInfo.TryGetProperty("description", out var descElem) ? descElem.GetString() : null,
+          Publisher =
+            volumeInfo.TryGetProperty("publisher", out var publisherElem) ? publisherElem.GetString() : null,
+          Language = volumeInfo.TryGetProperty("language", out var langElem) ? langElem.GetString() : null,
+          PageCount = volumeInfo.TryGetProperty("pageCount", out var pageCountElem) ? pageCountElem.GetInt32() : 0,
+          Rating = volumeInfo.TryGetProperty("averageRating", out var ratingElem) ?
+            (float?)ratingElem.GetDouble() :
+            null,
+          Thumbnail = volumeInfo.TryGetProperty("imageLinks", out var imageLinksElem) &&
+                      imageLinksElem.TryGetProperty("thumbnail", out var thumbElem) ?
+            thumbElem.GetString() :
+            null,
+          PublishDate = volumeInfo.TryGetProperty("publishedDate", out var dateElem) &&
+                        DateTime.TryParse(dateElem.GetString(), out DateTime pubDate) ?
+            pubDate :
+            null,
+          // Các trường không được ánh xạ từ API được gán mặc định
+          AuthorId = 0,
+          // Kind = AvailabilityKind.Default,
+          CoverImageResourceId = null,
+          PreviewPdfResourceId = null,
+          AudioResourceId = null,
+          Version = null,
+          CategoryId = 0,
+          ISBNumber12 = null,
+          IsbNumber10 = null,
+          TotalCopies = 0,
+          AvailableCopies = 0,
+          Price = null,
+          Fine = null,
+          CreateDate = DateTime.UtcNow,
+          UpdateDate = null,
+          DeletedAt = null,
+          IsChecked = false,
+          BookReviewId = 0,
+          Quantity = 0,
+          Availabilities = [],
+        };
 
-          // Ánh xạ dữ liệu từ volumeInfo sang đối tượng Book
-          var book = new Book
+        // Ánh xạ ISBN từ industryIdentifiers
+        if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
+            identifiers.ValueKind == JsonValueKind.Array)
+        {
+          foreach (var identifier in identifiers.EnumerateArray())
           {
-            Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
-            Description = volumeInfo.TryGetProperty("description", out var descElem) ? descElem.GetString() : null,
-            Publisher =
-              volumeInfo.TryGetProperty("publisher", out var publisherElem) ? publisherElem.GetString() : null,
-            Language = volumeInfo.TryGetProperty("language", out var langElem) ? langElem.GetString() : null,
-            PageCount = volumeInfo.TryGetProperty("pageCount", out var pageCountElem) ? pageCountElem.GetInt32() : 0,
-            Rating = volumeInfo.TryGetProperty("averageRating", out var ratingElem) ?
-              (float?)ratingElem.GetDouble() :
-              null,
-            Thumbnail = volumeInfo.TryGetProperty("imageLinks", out var imageLinksElem) &&
-                        imageLinksElem.TryGetProperty("thumbnail", out var thumbElem) ?
-              thumbElem.GetString() :
-              null,
-            PublishDate = volumeInfo.TryGetProperty("publishedDate", out var dateElem) &&
-                          DateTime.TryParse(dateElem.GetString(), out DateTime pubDate) ?
-              pubDate :
-              null,
-            // Các trường không được ánh xạ từ API được gán mặc định
-            AuthorId = 0,
-            // Kind = AvailabilityKind.Default,
-            CoverImageResourceId = null,
-            PreviewPdfResourceId = null,
-            AudioResourceId = null,
-            Version = null,
-            CategoryId = 0,
-            ISBNumber12 = null,
-            IsbNumber10 = null,
-            TotalCopies = 0,
-            AvailableCopies = 0,
-            Price = null,
-            Fine = null,
-            CreateDate = DateTime.UtcNow,
-            UpdateDate = null,
-            DeletedAt = null,
-            IsChecked = false,
-            BookReviewId = 0,
-            Quantity = 0,
-            Availabilities = [],
-          };
-
-          // Ánh xạ ISBN từ industryIdentifiers
-          if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
-              identifiers.ValueKind == JsonValueKind.Array)
-          {
-            foreach (var identifier in identifiers.EnumerateArray())
+            if (!identifier.TryGetProperty("type", out var typeElem) ||
+                !identifier.TryGetProperty("identifier", out var idElem))
+              continue;
+            var type = typeElem.GetString() ?? "";
+            var idValue = idElem.GetString() ?? "";
+            switch (type)
             {
-              if (!identifier.TryGetProperty("type", out var typeElem) ||
-                  !identifier.TryGetProperty("identifier", out var idElem))
-                continue;
-              var type = typeElem.GetString() ?? "";
-              var idValue = idElem.GetString() ?? "";
-              switch (type)
-              {
-                case "ISBN_13": book.ISBNumber12 = idValue; break;
-                case "ISBN_10": book.IsbNumber10 = idValue; break;
-              }
+              case "ISBN_13": book.ISBNumber12 = idValue; break;
+              case "ISBN_10": book.IsbNumber10 = idValue; break;
             }
           }
-
-          // Lấy tác giả: chỉ lấy tên tác giả đầu tiên
-          if (volumeInfo.TryGetProperty("authors", out JsonElement authorsElem) &&
-              authorsElem.ValueKind == JsonValueKind.Array)
-          {
-            string? firstAuthor = authorsElem[0].GetString();
-            if (!string.IsNullOrWhiteSpace(firstAuthor))
-            {
-              // Giả sử lớp Author có thuộc tính Name
-              book.Author = new Author { FullName = firstAuthor };
-            }
-          }
-
-          // Nếu có, ánh xạ danh mục (categories)
-          if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
-              categoriesElem.ValueKind == JsonValueKind.Array)
-          {
-            var categories = new List<string>();
-            foreach (var cat in categoriesElem.EnumerateArray())
-            {
-              if (cat.ValueKind == JsonValueKind.String) categories.Add(cat.GetString()!);
-            }
-
-            book.Category = new Category() { Name = categories.FirstOrDefault() };
-          }
-
-          // Nếu có, ánh xạ contentVersion
-          if (volumeInfo.TryGetProperty("contentVersion", out JsonElement contentVersionElem) &&
-              contentVersionElem.ValueKind == JsonValueKind.String) { book.Version = contentVersionElem.GetString(); }
-
-          books.Add(book);
         }
+
+        // Lấy tác giả: chỉ lấy tên tác giả đầu tiên
+        if (volumeInfo.TryGetProperty("authors", out JsonElement authorsElem) &&
+            authorsElem.ValueKind == JsonValueKind.Array)
+        {
+          string? firstAuthor = authorsElem[0].GetString();
+          if (!string.IsNullOrWhiteSpace(firstAuthor))
+          {
+            // Giả sử lớp Author có thuộc tính Name
+            book.Author = new Author { FullName = firstAuthor };
+          }
+        }
+
+        // Nếu có, ánh xạ danh mục (categories)
+        if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
+            categoriesElem.ValueKind == JsonValueKind.Array)
+        {
+          var categories = new List<string>();
+          foreach (var cat in categoriesElem.EnumerateArray())
+          {
+            if (cat.ValueKind == JsonValueKind.String) categories.Add(cat.GetString()!);
+          }
+
+          book.Category = new Category() { Name = categories.FirstOrDefault() };
+        }
+
+        // Nếu có, ánh xạ contentVersion
+        if (volumeInfo.TryGetProperty("contentVersion", out JsonElement contentVersionElem) &&
+            contentVersionElem.ValueKind == JsonValueKind.String) { book.Version = contentVersionElem.GetString(); }
+
+        books.Add(book);
       }
 
       return Ok(books);
