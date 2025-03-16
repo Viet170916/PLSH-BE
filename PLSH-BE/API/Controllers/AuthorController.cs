@@ -64,7 +64,8 @@ public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fil
       DeathYear = author.DeathYear,
       Description = author.Description,
       SummaryDescription = author.SummaryDescription,
-      AvatarUrl = context.Resources.Where(re => re.Id == author.AuthorResourceId).FirstOrDefault().LocalUrl,
+      AvatarUrl = Converter.ToImageUrl(context.Resources.FirstOrDefault(re => re.Id == author.AuthorResourceId)!
+                                              .LocalUrl),
     });
     var authors = await query.Take(100).ToListAsync();
     return Ok(authors);
