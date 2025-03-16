@@ -1,6 +1,6 @@
 ﻿using Common.Enums;
 
-namespace Model.Entity
+namespace Model.Entity.book
 {
     public class Category
     {

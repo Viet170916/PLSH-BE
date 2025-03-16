@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Model;
 using Model.Entity;
+using Model.Entity.book;
 using Model.Entity.LibraryRoom;
 
 namespace Data.DatabaseContext
@@ -47,10 +48,17 @@ namespace Data.DatabaseContext
     public DbSet<Shelf> Shelves { get; set; }
     public DbSet<Bookshelf> Bookshelves { get; set; }
     public DbSet<RowShelf> RowShelves { get; set; }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
       base.OnModelCreating(modelBuilder);
+      modelBuilder.Entity<Book>()
+                  .HasMany(b => b.Authors)
+                  .WithMany(a => a.Books)
+                  .UsingEntity<Dictionary<string, object>>(
+                    "AuthorBook",
+                    j => j.HasOne<Author>().WithMany().HasForeignKey("AuthorId"),
+                    j => j.HasOne<Book>().WithMany().HasForeignKey("BookId"));
 
       // Profile - Account (1 - 1)
       //modelBuilder.Entity<Profile>()

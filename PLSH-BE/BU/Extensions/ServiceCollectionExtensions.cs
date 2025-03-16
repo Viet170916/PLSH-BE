@@ -14,6 +14,7 @@ namespace BU.Extensions
       // add automapper auto binding
       services.AddAutoMapper(Assembly.GetExecutingAssembly());
       services.AddTransient<IAccountService, AccountService>();
+      services.AddTransient<IAuthorService, AuthorService>();
       // // Get options from app settings
       // var configuration = ServiceLocator.Current.GetInstance<Microsoft.Extensions.Configuration.IConfiguration>();
       //

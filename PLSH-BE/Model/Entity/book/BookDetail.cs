@@ -1,4 +1,4 @@
-namespace Model.Entity;
+namespace Model.Entity.book;
 
 public class BookDetail
 {

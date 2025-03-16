@@ -28,7 +28,7 @@ namespace API.DTO.Favorite
         //public virtual Borrower? Borrower { get; set; }
 
         [ForeignKey("BookId")]
-        public Model.Entity.Book? Book { get; set; }
+        public Model.Entity.book.Book? Book { get; set; }
 
     }
 }

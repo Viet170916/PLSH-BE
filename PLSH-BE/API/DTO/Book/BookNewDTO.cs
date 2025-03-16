@@ -1,42 +1,40 @@
-﻿#nullable enable
+﻿using System.Collections.Generic;
 using Common.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Model.Entity;
 
 namespace API.DTO.Book
 {
   public class BookNewDto
   {
-    public int Id { get; set; }
-    public string Title { get; set; }
-    public string Description { get; set; }
-    public int AuthorId { get; set; }
-    public int CategoryId { get; set; }
-    public AvailabilityKind Kind { get; set; } // 1: PhysicalBook, 2: Ebook, 3: Audiobook
-    public string Version { get; set; }
-    public string Publisher { get; set; }
-    public DateTime PublishDate { get; set; }
-    public string Language { get; set; }
-    public int PageCount { get; set; }
-    public string IsbnNumber { get; set; }
-    public double Price { get; set; }
-    public int TotalCopies { get; set; }
-    public int AvailableCopies { get; set; }
-
-    // Thông tin tác giả
-    public AuthorDto Author { get; set; }
-
-    // Thông tin thể loại sách
-    public CategoryDto Category { get; set; }
-
-    // File upload nếu là Ebook hoặc Audiobook
-    public IFormFile? File { get; set; }
+    public int? Id { get; set; }
+    public required string Title { get; set; }
+    public string? Description { get; set; }
+    public int? CategoryId { get; set; }
+    public AvailabilityKind? Kind { get; set; } // 1: PhysicalBook, 2: Ebook, 3: Audiobook
+    public required string Version { get; set; }
+    public required string Publisher { get; set; }
+    public string? PublishDate { get; set; }
+    public required string Language { get; set; }
+    public int? PageCount { get; set; }
+    public string? IsbnNumber13 { get; set; }
+    public string? IsbnNumber10 { get; set; }
+    public string? OtherIdentifier { get; set; }
+    public double? Price { get; set; }
+    public int? TotalCopies { get; set; }
+    public int? AvailableCopies { get; set; }
+    public IList<AuthorDto>? Authors { get; set; }
+    public CategoryDto? Category { get; set; }
+    public IFormFile? CoverImage { get; set; }
+    public IFormFile? ContentPdf { get; set; }
+    public IFormFile? AudioFile { get; set; }
   }
 
   public class AuthorDto
   {
-    public int Id { get; set; }
-    public string FullName { get; set; }
+    public int? Id { get; set; }
+    public required string FullName { get; set; }
     public string? AvatarUrl { get; set; }
     public string? Description { get; set; }
     public string? SummaryDescription { get; set; }
@@ -48,8 +46,8 @@ namespace API.DTO.Book
 
   public class CategoryDto
   {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Description { get; set; }
+    public int? Id { get; set; }
+    public required string Name { get; set; }
+    public string? Description { get; set; }
   }
 }

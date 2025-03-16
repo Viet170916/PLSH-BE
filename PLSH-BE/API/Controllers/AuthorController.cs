@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
+using Model.Entity.book;
 using Model.helper;
 
 namespace API.Controllers;

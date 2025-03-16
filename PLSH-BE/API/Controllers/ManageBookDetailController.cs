@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using API.DTO.Book;
 using Common.Enums;
 using Model.Entity;
+using Model.Entity.book;
 
 namespace API.Controllers
 {

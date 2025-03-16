@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Common.Enums;
-using Model.Entity.book;
 
-namespace Model.Entity;
+namespace Model.Entity.book;
 
 public class Book
 {
@@ -17,11 +16,23 @@ public class Book
   [Column(TypeName = "text")]
   public string? Description { get; set; }
 
-  public int AuthorId { get; set; }
+  [ForeignKey("BookAuthor")]
+  public long? BookAuthorId { get; set; }
+
+  public ICollection<Author>? Authors { get; set; }
   public AvailabilityKind Kind { get; set; }
   public int? CoverImageResourceId { get; set; } //Anh bia
   public int? PreviewPdfResourceId { get; set; }
   public int? AudioResourceId { get; set; }
+
+  [NotMapped]
+  public Resource? CoverImageResource { get; set; }
+
+  [NotMapped]
+  public Resource? PreviewPdfResource { get; set; }
+
+  [NotMapped]
+  public Resource? AudioResource { get; set; }
 
   [MaxLength(30)]
   public string? Version { get; set; }
@@ -29,7 +40,7 @@ public class Book
   [MaxLength(255)]
   public string? Publisher { get; set; }
 
-  public DateTime? PublishDate { get; set; }
+  public string? PublishDate { get; set; }
 
   [MaxLength(50)]
   public string? Language { get; set; }
@@ -40,7 +51,7 @@ public class Book
   public int CategoryId { get; set; }
 
   [MaxLength(13)]
-  public string? ISBNumber13 { get; set; }
+  public string? IsbNumber13 { get; set; }
 
   [MaxLength(100)]
   public string? OtherIdentifier { get; set; }
@@ -66,9 +77,6 @@ public class Book
 
   [NotMapped]
   public Category? Category { get; set; }
-
-  [NotMapped]
-  public Author? Author { get; set; }
 
   [NotMapped]
   public List<AvailabilityDto> Availabilities { get; set; } = [];
