@@ -4,7 +4,7 @@ public class Converter
 {
   public static string ToImageUrl(string? pathToImage)
   {
-    Environment.GetEnvironmentVariable("BACKEND_HOST");
-    return $"https://book-hive-api.spage/static/v1/file{pathToImage ?? "/default"}";
+    ;
+    return $"{Environment.GetEnvironmentVariable("BACKEND_HOST")??"https://book-hive-api.space"}/static/v1/file{pathToImage ?? "/default"}";
   }
 }
