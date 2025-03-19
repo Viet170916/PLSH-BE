@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Common.Enums;
+using Model.Entity.book.Dto;
 
 namespace Model.Entity.book;
 
@@ -82,10 +83,10 @@ public class Book
   public Category? Category { get; set; }
 
   [NotMapped]
-  public List<AvailabilityDto> Availabilities { get; set; } = [];
+  public List<AvailabilityDto>? Availabilities { get; set; } = [];
 
   [NotMapped]
-  public BookAvailabilityDto BookStatus { get; set; } = new() { };
+  public BookAvailabilityDto? BookStatus { get; set; } = new() { };
 
   public ICollection<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
 }

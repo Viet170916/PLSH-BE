@@ -1,4 +1,4 @@
-namespace Model.Entity.book;
+namespace Model.Entity.book.Dto;
 
 public class BookAvailabilityDto
 {
