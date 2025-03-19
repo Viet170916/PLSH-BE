@@ -110,7 +110,7 @@ namespace API.Controllers.BookControllers
         Resource? coverResource = null;
         Resource? pdfResource = null;
         Resource? audioResource = null;
-        
+
         // if (bookDto.CoverImage is not null)
         // {
         //   coverImageUrl = await googleCloudStorageHelper.UploadFileAsync(bookDto.CoverImage.OpenReadStream(),
@@ -164,7 +164,6 @@ namespace API.Controllers.BookControllers
         //   context.Resources.Add(audioResource);
         //   await context.SaveChangesAsync();
         // }
-
         IList<string> authorNames = new List<string>();
         if (bookDto.Authors is not null && bookDto.Authors.Any())
         {
@@ -186,7 +185,6 @@ namespace API.Controllers.BookControllers
           Description = bookDto.Description,
           Authors = processedAuthors,
           Thumbnail = bookDto.Thumbnail,
-          CategoryId = bookDto.CategoryId ?? 0,
           Kind = bookDto.Kind ?? 0,
           Version = bookDto.Version,
           Publisher = bookDto.Publisher,
@@ -206,12 +204,13 @@ namespace API.Controllers.BookControllers
           CreateDate = DateTime.UtcNow,
           UpdateDate = DateTime.UtcNow
         };
+        if (bookDto.CategoryId is not null) { book.CategoryId = bookDto.CategoryId; }
+
         if (bookDto.AudioResource is not null)
         {
           book.AudioResource = new Resource()
           {
-            Type = "audio",
-            LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.AudioResource.Name}"
+            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.AudioResource.Name}"
           };
         }
 
@@ -219,8 +218,7 @@ namespace API.Controllers.BookControllers
         {
           book.CoverImageResource = new Resource()
           {
-            Type = "image",
-            LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.CoverImageResource.Name}"
+            Type = "image", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.CoverImageResource.Name}"
           };
         }
 
