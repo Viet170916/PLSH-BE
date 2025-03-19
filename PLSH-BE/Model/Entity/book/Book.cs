@@ -86,7 +86,7 @@ public class Book
   public List<AvailabilityDto>? Availabilities { get; set; } = [];
 
   [NotMapped]
-  public BookAvailabilityDto? BookStatus { get; set; } = new() { };
+  public BookAvailabilityDto? BookStatus { get; set; }
 
   public ICollection<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
 }
