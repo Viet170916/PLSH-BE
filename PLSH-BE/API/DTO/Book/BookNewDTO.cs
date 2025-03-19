@@ -11,7 +11,12 @@ namespace API.DTO.Book
     public int? Id { get; set; }
     public required string Title { get; set; }
     public string? Description { get; set; }
+    public string? Thumbnail { get; set; }
     public int? CategoryId { get; set; }
+    public int? Width { get; set; }
+    public int? Weight { get; set; }
+    public int? Thickness { get; set; }
+    public int? Height { get; set; }
     public AvailabilityKind? Kind { get; set; } // 1: PhysicalBook, 2: Ebook, 3: Audiobook
     public required string Version { get; set; }
     public required string Publisher { get; set; }
@@ -29,6 +34,9 @@ namespace API.DTO.Book
     public IFormFile? CoverImage { get; set; }
     public IFormFile? ContentPdf { get; set; }
     public IFormFile? AudioFile { get; set; }
+    public Resource? AudioResource { get; set; }
+    public Resource? CoverImageResource { get; set; }
+    public Resource? PreviewPdfResource { get; set; }
   }
 
   public class AuthorDto
