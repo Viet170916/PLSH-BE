@@ -118,7 +118,7 @@ namespace API.Controllers
         foreach (var book in overdueBooks)
         {
           book.BorrowingStatus = BorrowingStatus.Overdue;
-          book.isFined = true; // Đánh dấu bị phạt
+          book.IsFined = true; // Đánh dấu bị phạt
           book.FineType = FineType.LateReturn;
           book.Note = "Quá hạn trả sách.";
         }

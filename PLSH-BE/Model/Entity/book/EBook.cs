@@ -8,6 +8,6 @@
 
         public int EstimatePage { get; set; }
 
-        public bool IsValiable { get; set; }    
+        public bool IsAvailable { get; set; }    
     }
 }

@@ -8,7 +8,7 @@
 
         public DateTime Duration { get; set; }
 
-        public bool IsAvaible { get; set; } 
+        public bool IsAvailable { get; set; } 
         public DateTime EstimatedTime {get; set; }
 
         //public string? Voice {  get; set; } 

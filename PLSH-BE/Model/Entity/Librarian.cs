@@ -1,11 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Model.Entity;
 
 public class Librarian
 {
   public int Id { get; set; }
+
+  [MaxLength(55)]
   public string? IdentityCardNumber { get; set; }
+
   public int AccountId { get; set; }
 
-    // Liên k?t danh sách phi?u m??n c?a ng??i này
+  // Liï¿½n k?t danh sï¿½ch phi?u m??n c?a ng??i nï¿½y
   //public List<Loan> Loans { get; set; } = new();
 }

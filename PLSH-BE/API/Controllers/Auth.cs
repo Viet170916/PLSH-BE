@@ -397,7 +397,7 @@ public class AuthController(
         GoogleToken = null,
         GoogleUserId = null,
         AvatarUrl = null,
-        isVerified = false, // Mặc định chưa xác minh
+        IsVerified = false, // Mặc định chưa xác minh
         Status = 0, // Chờ duyệt
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
@@ -417,7 +417,7 @@ public class AuthController(
           createdAccount.RoleId,
           createdAccount.Status,
           createdAccount.CreatedAt,
-          createdAccount.isVerified
+          isVerified = createdAccount.IsVerified
         }
       });
     }

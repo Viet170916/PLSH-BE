@@ -31,7 +31,7 @@ public class AccountService : IAccountService
                                    Email = acc.Email,
                                    Id = acc.Id,
                                    FullName = acc.FullName,
-                                   isVerified = acc.isVerified,
+                                   IsVerified = acc.IsVerified,
                                    AvatarUrl = acc.AvatarUrl
                                })
                                .FirstOrDefaultAsync(); 
@@ -62,7 +62,7 @@ public class AccountService : IAccountService
         return await _context.Accounts.FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
     }
 
-    //Check Account quá 90 ngày thì ph?i ??i m?t kh?u
+    //Check Account quï¿½ 90 ngï¿½y thï¿½ ph?i ??i m?t kh?u
     public async Task<bool> IsPasswordExpiredAsync(int accountId)
     {
         var lastPasswordChange = await _context.PasswordAudits
@@ -90,7 +90,7 @@ public class AccountService : IAccountService
         //existingUser.AvataUrl = user.AvataUrl;
         existingUser.RefreshToken = user.RefreshToken;
         existingUser.RefreshTokenExpiry = user.RefreshTokenExpiry;
-        existingUser.isVerified = user.isVerified;
+        existingUser.IsVerified = user.IsVerified;
 
         // Save the changes to the database
         await _context.SaveChangesAsync();

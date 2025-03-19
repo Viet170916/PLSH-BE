@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250316151818_modifyFields")]
+    partial class modifyFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -968,17 +971,13 @@ namespace Data.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("VARCHAR(255)");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("SummaryDescription")
                         .HasMaxLength(1500)
                         .HasColumnType("varchar(1500)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FullName")
-                        .HasDatabaseName("idx_author_fullname")
-                        .HasAnnotation("MySql:FullTextIndex", true);
 
                     b.HasIndex("FullName", "BirthYear", "DeathYear")
                         .IsUnique();

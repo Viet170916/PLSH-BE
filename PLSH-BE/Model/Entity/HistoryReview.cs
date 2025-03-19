@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Model.Entity
 {
@@ -7,6 +8,7 @@ namespace Model.Entity
         public int Id { get; set; }
 
         public int AccountId { get; set; }
+        [MaxLength(255)]
 
         public string? SearchQuery { get; set; }  
 

@@ -27,7 +27,7 @@ public class AccountRepository: GenericRepository<Account>, IAccountRepository
                       {
                           Id = acc.Id,
                           Email = acc.Email,
-                          isVerified = acc.isVerified,
+                          isVerified = acc.IsVerified,
                           RoleId = acc.RoleId,
                           FullName = pro != null ? pro.FullName : null,
                           Address = pro != null ? pro.Address : null,

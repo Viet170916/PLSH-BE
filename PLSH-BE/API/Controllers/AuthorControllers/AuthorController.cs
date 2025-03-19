@@ -7,10 +7,10 @@ using Model.Entity;
 using Model.Entity.book;
 using Model.helper;
 
-namespace API.Controllers;
+namespace API.Controllers.AuthorControllers;
 
 [Route("api/v1/author")]
-public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fileHelper) : Controller
+public partial class AuthorController(AppDbContext context, GoogleCloudStorageHelper fileHelper) : Controller
 {
   [HttpPost("add")] public async Task<IActionResult> AddAuthor([FromForm] AuthorDto request)
   {
@@ -70,4 +70,6 @@ public class AuthorController(AppDbContext context, GoogleCloudStorageHelper fil
     var authors = await query.Take(100).ToListAsync();
     return Ok(authors);
   }
+
+  
 }
