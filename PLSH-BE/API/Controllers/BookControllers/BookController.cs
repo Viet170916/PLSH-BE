@@ -54,7 +54,7 @@ namespace API.Controllers.BookControllers
       return Ok(books);
     }
 
-    [HttpPost("add")] public async Task<IActionResult> AddBook([FromBody] Book book)
+    [HttpPost("add")] public async Task<IActionResult> AddBook([FromForm] Book book)
     {
       if (book == null) return BadRequest("Invalid book data.");
       var category = await context.Categories.FindAsync(book.CategoryId);
