@@ -25,13 +25,13 @@ public class Book
   public int? PreviewPdfResourceId { get; set; }
   public int? AudioResourceId { get; set; }
 
-  [NotMapped]
+  [ForeignKey("CoverImageResourceId")]
   public Resource? CoverImageResource { get; set; }
 
-  [NotMapped]
+  [ForeignKey("PreviewPdfResourceId")]
   public Resource? PreviewPdfResource { get; set; }
 
-  [NotMapped]
+  [ForeignKey("AudioResourceId")]
   public Resource? AudioResource { get; set; }
 
   [MaxLength(30)]
@@ -48,6 +48,7 @@ public class Book
   public int PageCount { get; set; }
 
   // public BookType? BookType { get; set; }
+  [ForeignKey("Category")]
   public int CategoryId { get; set; }
 
   [MaxLength(13)]
@@ -72,10 +73,12 @@ public class Book
   public DateTime? UpdateDate { get; set; }
   public DateTime? DeletedAt { get; set; }
   public bool IsChecked { get; set; }
+  public int? Height { get; set; }
+  public int? Width { get; set; }
+  public int? Thickness { get; set; }
+  public int? Weight { get; set; }
   public int BookReviewId { get; set; }
   public int Quantity { get; set; }
-
-  [NotMapped]
   public Category? Category { get; set; }
 
   [NotMapped]
@@ -83,4 +86,6 @@ public class Book
 
   [NotMapped]
   public BookAvailabilityDto BookStatus { get; set; } = new() { };
+
+  public ICollection<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
 }

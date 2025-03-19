@@ -16,14 +16,14 @@ namespace Model.Entity.book
     [MaxLength(550)]
     public string? AvatarUrl { get; set; } // URL ảnh đại diện
 
+    [ForeignKey("Resource")]
     public int? AuthorResourceId { get; set; } // Tài nguyên liên quan
 
-    [ForeignKey("BookAuthor")]
-    public long? BookAuthorId { get; set; }
+    // [ForeignKey("BookAuthor")]
+    // public int? BookAuthorId { get; set; }
 
     public ICollection<Book> Books { get; set; } = new List<Book>();
 
-    [NotMapped]
     public Resource? Resource { get; set; }
 
     [MaxLength(2000)]

@@ -954,9 +954,6 @@ namespace Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<long?>("BookAuthorId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("DeathYear")
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
@@ -975,6 +972,8 @@ namespace Data.Migrations
                         .HasColumnType("varchar(1500)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorResourceId");
 
                     b.HasIndex("FullName")
                         .HasDatabaseName("idx_author_fullname")
@@ -1027,6 +1026,9 @@ namespace Data.Migrations
                     b.Property<double?>("Fine")
                         .HasColumnType("double");
 
+                    b.Property<int?>("Height")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsChecked")
                         .HasColumnType("tinyint(1)");
 
@@ -1071,6 +1073,9 @@ namespace Data.Migrations
                     b.Property<float?>("Rating")
                         .HasColumnType("float");
 
+                    b.Property<int?>("Thickness")
+                        .HasColumnType("int");
+
                     b.Property<string>("Thumbnail")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
@@ -1089,7 +1094,21 @@ namespace Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
+                    b.Property<int?>("Weight")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AudioResourceId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CoverImageResourceId");
+
+                    b.HasIndex("PreviewPdfResourceId");
 
                     b.ToTable("Books");
                 });
@@ -1132,6 +1151,36 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("BookDetails");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.BookInstance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BookOnRowShelfId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("BookShelfId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("BookShelfId");
+
+                    b.ToTable("BookInstance");
                 });
 
             modelBuilder.Entity("Model.Entity.book.Category", b =>
@@ -1251,6 +1300,71 @@ namespace Data.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Author", b =>
+                {
+                    b.HasOne("Model.Entity.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("AuthorResourceId");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Book", b =>
+                {
+                    b.HasOne("Model.Entity.Resource", "AudioResource")
+                        .WithMany()
+                        .HasForeignKey("AudioResourceId");
+
+                    b.HasOne("Model.Entity.book.Category", "Category")
+                        .WithMany("Books")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.Resource", "CoverImageResource")
+                        .WithMany()
+                        .HasForeignKey("CoverImageResourceId");
+
+                    b.HasOne("Model.Entity.Resource", "PreviewPdfResource")
+                        .WithMany()
+                        .HasForeignKey("PreviewPdfResourceId");
+
+                    b.Navigation("AudioResource");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("CoverImageResource");
+
+                    b.Navigation("PreviewPdfResource");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.BookInstance", b =>
+                {
+                    b.HasOne("Model.Entity.book.Book", "Book")
+                        .WithMany("BookInstances")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.LibraryRoom.Bookshelf", "BookOnRowShelf")
+                        .WithMany()
+                        .HasForeignKey("BookShelfId");
+
+                    b.Navigation("Book");
+
+                    b.Navigation("BookOnRowShelf");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Book", b =>
+                {
+                    b.Navigation("BookInstances");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Category", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

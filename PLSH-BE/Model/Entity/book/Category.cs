@@ -14,6 +14,6 @@ namespace Model.Entity.book
         public DateTime? UpdatedDate { get; set; }
         public CategoryStatus Status { get; set; } = CategoryStatus.Active;
 
-        //public virtual ICollection<Book> Books { get; set; } = new List<Book>();
+        public virtual ICollection<Book> Books { get; set; } = new List<Book>();
     }
 }

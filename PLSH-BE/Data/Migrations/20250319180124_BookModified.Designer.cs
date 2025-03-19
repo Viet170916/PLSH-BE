@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250315090035_initMigration")]
-    partial class initMigration
+    [Migration("20250319180124_BookModified")]
+    partial class BookModified
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,21 @@ namespace Data.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("AuthorBook", b =>
+                {
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AuthorId", "BookId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("AuthorBook");
+                });
+
             modelBuilder.Entity("Model.Entity.Account", b =>
                 {
                     b.Property<int>("Id")
@@ -34,10 +49,12 @@ namespace Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("AvatarUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("Birthdate")
                         .HasColumnType("datetime(6)");
@@ -58,37 +75,48 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("FailedLoginAttempts")
                         .HasColumnType("int");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool?>("Gender")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("GoogleToken")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("GoogleUserId")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("IdentityCardNumber")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Password")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("RefreshToken")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("datetime(6)");
@@ -101,9 +129,6 @@ namespace Data.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("isVerified")
-                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
@@ -123,170 +148,6 @@ namespace Data.Migrations
                     b.ToTable("Albums");
                 });
 
-            modelBuilder.Entity("Model.Entity.AudioBook", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Duration")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("EstimatedTime")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("IsAvaible")
-                        .HasColumnType("tinyint(1)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AudioBooks");
-                });
-
-            modelBuilder.Entity("Model.Entity.Author", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AuthorResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("BirthYear")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("DeathYear")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("SummaryDescription")
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Authors");
-                });
-
-            modelBuilder.Entity("Model.Entity.Book", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AudioResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AvailableCopies")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BookReviewId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("BookType")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CoverImageResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<double?>("Fine")
-                        .HasColumnType("double");
-
-                    b.Property<string>("ISBNumber12")
-                        .HasMaxLength(12)
-                        .HasColumnType("varchar(12)");
-
-                    b.Property<bool>("IsChecked")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("IsbNumber10")
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<int>("Kind")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Language")
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<int>("PageCount")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("PreviewPdfResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Price")
-                        .HasColumnType("double");
-
-                    b.Property<DateTime?>("PublishDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Publisher")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<float?>("Rating")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Thumbnail")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("Title")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<int>("TotalCopies")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdateDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Version")
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Books");
-                });
-
             modelBuilder.Entity("Model.Entity.BookBorrowing", b =>
                 {
                     b.Property<int>("Id")
@@ -296,10 +157,12 @@ namespace Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("BookConditionDescription")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("BookConditionUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("BookDetailId")
                         .HasColumnType("int");
@@ -313,11 +176,15 @@ namespace Data.Migrations
                     b.Property<int?>("FineType")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsFined")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int>("LoanId")
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<int?>("PageCount")
                         .HasColumnType("int");
@@ -328,49 +195,9 @@ namespace Data.Migrations
                     b.Property<int>("TransactionId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("isFined")
-                        .HasColumnType("tinyint(1)");
-
                     b.HasKey("Id");
 
                     b.ToTable("BookBorrowings");
-                });
-
-            modelBuilder.Entity("Model.Entity.BookDetail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BookConditionDescription")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("BookConditionUrl")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StatusDescription")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BookDetails");
                 });
 
             modelBuilder.Entity("Model.Entity.BookLocation", b =>
@@ -389,7 +216,8 @@ namespace Data.Migrations
 
                     b.Property<string>("Position")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -442,7 +270,8 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Comment")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -470,7 +299,8 @@ namespace Data.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("ClassRoom")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<int>("FavoriteId")
                         .HasColumnType("int");
@@ -480,61 +310,12 @@ namespace Data.Migrations
 
                     b.Property<string>("RoleInSchool")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Borrowers");
-                });
-
-            modelBuilder.Entity("Model.Entity.Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("Model.Entity.EBook", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EstimatePage")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsValiable")
-                        .HasColumnType("tinyint(1)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EBooks");
                 });
 
             modelBuilder.Entity("Model.Entity.Favorite", b =>
@@ -555,7 +336,8 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -585,17 +367,18 @@ namespace Data.Migrations
                     b.Property<int?>("FineType")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsFined")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Note")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<int?>("TransactionId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("isFined")
-                        .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
 
@@ -617,7 +400,8 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("SearchQuery")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -649,7 +433,8 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("IdentityCardNumber")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(55)
+                        .HasColumnType("varchar(55)");
 
                     b.HasKey("Id");
 
@@ -805,7 +590,8 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("ReturnDate")
                         .HasColumnType("datetime(6)");
@@ -841,7 +627,8 @@ namespace Data.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
@@ -854,34 +641,12 @@ namespace Data.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("Model.Entity.Page", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PageNumber")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PageUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Pages");
                 });
 
             modelBuilder.Entity("Model.Entity.PasswordAudit", b =>
@@ -900,7 +665,8 @@ namespace Data.Migrations
 
                     b.Property<string>("HashedPassword")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -920,19 +686,23 @@ namespace Data.Migrations
 
                     b.Property<string>("BankAccount")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("BankName")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("CardLastFour")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(4)
+                        .HasColumnType("varchar(4)");
 
                     b.Property<string>("CardToken")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreateAt")
                         .HasColumnType("datetime(6)");
@@ -942,7 +712,8 @@ namespace Data.Migrations
 
                     b.Property<string>("PaymentType")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<DateTime>("UpdateAt")
                         .HasColumnType("datetime(6)");
@@ -964,10 +735,12 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Address")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("AvatarUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime?>("Birthdate")
                         .HasColumnType("datetime(6)");
@@ -976,16 +749,19 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<bool?>("Gender")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(15)
+                        .HasColumnType("varchar(15)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime(6)");
@@ -1004,20 +780,24 @@ namespace Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int?>("Id"));
 
                     b.Property<string>("FileType")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("LocalUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<long?>("SizeByte")
                         .HasColumnType("bigint");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
 
                     b.HasKey("Id");
 
@@ -1033,13 +813,15 @@ namespace Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Level")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
 
                     b.HasKey("Id");
 
@@ -1055,7 +837,8 @@ namespace Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int?>("Id"));
 
                     b.Property<string>("CoverUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int?>("PageCount")
                         .HasColumnType("int");
@@ -1064,7 +847,8 @@ namespace Data.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Title")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -1087,18 +871,20 @@ namespace Data.Migrations
 
                     b.Property<string>("Currency")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(5)
+                        .HasColumnType("varchar(5)");
 
                     b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("PaymentMethodId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReferenceId")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -1127,7 +913,7 @@ namespace Data.Migrations
                     b.ToTable("Videos");
                 });
 
-            modelBuilder.Entity("Model.PhysicalBook", b =>
+            modelBuilder.Entity("Model.Entity.book.AudioBook", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1135,7 +921,356 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AvaiableCopies")
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Duration")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("EstimatedTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AudioBooks");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Author", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AuthorResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(550)
+                        .HasColumnType("varchar(550)");
+
+                    b.Property<string>("BirthYear")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("DeathYear")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("VARCHAR(255)");
+
+                    b.Property<string>("SummaryDescription")
+                        .HasMaxLength(1500)
+                        .HasColumnType("varchar(1500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorResourceId");
+
+                    b.HasIndex("FullName")
+                        .HasDatabaseName("idx_author_fullname")
+                        .HasAnnotation("MySql:FullTextIndex", true);
+
+                    b.HasIndex("FullName", "BirthYear", "DeathYear")
+                        .IsUnique();
+
+                    b.ToTable("Authors");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Book", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AudioResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AvailableCopies")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("BookAuthorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BookReviewId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CoverImageResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Fine")
+                        .HasColumnType("double");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsChecked")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("IsbNumber10")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("IsbNumber13")
+                        .HasMaxLength(13)
+                        .HasColumnType("varchar(13)");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("OtherIdentifier")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("PageCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreviewPdfResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("Price")
+                        .HasColumnType("double");
+
+                    b.Property<string>("PublishDate")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Publisher")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<float?>("Rating")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("Thickness")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Thumbnail")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("TotalCopies")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int?>("Weight")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AudioResourceId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CoverImageResourceId");
+
+                    b.HasIndex("PreviewPdfResourceId");
+
+                    b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.BookDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BookConditionDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("BookConditionUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusDescription")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BookDetails");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.BookInstance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BookOnRowShelfId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("BookShelfId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("BookShelfId");
+
+                    b.ToTable("BookInstance");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.EBook", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EstimatePage")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EBooks");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Page", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PageNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PageUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Pages");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.PhysicalBook", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AvailableCopies")
                         .HasColumnType("int");
 
                     b.Property<double?>("Fine")
@@ -1144,7 +1279,7 @@ namespace Data.Migrations
                     b.Property<double?>("Price")
                         .HasColumnType("double");
 
-                    b.Property<string>("QRCode")
+                    b.Property<string>("QrCode")
                         .HasColumnType("longtext");
 
                     b.Property<int>("TotalCopies")
@@ -1153,6 +1288,86 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PhysicalBooks");
+                });
+
+            modelBuilder.Entity("AuthorBook", b =>
+                {
+                    b.HasOne("Model.Entity.book.Author", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.book.Book", null)
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Author", b =>
+                {
+                    b.HasOne("Model.Entity.Resource", "Resource")
+                        .WithMany()
+                        .HasForeignKey("AuthorResourceId");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Book", b =>
+                {
+                    b.HasOne("Model.Entity.Resource", "AudioResource")
+                        .WithMany()
+                        .HasForeignKey("AudioResourceId");
+
+                    b.HasOne("Model.Entity.book.Category", "Category")
+                        .WithMany("Books")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.Resource", "CoverImageResource")
+                        .WithMany()
+                        .HasForeignKey("CoverImageResourceId");
+
+                    b.HasOne("Model.Entity.Resource", "PreviewPdfResource")
+                        .WithMany()
+                        .HasForeignKey("PreviewPdfResourceId");
+
+                    b.Navigation("AudioResource");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("CoverImageResource");
+
+                    b.Navigation("PreviewPdfResource");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.BookInstance", b =>
+                {
+                    b.HasOne("Model.Entity.book.Book", "Book")
+                        .WithMany("BookInstances")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.LibraryRoom.Bookshelf", "BookOnRowShelf")
+                        .WithMany()
+                        .HasForeignKey("BookShelfId");
+
+                    b.Navigation("Book");
+
+                    b.Navigation("BookOnRowShelf");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Book", b =>
+                {
+                    b.Navigation("BookInstances");
+                });
+
+            modelBuilder.Entity("Model.Entity.book.Category", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }
