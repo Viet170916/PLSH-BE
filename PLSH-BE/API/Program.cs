@@ -1,8 +1,8 @@
 using System.Text;
 using API.Common;
+using API.Configs;
 using API.Middlewares;
 using BU.Extensions;
-using BU.Mappings;
 using Common.Library;
 using Data.DatabaseContext;
 using Data.Repository.Implementation;

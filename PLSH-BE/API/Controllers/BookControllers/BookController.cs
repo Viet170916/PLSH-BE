@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using API.Common;
 using API.DTO.Book;
+using AutoMapper;
 using BU.Services.Interface;
 using Common.Enums;
 using Common.Helper;
@@ -24,13 +25,15 @@ namespace API.Controllers.BookControllers
     IAuthorService authorService,
     ILogger<BookController> logger,
     IHttpClientFactory httpClientFactory,
+    IMapper mapper,
     GoogleCloudStorageHelper googleCloudStorageHelper
   )
     : ControllerBase
   {
     [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
     {
-      var book = await context.Books.Include(b => b.Authors)
+      var book = await context.Books
+                              .Include(b => b.Authors)
                               .Include(b => b.Category)
                               .FirstOrDefaultAsync(b => b.Id == id);
       if (book == null) return NotFound();
@@ -42,51 +45,43 @@ namespace API.Controllers.BookControllers
       [FromQuery] int? categoryId,
       [FromQuery] int? authorId,
       [FromQuery] int page = 1,
-      [FromQuery] int limit = 10
+      [FromQuery] int limit = 10,
+      [FromQuery] string orderBy = "title",
+      [FromQuery] bool descending = false
     )
     {
       limit = Math.Clamp(limit, 1, 40);
-      var query = context.Books.AsQueryable();
+      var query = context.Books
+                         .Include(b => b.Authors)
+                         .Include(b => b.Category)
+                         .Include(b=>b.AudioResource)
+                         .Include(b=>b.CoverImageResource)
+                         .Include(b=>b.PreviewPdfResource)
+                         .AsQueryable();
       if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title.Contains(keyword));
       if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
       if (authorId.HasValue) query = query.Where(b => b.Authors.Any(a => a.Id == authorId));
-      var books = await query.Skip((page - 1) * limit).Take(limit).ToListAsync();
-      return Ok(books);
+      query = orderBy.ToLower() switch
+      {
+        "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
+        "createdate" => descending ? query.OrderByDescending(b => b.CreateDate) : query.OrderBy(b => b.CreateDate),
+        _ => query.OrderBy(b => b.Title)
+      };
+      var totalRecords = await query.CountAsync();
+      var booksQueryPagging = query.Skip((page - 1) * limit).Take(limit);
+      var books = await booksQueryPagging.ToListAsync();
+      var bookDtos = mapper.Map<List<BookNewDto>>(books);
+      var response = new
+      {
+        PageCount = (int)Math.Ceiling((double)totalRecords / limit),
+        CurrentPage = page,
+        TotalBook = totalRecords,
+        Data = bookDtos,
+      };
+      return Ok(response);
     }
 
-    [HttpPost("add")]
-    // public async Task<IActionResult> AddBook([FromForm] Book book)
-    // {
-    //   if (book == null) return BadRequest("Invalid book data.");
-    //   var category = await context.Categories.FindAsync(book.CategoryId);
-    //   if (category == null)
-    //   {
-    //     category = new Category { Id = book.CategoryId??0, Name = "New Category" };
-    //     context.Categories.Add(category);
-    //     await context.SaveChangesAsync();
-    //   }
-    //
-    //   if (book.AudioResource is not null)
-    //   {
-    //     book.AudioResource.LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{book.AudioResource.Name}";
-    //   }
-    //
-    //   if (book.CoverImageResource is not null)
-    //   {
-    //     book.CoverImageResource.LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{book.CoverImageResource.Name}";
-    //   }
-    //
-    //   if (book.PreviewPdfResource is not null)
-    //   {
-    //     book.PreviewPdfResource.LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{book.PreviewPdfResource.Name}";
-    //   }
-    //
-    //   book.Category = category;
-    //   context.Books.Add(book);
-    //   await context.SaveChangesAsync();
-    //   return CreatedAtAction(nameof(GetBookById), new { id = book.Id }, book);
-    // }
-    public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)
+    [HttpPost("add")] public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)
     {
       logger.LogInformation(
         $"{nameof(AddBook)}>>===>public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)");
@@ -103,7 +98,6 @@ namespace API.Controllers.BookControllers
           });
         }
 
-        // Khai báo biến để lưu URL file sau khi upload và đối tượng Resource tương ứng
         string? coverImageUrl;
         string? contentPdfUrl;
         string? audioFileUrl;
