@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using API.DTO.Book;
+using AutoMapper;
 using Data.DatabaseContext;
 using FuzzySharp;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +11,7 @@ namespace API.Controllers.CategoryControllers;
 
 [Route("api/v1/category")]
 [ApiController]
-public class CategoryController(AppDbContext context) : ControllerBase
+public class CategoryController(AppDbContext context, IMapper mapper) : ControllerBase
 {
   [HttpGet] public async Task<IActionResult> GetCategories()
   {
@@ -57,25 +59,27 @@ public class CategoryController(AppDbContext context) : ControllerBase
   [HttpGet("check-duplicate")] public async Task<IActionResult> CheckDuplicateCategory([FromQuery] string name)
   {
     if (string.IsNullOrWhiteSpace(name)) return BadRequest("Tên Category không hợp lệ.");
-    var categories = await context.Categories.Select(c => c.Name).ToListAsync();
+    var categories = await context.Categories.ToListAsync();
     var lowPriorityWords = new HashSet<string> { "học", "cơ bản", "nâng cao", "chuyên sâu" };
     string RemoveLowPriorityWords(string input)
     {
       var words = input.Split(' ').Where(w => !lowPriorityWords.Contains(w.ToLower()));
       return string.Join(" ", words);
     }
-    string cleanedInput = RemoveLowPriorityWords(name);
+    var cleanedInput = RemoveLowPriorityWords(name);
     var similarCategories = categories
                             .Select(c => new
                             {
                               Original = c,
-                              Score = Fuzz.WeightedRatio(cleanedInput.ToLower(), RemoveLowPriorityWords(c.ToLower()))
+                              Score = Fuzz.WeightedRatio(cleanedInput.ToLower(),
+                                RemoveLowPriorityWords(c.Name.ToLower()))
                             })
-                            .Where(c => c.Score >= 60) // Chỉ lấy những từ có độ trùng >= 70%
-                            .OrderByDescending(c => c.Score) // Sắp xếp theo độ trùng giảm dần
-                            .Select(c => c.Original)
+                            .Where(c => c.Score >= 60)
+                            .OrderByDescending(c => c.Score)
+                            .Select(sm => sm.Original)
                             .ToList();
     if (similarCategories.Count == 0) return Ok(new { message = "Không có Category nào trùng lặp." });
-    return Ok(new { message = "Có thể trùng với:", suggestions = similarCategories });
+    var categoryDtos = mapper.Map<List<CategoryDto>>(similarCategories);
+    return Ok(new { message = "Có thể trùng với:", suggestions = categoryDtos });
   }
 }
