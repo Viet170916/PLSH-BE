@@ -30,57 +30,7 @@ namespace API.Controllers.BookControllers
   )
     : ControllerBase
   {
-    [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
-    {
-      var book = await context.Books
-                              .Include(b => b.Authors)
-                              .Include(b => b.Category)
-                              .FirstOrDefaultAsync(b => b.Id == id);
-      if (book == null) return NotFound();
-      return Ok(book);
-    }
-
-    [HttpGet] public async Task<IActionResult> SearchBooks(
-      [FromQuery] string? keyword,
-      [FromQuery] int? categoryId,
-      [FromQuery] int? authorId,
-      [FromQuery] int page = 1,
-      [FromQuery] int limit = 10,
-      [FromQuery] string orderBy = "title",
-      [FromQuery] bool descending = false
-    )
-    {
-      limit = Math.Clamp(limit, 1, 40);
-      var query = context.Books
-                         .Include(b => b.Authors)
-                         .Include(b => b.Category)
-                         .Include(b => b.AudioResource)
-                         .Include(b => b.CoverImageResource)
-                         .Include(b => b.PreviewPdfResource)
-                         .AsQueryable();
-      if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title.Contains(keyword));
-      if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
-      if (authorId.HasValue) query = query.Where(b => b.Authors.Any(a => a.Id == authorId));
-      query = orderBy.ToLower() switch
-      {
-        "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
-        "createdate" => descending ? query.OrderByDescending(b => b.CreateDate) : query.OrderBy(b => b.CreateDate),
-        _ => query.OrderBy(b => b.Title)
-      };
-      var totalRecords = await query.CountAsync();
-      var booksQueryPagging = query.Skip((page - 1) * limit).Take(limit);
-      var books = await booksQueryPagging.ToListAsync();
-      var bookDtos = mapper.Map<List<BookNewDto>>(books);
-      var response = new
-      {
-        PageCount = (int)Math.Ceiling((double)totalRecords / limit),
-        CurrentPage = page,
-        TotalBook = totalRecords,
-        Data = bookDtos,
-      };
-      return Ok(response);
-    }
-
+    
     [HttpPost("add")] public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)
     {
       logger.LogInformation(
