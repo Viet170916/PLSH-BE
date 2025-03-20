@@ -54,9 +54,9 @@ namespace API.Controllers.BookControllers
       var query = context.Books
                          .Include(b => b.Authors)
                          .Include(b => b.Category)
-                         .Include(b=>b.AudioResource)
-                         .Include(b=>b.CoverImageResource)
-                         .Include(b=>b.PreviewPdfResource)
+                         .Include(b => b.AudioResource)
+                         .Include(b => b.CoverImageResource)
+                         .Include(b => b.PreviewPdfResource)
                          .AsQueryable();
       if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title.Contains(keyword));
       if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
@@ -198,31 +198,14 @@ namespace API.Controllers.BookControllers
           CreateDate = DateTime.UtcNow,
           UpdateDate = DateTime.UtcNow
         };
-        if (bookDto.CategoryId is not null) { book.CategoryId = bookDto.CategoryId; }
-
-        if (bookDto.AudioResource is not null)
+        if (bookDto.CategoryId is not null || (bookDto.Category?.Id is not null && bookDto.Category.Id != 0))
         {
-          book.AudioResource = new Resource()
-          {
-            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.AudioResource.Name}"
-          };
+          book.CategoryId = bookDto.CategoryId ?? bookDto.Category?.Id;
         }
+        else
+          if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
-        if (bookDto.CoverImageResource is not null)
-        {
-          book.CoverImageResource = new Resource()
-          {
-            Type = "image", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.CoverImageResource.Name}"
-          };
-        }
-
-        if (bookDto.PreviewPdfResource is not null)
-        {
-          book.PreviewPdfResource = new Resource()
-          {
-            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/{bookDto.PreviewPdfResource.Name}"
-          };
-        }
+        
         // if (coverResource is not null)
         // {
         //   book.CoverImageResourceId = coverResource.Id;
@@ -235,6 +218,30 @@ namespace API.Controllers.BookControllers
 
         context.Books.Add(book);
         await context.SaveChangesAsync();
+        
+        if (bookDto.AudioResource is not null)
+        {
+          book.AudioResource = new Resource()
+          {
+            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.AudioResource.Name}"
+          };
+        }
+
+        if (bookDto.CoverImageResource is not null)
+        {
+          book.CoverImageResource = new Resource()
+          {
+            Type = "image", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.CoverImageResource.Name}"
+          };
+        }
+
+        if (bookDto.PreviewPdfResource is not null)
+        {
+          book.PreviewPdfResource = new Resource()
+          {
+            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.PreviewPdfResource.Name}"
+          };
+        }
         return Ok(new OkResponse
         {
           Status = HttpStatus.OK.GetDescription(),
