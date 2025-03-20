@@ -78,8 +78,9 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
                             .OrderByDescending(c => c.Score)
                             .Select(sm => sm.Original)
                             .ToList();
-    if (similarCategories.Count == 0) return Ok(new { message = "Không có Category nào trùng lặp." });
+    if (similarCategories.Count == 0)
+      return Ok(new { message = "Không có Category nào trùng lặp.", Status = "no duplicated", });
     var categoryDtos = mapper.Map<List<CategoryDto>>(similarCategories);
-    return Ok(new { message = "Có thể trùng với:", suggestions = categoryDtos });
+    return Ok(new { message = "Có thể trùng với:", suggestions = categoryDtos, Status = "duplicated", });
   }
 }
