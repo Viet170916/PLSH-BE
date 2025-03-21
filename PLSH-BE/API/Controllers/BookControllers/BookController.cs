@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using API.Common;
 using API.DTO.Book;
 using AutoMapper;
 using BU.Services.Interface;
@@ -12,7 +11,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Model.Entity;
 using Model.Entity.book;
 using Model.ResponseModel;
 
@@ -25,16 +23,13 @@ namespace API.Controllers.BookControllers
     IAuthorService authorService,
     ILogger<BookController> logger,
     IHttpClientFactory httpClientFactory,
-    IMapper mapper,
-    GoogleCloudStorageHelper googleCloudStorageHelper
+    IMapper mapper
   )
     : ControllerBase
   {
-    
-    [HttpPost("add")] public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)
+    [HttpPost("add")] public async Task<IActionResult> AddOrUpdateBook([FromForm] BookNewDto? bookDto)
     {
-      logger.LogInformation(
-        $"{nameof(AddBook)}>>===>public async Task<IActionResult> AddBook([FromForm] BookNewDto? bookDto)");
+      logger.LogInformation($"{nameof(AddOrUpdateBook)} called.");
       try
       {
         if (bookDto is null)
@@ -44,70 +39,30 @@ namespace API.Controllers.BookControllers
             Status = HttpStatus.BAD_REQUEST.GetDescription(),
             StatusCode = HttpStatus.BAD_REQUEST,
             Message = "Dữ liệu không hợp lệ.",
-            Data = null
+            Data = null,
           });
         }
 
-        string? coverImageUrl;
-        string? contentPdfUrl;
-        string? audioFileUrl;
-        Resource? coverResource = null;
-        Resource? pdfResource = null;
-        Resource? audioResource = null;
+        Book? book = null;
 
-        // if (bookDto.CoverImage is not null)
-        // {
-        //   coverImageUrl = await googleCloudStorageHelper.UploadFileAsync(bookDto.CoverImage.OpenReadStream(),
-        //     bookDto.CoverImage.FileName,
-        //     StaticFolder.DIRPath_BOOK_COVER,
-        //     bookDto.CoverImage.ContentType);
-        //   coverResource = new Resource
-        //   {
-        //     Type = "image",
-        //     Name = bookDto.CoverImage.FileName,
-        //     SizeByte = bookDto.CoverImage.Length,
-        //     FileType = bookDto.CoverImage.ContentType,
-        //     LocalUrl = coverImageUrl
-        //   };
-        //   context.Resources.Add(coverResource);
-        //   await context.SaveChangesAsync();
-        // }
-        //
-        // if (bookDto.ContentPdf is not null)
-        // {
-        //   contentPdfUrl = await googleCloudStorageHelper.UploadFileAsync(bookDto.ContentPdf.OpenReadStream(),
-        //     bookDto.ContentPdf.FileName,
-        //     StaticFolder.DIRPath_BOOK_PDF,
-        //     bookDto.ContentPdf.ContentType);
-        //   pdfResource = new Resource
-        //   {
-        //     Type = "pdf",
-        //     Name = bookDto.ContentPdf.FileName,
-        //     SizeByte = bookDto.ContentPdf.Length,
-        //     FileType = bookDto.ContentPdf.ContentType,
-        //     LocalUrl = contentPdfUrl
-        //   };
-        //   context.Resources.Add(pdfResource);
-        //   await context.SaveChangesAsync();
-        // }
-        //
-        // if (bookDto.AudioFile is not null)
-        // {
-        //   audioFileUrl = await googleCloudStorageHelper.UploadFileAsync(bookDto.AudioFile.OpenReadStream(),
-        //     bookDto.AudioFile.FileName,
-        //     StaticFolder.DIRPath_BOOK_AUDIO,
-        //     bookDto.AudioFile.ContentType);
-        //   audioResource = new Resource
-        //   {
-        //     Type = "audio",
-        //     Name = bookDto.AudioFile.FileName,
-        //     SizeByte = bookDto.AudioFile.Length,
-        //     FileType = bookDto.AudioFile.ContentType,
-        //     LocalUrl = audioFileUrl
-        //   };
-        //   context.Resources.Add(audioResource);
-        //   await context.SaveChangesAsync();
-        // }
+        // Nếu có Id => Update
+        if (bookDto.Id.HasValue)
+        {
+          book = await context.Books
+                              .Include(b => b.Authors)
+                              .FirstOrDefaultAsync(b => b.Id == bookDto.Id.Value);
+          if (book is null)
+          {
+            return NotFound(new ErrorResponse
+            {
+              Status = HttpStatus.NOT_FOUND.GetDescription(),
+              StatusCode = HttpStatus.NOT_FOUND,
+              Message = "Không tìm thấy sách.",
+              Data = null,
+            });
+          }
+        }
+
         IList<string> authorNames = new List<string>();
         if (bookDto.Authors is not null && bookDto.Authors.Any())
         {
@@ -123,31 +78,35 @@ namespace API.Controllers.BookControllers
                                           .ToListAsync();
         }
 
-        var book = new Book
+        // Nếu không có Id => Thêm mới
+        if (book is null)
         {
-          Title = bookDto.Title,
-          Description = bookDto.Description,
-          Authors = processedAuthors,
-          Thumbnail = bookDto.Thumbnail,
-          Kind = bookDto.Kind ?? 0,
-          Version = bookDto.Version,
-          Publisher = bookDto.Publisher,
-          Width = bookDto.Width,
-          Height = bookDto.Height,
-          Thickness = bookDto.Thickness,
-          Weight = bookDto.Weight,
-          PublishDate = bookDto.PublishDate,
-          Language = bookDto.Language,
-          PageCount = bookDto.PageCount ?? 0,
-          IsbNumber13 = bookDto.IsbnNumber13,
-          IsbNumber10 = bookDto.IsbnNumber10,
-          OtherIdentifier = bookDto.OtherIdentifier,
-          Price = bookDto.Price,
-          TotalCopies = bookDto.TotalCopies ?? 0,
-          AvailableCopies = bookDto.AvailableCopies ?? 0,
-          CreateDate = DateTime.UtcNow,
-          UpdateDate = DateTime.UtcNow
-        };
+          book = new Book { CreateDate = DateTime.UtcNow, };
+          context.Books.Add(book);
+        }
+
+        // Cập nhật thông tin sách
+        book.Title = bookDto.Title;
+        book.Description = bookDto.Description;
+        book.Authors = processedAuthors;
+        book.Thumbnail = bookDto.Thumbnail;
+        book.Kind = bookDto.Kind ?? 0;
+        book.Version = bookDto.Version;
+        book.Publisher = bookDto.Publisher;
+        book.Width = bookDto.Width;
+        book.Height = bookDto.Height;
+        book.Thickness = bookDto.Thickness;
+        book.Weight = bookDto.Weight;
+        book.PublishDate = bookDto.PublishDate;
+        book.Language = bookDto.Language;
+        book.PageCount = bookDto.PageCount ?? 0;
+        book.IsbNumber13 = bookDto.IsbnNumber13;
+        book.IsbNumber10 = bookDto.IsbnNumber10;
+        book.OtherIdentifier = bookDto.OtherIdentifier;
+        book.Price = bookDto.Price;
+        book.TotalCopies = bookDto.TotalCopies ?? 0;
+        book.AvailableCopies = bookDto.AvailableCopies ?? 0;
+        book.UpdateDate = DateTime.UtcNow;
         if (bookDto.CategoryId is not null || (bookDto.Category?.Id is not null && bookDto.Category.Id != 0))
         {
           book.CategoryId = bookDto.CategoryId ?? bookDto.Category?.Id;
@@ -155,61 +114,24 @@ namespace API.Controllers.BookControllers
         else
           if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
-        
-        // if (coverResource is not null)
-        // {
-        //   book.CoverImageResourceId = coverResource.Id;
-        //   book.Thumbnail = coverResource.LocalUrl;
-        // }
-        //
-        // if (pdfResource is not null) { book.PreviewPdfResourceId = pdfResource.Id; }
-        //
-        // if (audioResource is not null) { book.AudioResourceId = audioResource.Id; }
-
-        context.Books.Add(book);
         await context.SaveChangesAsync();
-        
-        if (bookDto.AudioResource is not null)
-        {
-          book.AudioResource = new Resource()
-          {
-            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.AudioResource.Name}"
-          };
-        }
-
-        if (bookDto.CoverImageResource is not null)
-        {
-          book.CoverImageResource = new Resource()
-          {
-            Type = "image", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.CoverImageResource.Name}"
-          };
-        }
-
-        if (bookDto.PreviewPdfResource is not null)
-        {
-          book.PreviewPdfResource = new Resource()
-          {
-            Type = "audio", LocalUrl = $"{StaticFolder.DIRPath_BOOK_AUDIO}/book_{book.Id}/{bookDto.PreviewPdfResource.Name}"
-          };
-        }
         return Ok(new OkResponse
         {
           Status = HttpStatus.OK.GetDescription(),
           StatusCode = HttpStatus.OK,
-          Message = "Thêm sách thành công.",
-          Data = new { BookId = book.Id, },
+          Message = bookDto.Id.HasValue ? "Cập nhật sách thành công." : "Thêm sách thành công.",
+          Data = new { BookId = book.Id },
         });
       }
       catch (Exception ex)
       {
-        return StatusCode(StatusCodes.Status500InternalServerError,
-          new ErrorResponse
-          {
-            Status = HttpStatusCode.InternalServerError.ToString(),
-            StatusCode = HttpStatus.INTERNAL_ERROR,
-            Message = "Lỗi máy chủ nội bộ.",
-            Data = new { Error = ex.Message, },
-          });
+        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+        {
+          Status = HttpStatusCode.InternalServerError.ToString(),
+          StatusCode = HttpStatus.INTERNAL_ERROR,
+          Message = "Lỗi máy chủ nội bộ.",
+          Data = new { Error = ex.Message },
+        });
       }
     }
   }

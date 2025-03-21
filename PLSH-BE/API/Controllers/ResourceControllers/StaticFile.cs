@@ -10,12 +10,14 @@ using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Mvc;
 using VersOne.Epub;
 using System.IO.Compression;
+using Data.DatabaseContext;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.ResourceControllers;
 
 [ApiController]
 [Route("static/v1")]
-public class FileController(StorageClient storageClient, GoogleCloudStorageHelper ggHelper) : ControllerBase
+public class FileController(StorageClient storageClient, AppDbContext context) : ControllerBase
 {
   private readonly string? _bucketName = Environment.GetEnvironmentVariable("GOOGLE_CLOUD_BUCKET");
 
@@ -39,7 +41,7 @@ public class FileController(StorageClient storageClient, GoogleCloudStorageHelpe
     catch { return NotFound("File not found."); }
   }
 
-  private string GetContentType(string filePath)
+  private static string GetContentType(string filePath)
   {
     var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
     if (!provider.TryGetContentType(filePath, out var contentType)) { contentType = "application/octet-stream"; }
@@ -47,13 +49,18 @@ public class FileController(StorageClient storageClient, GoogleCloudStorageHelpe
     return contentType;
   }
 
-  [HttpGet("preview/{*path}")]
-  public async Task<IActionResult> PreviewEpub([FromRoute] string path, [FromQuery] int chapter = 1)
+  [HttpGet("preview/{bookId}")]
+  public async Task<IActionResult> PreviewEpub([FromRoute] int bookId, [FromQuery] int chapter = 1)
   {
+    var book = await context.Books.Include(b => b.PreviewPdfResource).FirstOrDefaultAsync(b => bookId == b.Id);
+    if (book is null) return NotFound(new { message = "Book not found." });
+    if (book.PreviewPdfResource is not null) return NotFound(new { message = "Book Preview Resource not found.", });
+    if (book.PreviewPdfResource?.LocalUrl is null)
+      return NotFound(new { message = "Book Preview Resource not found.", });
     try
     {
       var tempEpubPath = Path.Combine(Path.GetTempPath(), "book.epub");
-      await DownloadEpubFromGcs($"/{path.Replace("%2F", "/")}", tempEpubPath);
+      await DownloadEpubFromGcs(book.PreviewPdfResource.LocalUrl, tempEpubPath);
       var epubBook = await EpubReader.ReadBookAsync(tempEpubPath);
       var allChapters = epubBook.ReadingOrder.ToList();
       if (chapter < 1 || chapter > allChapters.Count) { return BadRequest(new { message = "Chapter không hợp lệ." }); }
@@ -67,7 +74,7 @@ public class FileController(StorageClient storageClient, GoogleCloudStorageHelpe
 
   private async Task DownloadEpubFromGcs(string objectPath, string destinationPath)
   {
-    using var outputFile = System.IO.File.OpenWrite(destinationPath);
+    await using var outputFile = System.IO.File.OpenWrite(destinationPath);
     await storageClient.DownloadObjectAsync(_bucketName, objectPath, outputFile);
   }
 
@@ -77,7 +84,7 @@ public class FileController(StorageClient storageClient, GoogleCloudStorageHelpe
     string outputFilePath
   )
   {
-    string tempExtractPath = Path.Combine(Path.GetTempPath(), "epub_extract");
+    var tempExtractPath = Path.Combine(Path.GetTempPath(), "epub_extract");
     if (Directory.Exists(tempExtractPath)) Directory.Delete(tempExtractPath, true);
     Directory.CreateDirectory(tempExtractPath);
 
