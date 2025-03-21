@@ -117,7 +117,8 @@ namespace API.Controllers.BookControllers
           if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
         await context.SaveChangesAsync();
-        return Ok(book);
+        var bookAdded = mapper.Map<BookDto>(book);
+        return Ok(bookAdded);
       }
       catch (Exception ex)
       {
