@@ -115,13 +115,7 @@ namespace API.Controllers.BookControllers
           if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
         await context.SaveChangesAsync();
-        return Ok(new OkResponse
-        {
-          Status = HttpStatus.OK.GetDescription(),
-          StatusCode = HttpStatus.OK,
-          Message = bookDto.Id.HasValue ? "Cập nhật sách thành công." : "Thêm sách thành công.",
-          Data = new { BookId = book.Id },
-        });
+        return Ok(book);
       }
       catch (Exception ex)
       {
