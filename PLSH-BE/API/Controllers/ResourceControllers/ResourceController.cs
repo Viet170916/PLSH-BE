@@ -13,7 +13,6 @@ namespace API.Controllers.ResourceControllers;
 [Route("api/v1/resource")]
 [ApiController]
 public class ResourceController(
-  IResourceService resourceService,
   AppDbContext context,
   ILogger<ResourceController> logger,
   IMapper mapper,
@@ -21,7 +20,7 @@ public class ResourceController(
 ) : Controller
 {
   [HttpPost("book/upload/{bookId}")]
-  public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, [FromRoute]int bookId)
+  public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, [FromRoute] int bookId)
   {
     var book = await context.Books.FindAsync(bookId);
     if (book is null) return NotFound(new { Message = "Book not found", BookId = bookId, });
@@ -72,7 +71,8 @@ public class ResourceController(
         await context.SaveChangesAsync();
         book.AudioResourceId = resourceEntity.Id;
         break;
-      default: return BadRequest(new { Message = "Resource type not supported(image/pdf/audio/epub)", BookId = bookId, });
+      default:
+        return BadRequest(new { Message = "Resource type not supported(image/pdf/audio/epub)", BookId = bookId, });
     }
 
     await context.SaveChangesAsync();
