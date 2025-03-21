@@ -54,7 +54,7 @@ public class FileController(StorageClient storageClient, AppDbContext context) :
   {
     var book = await context.Books.Include(b => b.EpubResource).FirstOrDefaultAsync(b => bookId == b.Id);
     if (book is null) return NotFound(new { message = "Book not found." });
-    if (book.EpubResource is not null) return NotFound(new { message = "Book Preview Resource not found.", });
+    if (book.EpubResource is null) return NotFound(new { message = "Book Preview Resource not found.", });
     if (book.EpubResource?.LocalUrl is null)
       return NotFound(new { message = "Book Preview Resource not found.", });
     try
