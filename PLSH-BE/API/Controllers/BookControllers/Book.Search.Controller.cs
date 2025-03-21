@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json;
+using API.Common;
 using API.DTO.Book;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -110,13 +111,12 @@ public partial class BookController
     }
 
     List<Book> books = [];
-    var booksCount = 0;
     foreach (var item in items)
     {
       if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
       var book = new Book
       {
-        Id = booksCount++,
+        Id = Generate.Generate6DigitNumber(),
         Title = volumeInfo.TryGetProperty("title", out var titleElem) ? titleElem.GetString() : null,
         Description = volumeInfo.TryGetProperty("description", out var descElem) ? descElem.GetString() : null,
         Publisher = volumeInfo.TryGetProperty("publisher", out var publisherElem) ? publisherElem.GetString() : null,

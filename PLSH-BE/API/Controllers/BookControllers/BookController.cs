@@ -44,28 +44,15 @@ namespace API.Controllers.BookControllers
         }
 
         Book? book = null;
-
-        // Nếu có Id => Update
         if (bookDto.Id.HasValue)
         {
           book = await context.Books
                               .Include(b => b.Authors)
                               .FirstOrDefaultAsync(b => b.Id == bookDto.Id.Value);
-          if (book is null)
-          {
-            return NotFound(new ErrorResponse
-            {
-              Status = HttpStatus.NOT_FOUND.GetDescription(),
-              StatusCode = HttpStatus.NOT_FOUND,
-              Message = "Không tìm thấy sách.",
-              Data = null,
-            });
-          }
         }
         else
         {
-          // Nếu không có Id, kiểm tra trùng Title và Version
-          bool exists = await context.Books.AnyAsync(b =>
+          var exists = await context.Books.AnyAsync(b =>
             b.Title == bookDto.Title &&
             b.Version == bookDto.Version);
           if (exists)
@@ -95,14 +82,12 @@ namespace API.Controllers.BookControllers
                                           .ToListAsync();
         }
 
-        // Nếu không có Id => Thêm mới
         if (book is null)
         {
           book = new Book { CreateDate = DateTime.UtcNow, };
           context.Books.Add(book);
         }
 
-        // Cập nhật thông tin sách
         book.Title = bookDto.Title;
         book.Description = bookDto.Description;
         book.Authors = processedAuthors;
