@@ -62,6 +62,23 @@ namespace API.Controllers.BookControllers
             });
           }
         }
+        else
+        {
+          // Nếu không có Id, kiểm tra trùng Title và Version
+          bool exists = await context.Books.AnyAsync(b =>
+            b.Title == bookDto.Title &&
+            b.Version == bookDto.Version);
+          if (exists)
+          {
+            return Conflict(new ErrorResponse
+            {
+              Status = HttpStatus.CONFLICT.GetDescription(),
+              StatusCode = HttpStatus.CONFLICT,
+              Message = "Sách đã tồn tại với cùng tiêu đề và phiên bản.",
+              Data = null,
+            });
+          }
+        }
 
         IList<string> authorNames = new List<string>();
         if (bookDto.Authors is not null && bookDto.Authors.Any())

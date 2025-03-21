@@ -25,9 +25,13 @@ public class Book
   public int? CoverImageResourceId { get; set; } //Anh bia
   public int? PreviewPdfResourceId { get; set; }
   public int? AudioResourceId { get; set; }
+  public int? EpubResourceId { get; set; }
 
   [ForeignKey("CoverImageResourceId")]
   public Resource? CoverImageResource { get; set; }
+
+  [ForeignKey("EpubResourceId")]
+  public Resource? EpubResource { get; set; }
 
   [ForeignKey("PreviewPdfResourceId")]
   public Resource? PreviewPdfResource { get; set; }
@@ -61,15 +65,15 @@ public class Book
   [MaxLength(10)]
   public string? IsbNumber10 { get; set; }
 
-  public float? Rating { get; set; } 
-  public int? TotalCopies { get; set; } 
-  public int? AvailableCopies { get; set; } 
+  public float? Rating { get; set; }
+  public int? TotalCopies { get; set; }
+  public int? AvailableCopies { get; set; }
   public double? Price { get; set; }
 
   [MaxLength(255)]
-  public string? Thumbnail { get; set; } 
+  public string? Thumbnail { get; set; }
 
-  public double? Fine { get; set; } 
+  public double? Fine { get; set; }
   public DateTime? CreateDate { get; set; }
   public DateTime? UpdateDate { get; set; }
   public DateTime? DeletedAt { get; set; }

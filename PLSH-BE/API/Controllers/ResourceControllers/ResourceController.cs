@@ -20,8 +20,8 @@ public class ResourceController(
   GoogleCloudStorageHelper googleCloudStorageHelper
 ) : Controller
 {
-  [HttpPost("book/upload")]
-  public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, int bookId)
+  [HttpPost("book/upload/{bookId}")]
+  public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, [FromRoute]int bookId)
   {
     var book = await context.Books.FindAsync(bookId);
     if (book is null) return NotFound(new { Message = "Book not found", BookId = bookId, });

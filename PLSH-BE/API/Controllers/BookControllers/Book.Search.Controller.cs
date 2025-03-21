@@ -16,6 +16,7 @@ public partial class BookController
                             .Include(b => b.Category)
                             .Include(b => b.AudioResource)
                             .Include(b => b.CoverImageResource)
+                            .Include(b => b.EpubResource)
                             .Include(b => b.PreviewPdfResource)
                             .FirstOrDefaultAsync(b => b.Id == id);
     var bookDto = mapper.Map<BookNewDto>(book);
@@ -38,6 +39,7 @@ public partial class BookController
                        .Include(b => b.Authors)
                        .Include(b => b.Category)
                        .Include(b => b.AudioResource)
+                       .Include(b => b.EpubResource)
                        .Include(b => b.CoverImageResource)
                        .Include(b => b.PreviewPdfResource)
                        .AsQueryable();

@@ -30,11 +30,15 @@ namespace API.DTO.Book
     public int? TotalCopies { get; set; }
     public int? AvailableCopies { get; set; }
     public IList<AuthorDto>? Authors { get; set; }
+    public int? EpubResourceId { get; set; }
+    public int? AudioResourceId { get; set; }
     public CategoryDto? Category { get; set; }
     public IFormFile? CoverImage { get; set; }
     public IFormFile? ContentPdf { get; set; }
     public IFormFile? AudioFile { get; set; }
+    public IFormFile? Epub { get; set; }
     public Resource? AudioResource { get; set; }
+    public Resource? EpubResource { get; set; }
     public Resource? CoverImageResource { get; set; }
     public Resource? PreviewPdfResource { get; set; }
   }
