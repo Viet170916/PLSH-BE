@@ -1,7 +1,9 @@
 using API.Common;
+using API.Controllers.ResourceControllers;
 using API.DTO.Book;
-using AutoMapper;
+using Model.Entity;
 using Model.Entity.book;
+using Profile = AutoMapper.Profile;
 
 namespace API.Configs;
 
@@ -16,11 +18,12 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.IsbnNumber10, opt => opt.MapFrom(src => src.IsbNumber10))
       .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src => src.Thumbnail))
       .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
-      .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors)).ReverseMap();
+      .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors))
+      .ReverseMap();
     CreateMap<Category, CategoryDto>().ReverseMap();
     CreateMap<Author, AuthorDto>().ReverseMap();
     CreateMap<Book, BookDto>().ReverseMap();
-    
-    
+    CreateMap<ResourceDto, Resource>().ReverseMap();
   }
 }
+

@@ -50,7 +50,7 @@ namespace API.Controllers.BookControllers
                               .Include(b => b.Authors)
                               .FirstOrDefaultAsync(b => b.Id == bookDto.Id.Value);
         }
-        else
+        if (book is null)
         {
           var exists = await context.Books.AnyAsync(b =>
             b.Title == bookDto.Title &&
@@ -65,6 +65,8 @@ namespace API.Controllers.BookControllers
               Data = null,
             });
           }
+          book = new Book { CreateDate = DateTime.UtcNow, };
+          context.Books.Add(book);
         }
 
         IList<string> authorNames = new List<string>();
@@ -81,13 +83,6 @@ namespace API.Controllers.BookControllers
                                           .Where(a => authorNames.Contains(a.FullName))
                                           .ToListAsync();
         }
-
-        if (book is null)
-        {
-          book = new Book { CreateDate = DateTime.UtcNow, };
-          context.Books.Add(book);
-        }
-
         book.Title = bookDto.Title;
         book.Description = bookDto.Description;
         book.Authors = processedAuthors;
