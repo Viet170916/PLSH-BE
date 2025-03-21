@@ -8,6 +8,7 @@ public static class StaticFolder
   public const string DIRPath_BOOK_IMAGE = "/book/image";
   public const string DIRPath_BOOK_DAMAGED = "/book/damaged";
   public const string DIRPath_BOOK_PDF = "/book/pdf";
+  public const string DIRPath_BOOK_EPUB = "/book/epub";
   public const string DIRPath_BOOK_TEXT_RAW = "/book/raw";
   public const string DIRPath_BOOK_TEXT_SUMARY = "/book/summary";
   public const string DIRPath_BOOK_AUDIO = "/book/audio";

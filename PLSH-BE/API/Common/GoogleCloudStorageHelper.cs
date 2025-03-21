@@ -12,8 +12,15 @@ public class GoogleCloudStorageHelper(StorageClient storageClient)
   {
     if (fileStream == null || string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(folderPath))
       throw new ArgumentException("Invalid input parameters.");
-    string objectName = $"{folderPath.TrimEnd('/')}/{Guid.NewGuid()}_{fileName}";
+    var objectName = $"{folderPath.TrimEnd('/')}/{Guid.NewGuid()}_{fileName}";
     await storageClient.UploadObjectAsync(_bucketName, objectName, contentType, fileStream);
     return $"{objectName}";
   }
+  public async Task DownloadEpubFromGcs(string objectPath, string destinationPath)
+  {
+    await using var outputFile = File.OpenWrite(destinationPath);
+    await storageClient.DownloadObjectAsync(_bucketName, objectPath, outputFile);
+  }
+
+
 }

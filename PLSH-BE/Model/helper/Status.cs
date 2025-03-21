@@ -13,6 +13,7 @@ public static class Status
   {
     public static string Image { get; } = "image";
     public static string Pdf { get; } = "pdf";
+    public static string Epub { get; } = "epub";
     public static string Audio { get; } = "audio";
   }
 

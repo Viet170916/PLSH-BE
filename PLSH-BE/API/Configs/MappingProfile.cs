@@ -16,8 +16,10 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.IsbnNumber10, opt => opt.MapFrom(src => src.IsbNumber10))
       .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src => src.Thumbnail))
       .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
-      .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors));
-    CreateMap<Category, CategoryDto>();
-    CreateMap<Author, AuthorDto>();
+      .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors)).ReverseMap();
+    CreateMap<Category, CategoryDto>().ReverseMap();
+    CreateMap<Author, AuthorDto>().ReverseMap();
+    CreateMap<Book, BookDto>().ReverseMap();
+    
   }
 }
