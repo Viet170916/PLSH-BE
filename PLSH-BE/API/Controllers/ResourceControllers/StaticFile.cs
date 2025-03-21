@@ -52,15 +52,15 @@ public class FileController(StorageClient storageClient, AppDbContext context) :
   [HttpGet("preview/{bookId}")]
   public async Task<IActionResult> PreviewEpub([FromRoute] int bookId, [FromQuery] int chapter = 1)
   {
-    var book = await context.Books.Include(b => b.PreviewPdfResource).FirstOrDefaultAsync(b => bookId == b.Id);
+    var book = await context.Books.Include(b => b.EpubResource).FirstOrDefaultAsync(b => bookId == b.Id);
     if (book is null) return NotFound(new { message = "Book not found." });
-    if (book.PreviewPdfResource is not null) return NotFound(new { message = "Book Preview Resource not found.", });
-    if (book.PreviewPdfResource?.LocalUrl is null)
+    if (book.EpubResource is not null) return NotFound(new { message = "Book Preview Resource not found.", });
+    if (book.EpubResource?.LocalUrl is null)
       return NotFound(new { message = "Book Preview Resource not found.", });
     try
     {
       var tempEpubPath = Path.Combine(Path.GetTempPath(), "book.epub");
-      await DownloadEpubFromGcs(book.PreviewPdfResource.LocalUrl, tempEpubPath);
+      await DownloadEpubFromGcs(book.EpubResource.LocalUrl, tempEpubPath);
       var epubBook = await EpubReader.ReadBookAsync(tempEpubPath);
       var allChapters = epubBook.ReadingOrder.ToList();
       if (chapter < 1 || chapter > allChapters.Count) { return BadRequest(new { message = "Chapter không hợp lệ." }); }
