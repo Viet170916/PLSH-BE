@@ -59,7 +59,7 @@ public class ResourceController(
         resourceEntity.LocalUrl = contentEpubUrl;
         context.Resources.Add(resourceEntity);
         await context.SaveChangesAsync();
-        book.PreviewPdfResourceId = resourceEntity.Id;
+        book.EpubResourceId = resourceEntity.Id;
         break;
       case "audio":
         var audioFileUrl = await googleCloudStorageHelper.UploadFileAsync(resource.File.OpenReadStream(),
