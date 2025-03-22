@@ -1,3 +1,4 @@
+using AutoMapper;
 using Data.DatabaseContext;
 using EFCore.BulkExtensions;
 using Microsoft.AspNetCore.Mvc;
@@ -5,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Model.Entity.LibraryRoom;
 
-namespace API.Controllers;
+namespace API.Controllers.LibRoomControllers;
 
 [ApiController]
 [Route("api/v1/library-room")]
-public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomController> logger)
+public partial class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomController> logger, IMapper mapper)
   : Controller
 {
   [HttpGet] public IActionResult Index()
@@ -26,8 +27,6 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
         Name = groupedLib.Key.Name,
         Shelves = groupedLib.ToList(),
       };
-
-    // var shelves = context.Shelves.Where(s => );
     return
       Ok(libraryRoom.FirstOrDefault());
   }
@@ -40,24 +39,20 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
     if (existingRoom is null)
     {
       var room = await context.LibraryRooms.AddAsync(request);
-      await context.SaveChangesAsync(); // Đảm bảo ID được cập nhật
+      await context.SaveChangesAsync();
       request.Shelves.ForEach(s => { s.RoomId = room.Entity.Id; });
-      await context.BulkInsertAsync(request.Shelves);
     }
     else
     {
-      // Cập nhật thông tin phòng
       existingRoom.ColumnSize = request.ColumnSize;
       existingRoom.RowSize = request.RowSize;
-
-      // Xóa Shelves cũ trước khi thêm mới
       await context.Shelves
                    .Where(s => s.RoomId == existingRoom.Id)
                    .ExecuteDeleteAsync();
       request.Shelves.ForEach(s => s.RoomId = existingRoom.Id);
-      await context.BulkInsertAsync(request.Shelves);
     }
 
+    await context.BulkInsertAsync(request.Shelves);
     var newShelves =
       from shelves in context.Shelves
       join row in context.RowShelves on shelves.Id equals row.ShelfId into grouped
@@ -72,32 +67,13 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
     return Ok(request);
   }
 
-  [HttpGet("shelf/check")]
-  public async Task<IActionResult> CheckShelfExists([FromQuery] int? id, [FromQuery] string? name)
-  {
-    if (id == null && string.IsNullOrEmpty(name)) return BadRequest("Please provide an 'id' or 'name' to check.");
-    bool exists = await context.Shelves.AnyAsync(s =>
-      (id != null && s.Id == id) ||
-      (!string.IsNullOrEmpty(name) && s.Name == name));
-    return Ok(new { exists, });
-  }
-
-  [HttpGet("shelf/{id:long}")] public async Task<IActionResult> GetShelfById(long id)
-  {
-    var shelf = await context.Shelves.FirstOrDefaultAsync(s => s.Id == id);
-    if (shelf is null) return NotFound("Shelf not found.");
-    var rowShelves = await context.RowShelves.Where(r => r.ShelfId == shelf.Id).ToListAsync();
-    shelf.RowShelves = rowShelves;
-    return Ok(shelf);
-  }
-
   [HttpPost("shelf/{shelfId}/row/add")] [HttpPost("add")]
   public async Task<IActionResult> AddRowShelf(long shelfId, [FromBody] RowShelf request)
   {
     if (request is null) return BadRequest("Invalid data.");
     var shelf = await context.Shelves.FindAsync(shelfId);
     if (shelf is null) return NotFound("Shelf not found.");
-    int maxPosition = await context.RowShelves
+    var maxPosition = await context.RowShelves
                                    .Where(r => r.ShelfId == shelfId)
                                    .OrderByDescending(r => r.Position)
                                    .Select(r => r.Position ?? -1)

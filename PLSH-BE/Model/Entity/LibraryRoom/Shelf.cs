@@ -10,7 +10,7 @@ namespace Model.Entity.LibraryRoom
 
     public int RoomId { get; set; }
 
-    [NotMapped]
+    [ForeignKey("RoomId")]
     public LibraryRoom? LibraryRoom { get; set; }
 
     public string? Name { get; set; }
@@ -20,7 +20,6 @@ namespace Model.Entity.LibraryRoom
     public int X { get; set; }
     public int Y { get; set; }
 
-    [NotMapped]
-    public List<RowShelf> RowShelves { get; set; } = [];
+    public ICollection<RowShelf> RowShelves { get; set; } = [];
   }
 }

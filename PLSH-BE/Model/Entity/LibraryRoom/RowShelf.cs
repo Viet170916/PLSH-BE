@@ -18,5 +18,5 @@ public class RowShelf
 
   public int? Position { get; set; }
   public int MaxCol { get; set; }
-  public List<BookInstance>? BookInstances { get; set; }
+  public ICollection<BookInstance>? BookInstances { get; set; }
 }

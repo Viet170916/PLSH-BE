@@ -8,8 +8,6 @@ namespace Model.Entity.LibraryRoom
     public string? Name { get; set; }
     public int ColumnSize { get; set; } = 6;
     public int RowSize { get; set; } = 3;
-
-    [NotMapped]
     public List<Shelf> Shelves { get; set; } = [];
   }
 }

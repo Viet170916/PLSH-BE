@@ -3,6 +3,8 @@ using API.Controllers.ResourceControllers;
 using API.DTO.Book;
 using Model.Entity;
 using Model.Entity.book;
+using Model.Entity.book.Dto;
+using Model.Entity.LibraryRoom;
 using Profile = AutoMapper.Profile;
 
 namespace API.Configs;
@@ -24,5 +26,16 @@ public class MappingProfile : Profile
     CreateMap<Author, AuthorDto>().ReverseMap();
     CreateMap<Book, BookDto>().ReverseMap();
     CreateMap<ResourceDto, Resource>().ReverseMap();
+    CreateMap<BookInstance, LibraryRoomDto.BookInstanceDto>()
+      .ForMember(dest => dest.BookId, opt => opt.MapFrom(src => src.BookId))
+      .ForMember(dest => dest.RowShelfId, opt => opt.MapFrom(src => src.RowShelfId))
+      .ReverseMap();
+    CreateMap<RowShelf, LibraryRoomDto.RowShelfDto>()
+      .ForMember(dest => dest.BookInstances, opt => opt.MapFrom(src => src.BookInstances))
+      .ForMember(dest => dest.Count, opt => opt.MapFrom(src => (src.BookInstances.Count)))
+      .ReverseMap();
+    CreateMap<Shelf, LibraryRoomDto.ShelfDto>()
+      .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
+      .ReverseMap();
   }
 }

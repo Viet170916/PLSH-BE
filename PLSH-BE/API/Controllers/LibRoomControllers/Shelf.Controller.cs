@@ -1,0 +1,37 @@
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Model.Entity.book.Dto;
+
+namespace API.Controllers.LibRoomControllers;
+
+public partial class LibraryRoomController
+{
+  [HttpGet("shelf")] public async Task<ActionResult<List<LibraryRoomDto.ShelfDto>>> GetShelves()
+  {
+    var shelves = await context.Shelves
+                               .Include(s => s.RowShelves)
+                               .ThenInclude(rs => rs.BookInstances)
+                               .ToListAsync();
+    return Ok(mapper.Map<List<LibraryRoomDto.ShelfDto>>(shelves));
+  }
+
+  [HttpGet("shelf/check")]
+  public async Task<IActionResult> CheckShelfExists([FromQuery] int? id, [FromQuery] string? name)
+  {
+    if (id == null && string.IsNullOrEmpty(name)) return BadRequest("Please provide an 'id' or 'name' to check.");
+    var exists = await context.Shelves.AnyAsync(s =>
+      (id != null && s.Id == id) ||
+      (!string.IsNullOrEmpty(name) && s.Name == name));
+    return Ok(new { exists, });
+  }
+
+  [HttpGet("shelf/{id:long}")] public async Task<IActionResult> GetShelfById(long id)
+  {
+    var shelf = await context.Shelves.FirstOrDefaultAsync(s => s.Id == id);
+    if (shelf is null) return NotFound("Shelf not found.");
+    var rowShelves = await context.RowShelves.Where(r => r.ShelfId == shelf.Id).ToListAsync();
+    shelf.RowShelves = rowShelves;
+    return Ok(shelf);
+  }
+}
