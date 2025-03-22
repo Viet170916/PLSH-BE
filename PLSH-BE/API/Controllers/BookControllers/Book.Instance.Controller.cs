@@ -10,10 +10,10 @@ public partial class BookController
     var bookInstances = await context.BookInstances
                                      .Where(bi => bi.BookId == bookId && bi.DeletedAt == null)
                                      .ToListAsync();
-    return Ok(bookInstances);
+    return Ok(new { bookInstances.Count, Data = bookInstances, });
   }
 
-  [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute]int id)
+  [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)
   {
     var bookInstance = await context.BookInstances.FindAsync(id);
     if (bookInstance == null) { return NotFound(new { message = "Book instance not found", }); }
