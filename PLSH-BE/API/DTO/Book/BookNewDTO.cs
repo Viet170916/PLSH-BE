@@ -3,6 +3,7 @@ using Common.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Model.Entity;
+using Model.Entity.book;
 
 namespace API.DTO.Book
 {
@@ -32,6 +33,8 @@ namespace API.DTO.Book
     public IList<AuthorDto>? Authors { get; set; }
     public int? EpubResourceId { get; set; }
     public int? AudioResourceId { get; set; }
+    public IList<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
+    public int Quantity { get; set; } = 0;
     public CategoryDto? Category { get; set; }
     public IFormFile? CoverImage { get; set; }
     public IFormFile? ContentPdf { get; set; }

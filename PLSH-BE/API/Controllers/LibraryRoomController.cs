@@ -79,7 +79,7 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
     bool exists = await context.Shelves.AnyAsync(s =>
       (id != null && s.Id == id) ||
       (!string.IsNullOrEmpty(name) && s.Name == name));
-    return Ok(new { exists });
+    return Ok(new { exists, });
   }
 
   [HttpGet("shelf/{id:long}")] public async Task<IActionResult> GetShelfById(long id)
@@ -114,10 +114,8 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
   {
     var rowShelf = await context.RowShelves.FindAsync(id);
     if (rowShelf is null) return NotFound("RowShelf not found.");
-
-    var books = context.Bookshelves.Where(b => b.RowShelfId == id);
-    context.Bookshelves.RemoveRange(books);
-
+    var books = context.BookInstances.Where(b => b.RowShelfId == id)
+                       .ExecuteUpdateAsync(setter => setter.SetProperty(b => b.RowShelfId, (int?)null));
     context.RowShelves.Remove(rowShelf);
     await context.SaveChangesAsync();
     return Ok($"RowShelf {id} and related BookShelves deleted.");
@@ -139,7 +137,7 @@ public class LibraryRoomController(AppDbContext context, ILogger<LibraryRoomCont
   [HttpGet("shelf/row/has-books/{rowShelfId}")]
   public async Task<IActionResult> HasBooksInRowShelf(long rowShelfId)
   {
-    bool hasBooks = await context.Bookshelves.AnyAsync(b => b.RowShelfId == rowShelfId);
+    var hasBooks = await context.BookInstances.AnyAsync(b => b.RowShelfId == rowShelfId);
     return Ok(new { rowShelfId, hasBooks });
   }
 }

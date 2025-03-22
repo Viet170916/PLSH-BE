@@ -23,7 +23,8 @@ namespace API.Controllers.BookControllers
     IAuthorService authorService,
     ILogger<BookController> logger,
     IHttpClientFactory httpClientFactory,
-    IMapper mapper
+    IMapper mapper,
+    IBookInstanceService bookInstanceService
   )
     : ControllerBase
   {
@@ -50,6 +51,7 @@ namespace API.Controllers.BookControllers
                               .Include(b => b.Authors)
                               .FirstOrDefaultAsync(b => b.Id == bookDto.Id.Value);
         }
+
         if (book is null)
         {
           var exists = await context.Books.AnyAsync(b =>
@@ -65,10 +67,12 @@ namespace API.Controllers.BookControllers
               Data = null,
             });
           }
+
           book = new Book { CreateDate = DateTime.UtcNow, };
           context.Books.Add(book);
         }
 
+        await bookInstanceService.AddBookInstancesIfNeeded(book.Id, bookDto.Quantity);
         IList<string> authorNames = new List<string>();
         if (bookDto.Authors is not null && bookDto.Authors.Any())
         {
@@ -83,6 +87,7 @@ namespace API.Controllers.BookControllers
                                           .Where(a => authorNames.Contains(a.FullName))
                                           .ToListAsync();
         }
+
         book.Title = bookDto.Title;
         book.Description = bookDto.Description;
         book.Authors = processedAuthors;

@@ -12,6 +12,7 @@ using VersOne.Epub;
 using System.IO.Compression;
 using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
+using VersOne.Epub.Options;
 
 namespace API.Controllers.ResourceControllers;
 
@@ -55,12 +56,12 @@ public class FileController(StorageClient storageClient, AppDbContext context) :
     var book = await context.Books.Include(b => b.EpubResource).FirstOrDefaultAsync(b => bookId == b.Id);
     if (book is null) return NotFound(new { message = "Book not found." });
     if (book.EpubResource is null) return NotFound(new { message = "Book Preview Resource not found.", });
-    if (book.EpubResource?.LocalUrl is null)
-      return NotFound(new { message = "Book Preview Resource not found.", });
+    if (book.EpubResource?.LocalUrl is null) return NotFound(new { message = "Book Preview Resource not found.", });
     try
     {
       var tempEpubPath = Path.Combine(Path.GetTempPath(), "book.epub");
-      await DownloadEpubFromGcs(book.EpubResource.LocalUrl, tempEpubPath);
+      var path = book.EpubResource.LocalUrl;
+      await DownloadEpubFromGcs(path, tempEpubPath);
       var epubBook = await EpubReader.ReadBookAsync(tempEpubPath);
       var allChapters = epubBook.ReadingOrder.ToList();
       if (chapter < 1 || chapter > allChapters.Count) { return BadRequest(new { message = "Chapter không hợp lệ." }); }

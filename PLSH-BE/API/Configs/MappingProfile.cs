@@ -19,11 +19,10 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src => src.Thumbnail))
       .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
       .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors))
-      .ReverseMap();
+      .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.BookInstances.Count));
     CreateMap<Category, CategoryDto>().ReverseMap();
     CreateMap<Author, AuthorDto>().ReverseMap();
     CreateMap<Book, BookDto>().ReverseMap();
     CreateMap<ResourceDto, Resource>().ReverseMap();
   }
 }
-

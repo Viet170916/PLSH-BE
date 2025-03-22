@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Model.Entity.book;
 
 namespace Model.Entity.LibraryRoom;
 
@@ -12,12 +13,10 @@ public class RowShelf
   public string? Description { get; set; }
   public long ShelfId { get; set; }
 
-  [NotMapped]
+  [ForeignKey("ShelfId")]
   public Shelf? Shelf { get; set; }
 
   public int? Position { get; set; }
   public int MaxCol { get; set; }
-
-  [NotMapped]
-  public List<Bookshelf> booksOnRowShelf { get; set; }
+  public List<BookInstance>? BookInstances { get; set; }
 }
