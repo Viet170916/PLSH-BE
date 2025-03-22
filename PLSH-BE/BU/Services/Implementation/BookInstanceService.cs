@@ -20,7 +20,7 @@ public class BookInstanceService(AppDbContext context) : IBookInstanceService
       if (additionalCount > 0)
       {
         var newInstances = Enumerable.Range(0, additionalCount)
-                                     .Select(_ => new BookInstance { BookId = (int)bookId, Code = GenerateCode() })
+                                     .Select(_ => new BookInstance { BookId = (int)bookId, Code = GenerateCode(), })
                                      .ToList();
         context.BookInstances.AddRange(newInstances);
         await context.SaveChangesAsync();
@@ -28,5 +28,5 @@ public class BookInstanceService(AppDbContext context) : IBookInstanceService
     }
   }
 
-  private string GenerateCode() { return new Random().Next(1000000000, int.MaxValue).ToString(); }
+  private static string GenerateCode() { return new Random().Next(1000000000, int.MaxValue).ToString(); }
 }
