@@ -32,7 +32,7 @@ public partial class LibraryRoomController
                  .ExecuteUpdateAsync(setter => setter.SetProperty(b => b.RowShelfId, (int?)null));
     context.RowShelves.Remove(rowShelf);
     await context.SaveChangesAsync();
-    return Ok($"RowShelf {id} and related BookShelves deleted.");
+    return Ok(new { Message = $"RowShelf {id} and related BookShelves deleted.", Success = true, });
   }
 
   public class RowShelfUpdate
