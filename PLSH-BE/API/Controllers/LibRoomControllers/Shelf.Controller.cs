@@ -28,10 +28,11 @@ public partial class LibraryRoomController
 
   [HttpGet("shelf/{id:long}")] public async Task<IActionResult> GetShelfById(long id)
   {
-    var shelf = await context.Shelves.FirstOrDefaultAsync(s => s.Id == id);
+    var shelf = await context.Shelves.Include(sh => sh.RowShelves).FirstOrDefaultAsync(s => s.Id == id);
     if (shelf is null) return NotFound("Shelf not found.");
     var rowShelves = await context.RowShelves.Where(r => r.ShelfId == shelf.Id).ToListAsync();
     shelf.RowShelves = rowShelves;
-    return Ok(shelf);
+    var shelfMapped = mapper.Map<LibraryRoomDto.ShelfDto>(shelf);
+    return Ok(new { ShelfBaseInfo = shelfMapped, rowShelves = shelfMapped.RowShelves, });
   }
 }

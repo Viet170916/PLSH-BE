@@ -1,6 +1,7 @@
 using API.Common;
 using API.Controllers.ResourceControllers;
 using API.DTO.Book;
+using API.DTO.LibRoomDto;
 using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.book.Dto;
@@ -36,6 +37,8 @@ public class MappingProfile : Profile
       .ReverseMap();
     CreateMap<Shelf, LibraryRoomDto.ShelfDto>()
       .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
+      .ReverseMap();
+    CreateMap<LibraryRoom, LibRoomDto.LibraryRoomDto>()
       .ReverseMap();
   }
 }
