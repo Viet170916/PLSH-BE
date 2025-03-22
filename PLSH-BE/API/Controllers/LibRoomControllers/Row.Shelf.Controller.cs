@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Model.Entity.book.Dto;
 using Model.Entity.LibraryRoom;
 
 namespace API.Controllers.LibRoomControllers;
@@ -19,7 +20,8 @@ public partial class LibraryRoomController
     var row = new RowShelf() { ShelfId = shelfId, MaxCol = 10, Position = position, };
     context.RowShelves.Add(row);
     await context.SaveChangesAsync();
-    return Ok(row);
+    var rowMap = mapper.Map<LibraryRoomDto.RowShelfDto>(row);
+    return Ok(rowMap);
   }
 
   [HttpDelete("shelf/row/delete/{id}")] public async Task<IActionResult> DeleteRowShelf(long id)
@@ -49,7 +51,8 @@ public partial class LibraryRoomController
     rowShelf.Description = updatedRowShelf.Description;
     rowShelf.MaxCol = updatedRowShelf.MaxCol;
     await context.SaveChangesAsync();
-    return Ok(rowShelf);
+    var rowMap = mapper.Map<LibraryRoomDto.RowShelfDto>(rowShelf);
+    return Ok(rowMap);
   }
 
   [HttpGet("shelf/row/has-books/{rowShelfId}")]
