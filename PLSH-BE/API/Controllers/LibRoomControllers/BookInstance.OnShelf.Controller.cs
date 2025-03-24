@@ -14,7 +14,9 @@ public partial class LibraryRoomController
     {
         if (bookInstancesDto == null || bookInstancesDto.Count == 0)
         {
-            return BadRequest("List of book instances cannot be empty.");
+            return BadRequest( new{
+                Message="List of book instances cannot be empty."
+            });
         }
 
         var updatedInstances = mapper.Map<List<BookInstance>>(bookInstancesDto);
@@ -70,13 +72,17 @@ public partial class LibraryRoomController
   {
     if (bookInstanceIds == null || bookInstanceIds.Count == 0)
     {
-      return BadRequest("List of book instance IDs cannot be empty.");
+      return BadRequest(new{
+          Message="List of book instance IDs cannot be empty."
+      });
     }
 
     var bookInstances = await context.BookInstances
                                      .Where(b => bookInstanceIds.Contains(b.Id))
                                      .ToListAsync();
-    if (!bookInstances.Any()) { return NotFound("No matching book instances found."); }
+    if (!bookInstances.Any()) { return NotFound(new{
+       Message= "No matching book instances found."
+    }); }
 
     foreach (var instance in bookInstances)
     {
@@ -96,7 +102,9 @@ public partial class LibraryRoomController
     var bookInstances = await context.BookInstances
                                      .Where(b => b.BookId == bookId && b.RowShelfId == rowShelfId)
                                      .ToListAsync();
-    if (!bookInstances.Any()) { return NotFound("No matching book instances found."); }
+    if (!bookInstances.Any()) { return NotFound(new{
+        Message="No matching book instances found."
+    }); }
 
     var bookInstanceDtos = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(bookInstances);
     return Ok(new { Message = "Book instances retrieved successfully.", Success = true, Data = bookInstanceDtos });

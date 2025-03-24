@@ -33,7 +33,7 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
 
   [HttpPost("upsert")] public async Task<IActionResult> UpsertLibraryRoomState([FromBody] LibraryRoom request)
   {
-    if (request is null) return BadRequest("Invalid data.");
+    if (request is null) return BadRequest(new { Message = "Invalid data." });
     var existingRoom = await context.LibraryRooms
                                     .FirstOrDefaultAsync();
     if (existingRoom is null)
@@ -66,5 +66,4 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
     await context.SaveChangesAsync();
     return Ok(request);
   }
-
 }

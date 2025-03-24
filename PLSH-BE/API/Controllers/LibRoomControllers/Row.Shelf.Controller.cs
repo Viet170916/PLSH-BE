@@ -11,7 +11,10 @@ public partial class LibraryRoomController
   public async Task<IActionResult> AddRowShelf(long shelfId)
   {
     var shelf = await context.Shelves.FindAsync(shelfId);
-    if (shelf is null) return NotFound("Shelf not found.");
+    if (shelf is null) return NotFound(new
+    {
+      Message="Shelf not found."
+    });
     var position = await context.RowShelves
                                 .Where(r => r.ShelfId == shelfId)
                                 .OrderByDescending(r => r.Position)
@@ -27,7 +30,10 @@ public partial class LibraryRoomController
   [HttpDelete("shelf/row/delete/{id}")] public async Task<IActionResult> DeleteRowShelf(long id)
   {
     var rowShelf = await context.RowShelves.FindAsync(id);
-    if (rowShelf is null) return NotFound("RowShelf not found.");
+    if (rowShelf is null) return NotFound(new
+    {
+      Message="RowShelf not found."
+    });
     await context.BookInstances.Where(b => b.RowShelfId == id)
                  .ExecuteUpdateAsync(setter => setter.SetProperty(b => b.RowShelfId, (int?)null));
     context.RowShelves.Remove(rowShelf);
@@ -46,7 +52,10 @@ public partial class LibraryRoomController
   public async Task<IActionResult> UpdateRowShelf(long id, [FromBody] RowShelfUpdate updatedRowShelf)
   {
     var rowShelf = await context.RowShelves.FindAsync(id);
-    if (rowShelf is null) return NotFound("RowShelf not found.");
+    if (rowShelf is null) return NotFound(new
+    {
+      Message="RowShelf not found."
+    });
     rowShelf.Name = updatedRowShelf.Name;
     rowShelf.Description = updatedRowShelf.Description;
     rowShelf.MaxCol = updatedRowShelf.MaxCol;

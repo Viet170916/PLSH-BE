@@ -19,7 +19,8 @@ public partial class LibraryRoomController
   [HttpGet("shelf/check")]
   public async Task<IActionResult> CheckShelfExists([FromQuery] int? id, [FromQuery] string? name)
   {
-    if (id == null && string.IsNullOrEmpty(name)) return BadRequest("Please provide an 'id' or 'name' to check.");
+    if (id == null && string.IsNullOrEmpty(name))
+      return BadRequest(new { Message = "Please provide an 'id' or 'name' to check." });
     var exists = await context.Shelves.AnyAsync(s =>
       (id != null && s.Id == id) ||
       (!string.IsNullOrEmpty(name) && s.Name == name));
@@ -29,7 +30,7 @@ public partial class LibraryRoomController
   [HttpGet("shelf/{id:long}")] public async Task<IActionResult> GetShelfById(long id)
   {
     var shelf = await context.Shelves.Include(sh => sh.RowShelves).FirstOrDefaultAsync(s => s.Id == id);
-    if (shelf is null) return NotFound("Shelf not found.");
+    if (shelf is null) return NotFound(new { Message = "Shelf not found." });
     var rowShelves = await context.RowShelves.Where(r => r.ShelfId == shelf.Id).ToListAsync();
     shelf.RowShelves = rowShelves;
     var shelfMapped = mapper.Map<LibraryRoomDto.ShelfDto>(shelf);
