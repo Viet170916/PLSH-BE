@@ -80,7 +80,7 @@
 //                 //Position = bookDto.Position,
 //                 PageCount = bookDto.PageCount,
 //                 CategoryId = bookDto.CategoryId,
-//                 IsbnNumber13 = bookDto.ISBNumber,
+//                 IsbNumber13 = bookDto.ISBNumber,
 //                 TotalCopies = bookDto.TotalCopies,
 //                 AvailableCopies = bookDto.AvailableCopies,
 //                 Price = bookDto.Price,
@@ -94,7 +94,7 @@
 //             // Sinh QR Code và lưu base64 vào sách
 //             var qrContent = $"Title: {book.Title}, " +
 //                 //$"Author: {book.Author}, " +
-//                 $"ISBNumber: {book.IsbnNumber13}";
+//                 $"ISBNumber: {book.IsbNumber13}";
 //             if (!string.IsNullOrEmpty(qrContent))
 //             {
 //                 var qrGenerator = new QRCodeGenerator();
@@ -253,7 +253,7 @@
 //                     //Author = bookAuthor,
 //                     Publisher = bookPublisher,
 //                     PublishDate = publishDate,
-//                     IsbnNumber13 = isbn,
+//                     IsbNumber13 = isbn,
 //                     Thumbnail = bookThumbnail,
 //                     CreateDate = DateTime.Now
 //                 };
@@ -415,7 +415,7 @@
 //                 existingBook.Language = bookDTO.Language ?? existingBook.Language;
 //                 //existingBook.Position = bookDTO.Position ?? existingBook.Position;
 //                 existingBook.PageCount = bookDTO.PageCount != 0 ? bookDTO.PageCount : existingBook.PageCount;
-//                 existingBook.IsbnNumber13 = bookDTO.ISBNumber ?? existingBook.IsbnNumber13;
+//                 existingBook.IsbNumber13 = bookDTO.ISBNumber ?? existingBook.IsbNumber13;
 //                 existingBook.TotalCopies = bookDTO.TotalCopies != 0 ? bookDTO.TotalCopies : existingBook.TotalCopies;
 //                 existingBook.AvailableCopies = bookDTO.AvailableCopies != 0 ? bookDTO.AvailableCopies : existingBook.AvailableCopies;
 //                 existingBook.Price = bookDTO.Price ?? existingBook.Price;
@@ -459,7 +459,7 @@
 //                     PageCount = existingBook.PageCount,
 //                     CategoryId = existingBook.CategoryId,
 //                     //CategoryName = existingBook.Category?.Name, // Lấy tên danh mục
-//                     ISBNumber = existingBook.IsbnNumber13,
+//                     ISBNumber = existingBook.IsbNumber13,
 //                     TotalCopies = existingBook.TotalCopies,
 //                     AvailableCopies = existingBook.AvailableCopies,
 //                     Price = existingBook.Price,
@@ -513,7 +513,7 @@
 //                         Id = b.Id,
 //                         Title = b.Title,
 //                        // Author = b.Author,
-//                         ISBNumber = b.IsbnNumber13,
+//                         ISBNumber = b.IsbNumber13,
 //                         //Category = new CategoryDTOResponse
 //                         //{
 //                         //    Id = b.Category.Id,
@@ -692,7 +692,7 @@
 //                         b.PublishDate,
 //                         b.Language,
 //                         b.PageCount,
-//                         ISBNumber13 = b.IsbnNumber13,
+//                         ISBNumber13 = b.IsbNumber13,
 //                         b.TotalCopies,
 //                         b.AvailableCopies,
 //                         b.Price,

@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250324182741_fix_field_name_2")]
+    partial class fix_field_name_2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1011,11 +1014,11 @@ namespace Data.Migrations
                     b.Property<bool?>("IsChecked")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("IsbNumber10")
+                    b.Property<string>("IsbnNumber10")
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");
 
-                    b.Property<string>("IsbNumber13")
+                    b.Property<string>("IsbnNumber13")
                         .HasMaxLength(13)
                         .HasColumnType("varchar(13)");
 

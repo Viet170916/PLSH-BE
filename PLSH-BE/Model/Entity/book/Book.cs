@@ -57,13 +57,13 @@ public class Book
   public int? CategoryId { get; set; }
 
   [MaxLength(13)]
-  public string? IsbnNumber13 { get; set; }
+  public string? IsbNumber13 { get; set; }
 
   [MaxLength(100)]
   public string? OtherIdentifier { get; set; }
 
   [MaxLength(10)]
-  public string? IsbnNumber10 { get; set; }
+  public string? IsbNumber10 { get; set; }
 
   public float? Rating { get; set; }
   public int? TotalCopies { get; set; }
