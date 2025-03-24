@@ -15,7 +15,7 @@ public sealed class BookInstance
 
   public int? RowShelfId { get; set; }
   public int? BookId { get; set; }
-  public int Position { get; set; }
+  public int? Position { get; set; }
   public DateTime? DeletedAt { get; set; }
   public DateTime CreatedAt { get; set; } = DateTime.Now;
   public int? BookIdRestore { get; set; }
