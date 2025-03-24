@@ -61,4 +61,6 @@ public partial class LibraryRoomController
     var hasBooks = await context.BookInstances.AnyAsync(b => b.RowShelfId == rowShelfId);
     return Ok(new { rowShelfId, hasBooks });
   }
+  
+  
 }

@@ -6,6 +6,7 @@ using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.book.Dto;
 using Model.Entity.LibraryRoom;
+using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
 using Profile = AutoMapper.Profile;
 
 namespace API.Configs;
@@ -38,7 +39,7 @@ public class MappingProfile : Profile
     CreateMap<Shelf, LibraryRoomDto.ShelfDto>()
       .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
       .ReverseMap();
-    CreateMap<LibraryRoom, LibRoomDto.LibraryRoomDto>()
+    CreateMap<LibraryRoom, LibraryRoomDto>()
       .ReverseMap();
   }
 }
