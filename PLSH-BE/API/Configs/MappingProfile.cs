@@ -31,6 +31,11 @@ public class MappingProfile : Profile
     CreateMap<BookInstance, LibraryRoomDto.BookInstanceDto>()
       .ForMember(dest => dest.BookId, opt => opt.MapFrom(src => src.BookId))
       .ForMember(dest => dest.RowShelfId, opt => opt.MapFrom(src => src.RowShelfId))
+      .ForMember(dest => dest.BookName, opt => opt.MapFrom(src => src.Book.Title))
+      .ForMember(dest => dest.BookVersion, opt => opt.MapFrom(src => src.Book.Version))
+      .ForMember(dest => dest.BookThumnail, opt => opt.MapFrom(src => src.Book.Thumbnail))
+      .ForMember(dest => dest.BookAuthor, opt => opt.MapFrom(src => src.Book.Authors.FirstOrDefault().FullName))
+      .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.Book.Category.Name))
       .ReverseMap();
     CreateMap<RowShelf, LibraryRoomDto.RowShelfDto>()
       .ForMember(dest => dest.BookInstances, opt => opt.MapFrom(src => src.BookInstances))
