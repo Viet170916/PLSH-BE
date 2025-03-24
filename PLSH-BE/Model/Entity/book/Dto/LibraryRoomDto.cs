@@ -10,7 +10,7 @@ public class LibraryRoomDto
     public int? BookId { get; set; }
     public int Position { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
   }
 
   public class RowShelfDto
