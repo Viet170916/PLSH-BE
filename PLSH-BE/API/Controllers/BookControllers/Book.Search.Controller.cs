@@ -133,8 +133,8 @@ public partial class BookController
         AudioResourceId = null,
         Version = null,
         CategoryId = 0,
-        IsbNumber13 = null,
-        IsbNumber10 = null,
+        IsbnNumber13 = null,
+        IsbnNumber10 = null,
         TotalCopies = 0,
         AvailableCopies = 0,
         Price = null,
@@ -160,8 +160,8 @@ public partial class BookController
           var idValue = idElem.GetString() ?? "";
           switch (type)
           {
-            case "ISBN_13": book.IsbNumber13 = idValue; break;
-            case "ISBN_10": book.IsbNumber10 = idValue; break;
+            case "ISBN_13": book.IsbnNumber13 = idValue; break;
+            case "ISBN_10": book.IsbnNumber10 = idValue; break;
             default: book.OtherIdentifier = idValue; break;
           }
         }

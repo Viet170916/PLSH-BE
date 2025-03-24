@@ -102,8 +102,8 @@ namespace API.Controllers.BookControllers
         book.PublishDate = bookDto.PublishDate;
         book.Language = bookDto.Language;
         book.PageCount = bookDto.PageCount ?? 0;
-        book.IsbNumber13 = bookDto.IsbnNumber13;
-        book.IsbNumber10 = bookDto.IsbnNumber10;
+        book.IsbnNumber13 = bookDto.IsbnNumber13;
+        book.IsbnNumber10 = bookDto.IsbnNumber10;
         book.OtherIdentifier = bookDto.OtherIdentifier;
         book.Price = bookDto.Price;
         book.TotalCopies = bookDto.TotalCopies ?? 0;

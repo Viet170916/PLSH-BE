@@ -18,8 +18,8 @@ public class MappingProfile : Profile
     CreateMap<Book, BookNewDto>()
       .ForMember(dest => dest.Thumbnail,
         opt => opt.MapFrom(src => src.Thumbnail ?? Converter.ToImageUrl(src.CoverImageResource.LocalUrl)))
-      .ForMember(dest => dest.IsbnNumber13, opt => opt.MapFrom(src => src.IsbNumber13))
-      .ForMember(dest => dest.IsbnNumber10, opt => opt.MapFrom(src => src.IsbNumber10))
+      .ForMember(dest => dest.IsbnNumber13, opt => opt.MapFrom(src => src.IsbnNumber13))
+      .ForMember(dest => dest.IsbnNumber10, opt => opt.MapFrom(src => src.IsbnNumber10))
       .ForMember(dest => dest.Thumbnail, opt => opt.MapFrom(src => src.Thumbnail))
       .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
       .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors))

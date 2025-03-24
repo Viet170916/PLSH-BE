@@ -1011,11 +1011,11 @@ namespace Data.Migrations
                     b.Property<bool?>("IsChecked")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("IsbNumber10")
+                    b.Property<string>("IsbnNumber10")
                         .HasMaxLength(10)
                         .HasColumnType("varchar(10)");
 
-                    b.Property<string>("IsbNumber13")
+                    b.Property<string>("IsbnNumber13")
                         .HasMaxLength(13)
                         .HasColumnType("varchar(13)");
 
