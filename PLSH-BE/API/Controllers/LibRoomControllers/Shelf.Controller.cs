@@ -33,7 +33,10 @@ public partial class LibraryRoomController
                              .Include(sh => sh.RowShelves)
                              .ThenInclude(rs => rs.BookInstances)!
                              .ThenInclude(bit => bit.Book)
-                             .ThenInclude(book => book.Category)
+                             .ThenInclude(book => book.Category).Include(sh => sh.RowShelves)
+                             .ThenInclude(rs => rs.BookInstances)!
+                             .ThenInclude(bit => bit.Book)
+                             .ThenInclude(book => book.CoverImageResource)
                              .FirstOrDefaultAsync(s => s.Id == id);
     if (shelf is null) return NotFound(new { Message = "Shelf not found." });
     var rowShelves = await context.RowShelves.Where(r => r.ShelfId == shelf.Id).ToListAsync();

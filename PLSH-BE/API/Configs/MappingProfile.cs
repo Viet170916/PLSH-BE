@@ -33,7 +33,8 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.RowShelfId, opt => opt.MapFrom(src => src.RowShelfId))
       .ForMember(dest => dest.BookName, opt => opt.MapFrom(src => src.Book.Title))
       .ForMember(dest => dest.BookVersion, opt => opt.MapFrom(src => src.Book.Version))
-      .ForMember(dest => dest.BookThumnail, opt => opt.MapFrom(src => src.Book.Thumbnail))
+      .ForMember(dest => dest.BookThumbnail,
+        opt => opt.MapFrom(src => src.Book.Thumbnail ?? Converter.ToImageUrl(src.Book.CoverImageResource.LocalUrl)))
       .ForMember(dest => dest.BookAuthor, opt => opt.MapFrom(src => src.Book.Authors.FirstOrDefault().FullName))
       .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.Book.Category.Name))
       .ReverseMap();

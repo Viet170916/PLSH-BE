@@ -7,11 +7,11 @@ public class LibraryRoomDto
     public int Id { get; set; }
     public string? Code { get; set; }
     public int? RowShelfId { get; set; }
-    public int? BookName { get; set; }
-    public int? BookThumnail { get; set; }
-    public int? BookVersion { get; set; }
-    public int? BookAuthor { get; set; }
-    public int? BookCategory { get; set; }
+    public string? BookName { get; set; }
+    public string? BookThumbnail { get; set; }
+    public string? BookVersion { get; set; }
+    public string? BookAuthor { get; set; }
+    public string? BookCategory { get; set; }
     public int? BookId { get; set; }
     public int Position { get; set; }
     public DateTime? DeletedAt { get; set; }
