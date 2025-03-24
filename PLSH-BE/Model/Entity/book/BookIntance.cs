@@ -13,7 +13,7 @@ public sealed class BookInstance
   [MaxLength(10)]
   public string? Code { get; set; }
 
-  public int? RowShelfId { get; set; }
+  public long? RowShelfId { get; set; }
   public int? BookId { get; set; }
   public int? Position { get; set; }
   public DateTime? DeletedAt { get; set; }
@@ -23,6 +23,6 @@ public sealed class BookInstance
   [ForeignKey("BookId")]
   public Book Book { get; set; } = null!;
 
-  [ForeignKey("ShelfId")]
+  [ForeignKey("RowShelfId")]
   public RowShelf? RowShelf { get; set; }
 }
