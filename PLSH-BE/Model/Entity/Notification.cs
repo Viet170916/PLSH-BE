@@ -17,5 +17,5 @@ public class Notification
   public int Reference { get; set; } = 0; //(loại thông báo cho chức năng gì)
   public int AccountId { get; set; }
 
-  //public virtual Account Account { get; set; }
+  //public virtual AccountControllers AccountControllers { get; set; }
 }

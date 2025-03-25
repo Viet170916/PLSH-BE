@@ -1,11 +1,11 @@
 using API.Common;
 using API.Controllers.ResourceControllers;
+using API.DTO.Account.AccountDTO;
 using API.DTO.Book;
-using API.DTO.LibRoomDto;
 using Model.Entity;
 using Model.Entity.book;
-using Model.Entity.book.Dto;
 using Model.Entity.LibraryRoom;
+using Model.Entity.User;
 using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
 using Profile = AutoMapper.Profile;
 
@@ -49,6 +49,10 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
       .ReverseMap();
     CreateMap<LibraryRoom, LibraryRoomDto>()
+      .ReverseMap();
+    CreateMap<Account, AccountGDto>()
+      .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
+      .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
       .ReverseMap();
   }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Model.Entity.LibraryRoom;
 
 namespace Model.Entity.book;
@@ -20,9 +21,11 @@ public sealed class BookInstance
   public DateTime CreatedAt { get; set; } = DateTime.Now;
   public int? BookIdRestore { get; set; }
 
+  [JsonIgnore]
   [ForeignKey("BookId")]
   public Book Book { get; set; } = null!;
 
+  [JsonIgnore]
   [ForeignKey("RowShelfId")]
   public RowShelf? RowShelf { get; set; }
 }

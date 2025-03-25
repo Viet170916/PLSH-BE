@@ -173,7 +173,7 @@ namespace API.Controllers
     //    if (borrowing == null)
     //        return NotFound("Không tìm thấy thông tin mượn sách.");
 
-    //    var account = borrowing.Loan?.Account;
+    //    var account = borrowing.Loan?.AccountControllers;
     //    if (account == null)
     //        return BadRequest("Không tìm thấy tài khoản của người mượn.");
 
@@ -228,7 +228,7 @@ namespace API.Controllers
     //    var overdueBooks = await _context.BookBorrowings
     //        .Where(bb => bb.ReturnDate < DateTime.UtcNow && bb.BorrowingStatus == BorrowingStatus.Borrowed)
     //        .Include(bb => bb.Loan)
-    //        .ThenInclude(l => l.Account)
+    //        .ThenInclude(l => l.AccountControllers)
     //        .ToListAsync();
 
     //    foreach (var borrowing in overdueBooks)
@@ -236,7 +236,7 @@ namespace API.Controllers
     //        borrowing.BorrowingStatus = BorrowingStatus.Overdue;
     //        borrowing.isFined = true;
     //        borrowing.FineType = FineType.LateReturn;
-    //        await SendNotification(borrowing.Loan.Account.Id, "Thông báo: Bạn bị phạt do trả sách muộn",
+    //        await SendNotification(borrowing.Loan.AccountControllers.Id, "Thông báo: Bạn bị phạt do trả sách muộn",
     //            $"Sách '{borrowing.BookDetail?.StatusDescription}' đã quá hạn. Bạn sẽ bị tính phí phạt.");
     //    }
 

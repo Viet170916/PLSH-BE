@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Model.Entity;
+namespace Model.Entity.User;
 
 public class Librarian
 {

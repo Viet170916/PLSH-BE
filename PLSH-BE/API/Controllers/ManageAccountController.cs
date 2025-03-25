@@ -26,7 +26,7 @@ namespace API.Controllers
             var account = await _context.Accounts.FindAsync(id);
             if (account == null)
             {
-                _logger.LogWarning($"Account with ID {id} not found.");
+                _logger.LogWarning($"AccountControllers with ID {id} not found.");
                 return NotFound(new { message = "Tài khoản không tồn tại" });
             }
             return Ok(account);
@@ -41,7 +41,7 @@ namespace API.Controllers
         //        return BadRequest(ModelState);
         //    }
 
-        //    var account = new Account
+        //    var account = new AccountControllers
         //    {
         //        Email = accountDto.Email,
         //        FullName = accountDto.FullName,

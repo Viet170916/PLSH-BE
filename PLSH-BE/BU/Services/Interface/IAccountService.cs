@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Model.Entity;
+using Model.Entity.User;
 
 namespace BU.Services.Interface;
 

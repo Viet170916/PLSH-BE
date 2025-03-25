@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Model.Entity;
+using Model.Entity.User;
 using Model.ResponseModel;
 using Newtonsoft.Json;
 
@@ -32,7 +33,7 @@ public class AuthController(
   IEmailService emailService,
   IOTPService otpService,
   RedisService redisService,
-  Microsoft.Extensions.Configuration.IConfiguration configuration
+  IConfiguration configuration
 ) : Controller
 {
   private readonly EmailSettings _emailSettings = configuration.GetSection("EmailSettings").Get<EmailSettings>();

@@ -21,6 +21,7 @@ using API.DTO.ReserveBook;
 using Common.Enums;
 using Microsoft.AspNetCore.Http;
 using Model.Entity;
+using Model.Entity.User;
 
 namespace API.Controllers
 {

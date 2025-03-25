@@ -12,7 +12,7 @@ namespace API.DTO.BookReview
         public int BookId { get; set; }
 
         [Required]
-        [ForeignKey("Account")]
+        [ForeignKey("AccountControllers")]
         public int AccountId { get; set; }  // Người dùng đã đánh giá
 
         [Required]

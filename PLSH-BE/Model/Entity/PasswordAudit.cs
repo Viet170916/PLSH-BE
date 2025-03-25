@@ -17,6 +17,6 @@ namespace Model.Entity
 
     public DateTime ChangedAt { get; set; } = DateTime.UtcNow; // Thời điểm thay đổi mật khẩu
 
-    //public virtual Account? Account { get; set; }
+    //public virtual AccountControllers? AccountControllers { get; set; }
   }
 }

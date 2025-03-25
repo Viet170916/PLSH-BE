@@ -16,7 +16,7 @@ namespace Model.Entity
 
 
         //[ForeignKey("AccountId")]
-        ////public Account? Account { get; set; }
+        ////public AccountControllers? AccountControllers { get; set; }
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Common.Enums;
 using Model.Entity.book.Dto;
 
@@ -20,24 +21,11 @@ public class Book
   [ForeignKey("BookAuthor")]
   public long? BookAuthorId { get; set; }
 
-  public ICollection<Author>? Authors { get; set; }
   public AvailabilityKind? Kind { get; set; }
   public int? CoverImageResourceId { get; set; } //Anh bia
   public int? PreviewPdfResourceId { get; set; }
   public int? AudioResourceId { get; set; }
   public int? EpubResourceId { get; set; }
-
-  [ForeignKey("CoverImageResourceId")]
-  public Resource? CoverImageResource { get; set; }
-
-  [ForeignKey("EpubResourceId")]
-  public Resource? EpubResource { get; set; }
-
-  [ForeignKey("PreviewPdfResourceId")]
-  public Resource? PreviewPdfResource { get; set; }
-
-  [ForeignKey("AudioResourceId")]
-  public Resource? AudioResource { get; set; }
 
   [MaxLength(30)]
   public string? Version { get; set; }
@@ -92,5 +80,21 @@ public class Book
   [NotMapped]
   public BookAvailabilityDto? BookStatus { get; set; }
 
+  [ForeignKey("CoverImageResourceId")]
+  public Resource? CoverImageResource { get; set; }
+
+  [ForeignKey("EpubResourceId")]
+  public Resource? EpubResource { get; set; }
+
+  [ForeignKey("PreviewPdfResourceId")]
+  public Resource? PreviewPdfResource { get; set; }
+
+  [ForeignKey("AudioResourceId")]
+  public Resource? AudioResource { get; set; }
+
+  [JsonIgnore]
+  public ICollection<Author>? Authors { get; set; }
+
+  [JsonIgnore]
   public ICollection<BookInstance>? BookInstances { get; set; } = new List<BookInstance>();
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Common.Enums;
 using Model.Entity;
+using Model.Entity.User;
 
 namespace API.DTO.Loan
 {

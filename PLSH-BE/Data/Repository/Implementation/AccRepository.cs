@@ -1,7 +1,7 @@
 ﻿using Data.DatabaseContext;
 using Model.Entity;
 using Microsoft.EntityFrameworkCore;
-
+using Model.Entity.User;
 
 namespace Data.Repository.Implementation
 {

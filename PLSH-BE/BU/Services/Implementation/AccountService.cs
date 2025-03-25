@@ -9,6 +9,7 @@ using Data.UnitOfWork;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
+using Model.Entity.User;
 
 namespace BU.Services.Implementation;
 
@@ -39,7 +40,7 @@ public class AccountService : IAccountService
         return user;
     }
 
-    //public async Task<Account?> GetUserByEmailAsync(string email)
+    //public async Task<AccountControllers?> GetUserByEmailAsync(string email)
     //{
     //    return await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
     //}
@@ -62,7 +63,7 @@ public class AccountService : IAccountService
         return await _context.Accounts.FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
     }
 
-    //Check Account qu� 90 ng�y th� ph?i ??i m?t kh?u
+    //Check AccountControllers qu� 90 ng�y th� ph?i ??i m?t kh?u
     public async Task<bool> IsPasswordExpiredAsync(int accountId)
     {
         var lastPasswordChange = await _context.PasswordAudits
@@ -80,7 +81,7 @@ public class AccountService : IAccountService
 
         if (existingUser == null)
         {
-            throw new InvalidOperationException($"Account with ID {user.Id} does not exist.");
+            throw new InvalidOperationException($"AccountControllers with ID {user.Id} does not exist.");
         }
 
         // Update the fields of the existing account

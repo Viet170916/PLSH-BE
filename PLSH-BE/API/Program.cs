@@ -95,7 +95,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseMySql(dbConnectionString,
       ServerVersion.AutoDetect(dbConnectionString)),
   ServiceLifetime.Scoped);
-// builder.Services.AddIdentity<Account, Role>()
+// builder.Services.AddIdentity<AccountControllers, Role>()
 //        .AddEntityFrameworkStores<AppDbContext>()
 //        .AddDefaultTokenProviders();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -132,14 +132,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            }
          };
        });
-builder.Services.AddAuthorization(options =>
-{
-  options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
-});
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+       {
+         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+       });
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigureEmailService();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

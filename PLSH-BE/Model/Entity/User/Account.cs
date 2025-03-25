@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
-namespace Model.Entity;
+namespace Model.Entity.User;
 
 public class Account
 {
@@ -39,12 +40,12 @@ public class Account
   public string? GoogleUserId { get; set; }
 
   public bool IsVerified { get; set; } = false;
-  public int Status { get; set; } = 0; //(chờ duyệt, đã duyệt, bị từ chối)
+  public int Status { get; set; } = 0;
   public DateTime CreatedAt { get; set; }
   public DateTime? UpdatedAt { get; set; }
   public DateTime? DeletedAt { get; set; }
   public long CardMemberNumber { get; set; } = GenerateUniqueId();
-  public int CardMemberStatus { get; set; } = 0; //(chưa kích hoạt, đang chờ duyệt, đã kích hoạt, tạm khoá, đã huỷ )
+  public int CardMemberStatus { get; set; } = 0;
   public DateTime CardMemberExpiredDate { get; set; } = DateTime.Now;
 
   [MaxLength(255)]
@@ -60,4 +61,7 @@ public class Account
 
   public int FailedLoginAttempts { get; set; } = 0; // Đếm số lần đăng nhập sai
   public DateTime? LockoutEnd { get; set; } = null; // Thời gian khóa tài khoản (nếu có)
+
+  [JsonIgnore]
+  public Role Role { get; set; }
 }

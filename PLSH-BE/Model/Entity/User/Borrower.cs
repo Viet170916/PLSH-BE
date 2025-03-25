@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
 
-namespace Model.Entity;
+namespace Model.Entity.User;
 
 public class Borrower
 {
@@ -20,7 +19,7 @@ public class Borrower
   public int FavoriteId { get; set; }
   public int LoanId { get; set; }
 
-  //public virtual Account Account { get; set; }
+  //public virtual AccountControllers AccountControllers { get; set; }
   //public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
   //public virtual ICollection<Loan> Loans { get; set; } = new List<Loan>();
 }

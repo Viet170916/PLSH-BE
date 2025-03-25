@@ -5,6 +5,7 @@ using Model;
 using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.LibraryRoom;
+using Model.Entity.User;
 
 namespace Data.DatabaseContext;
 
@@ -63,6 +64,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     modelBuilder.Entity<Book>()
                 .HasMany(b => b.Authors)
                 .WithMany(a => a.Books)
@@ -75,16 +77,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .IsUnique(false)
                 .HasAnnotation("MySql:FullTextIndex", true);
 
-    // Profile - Account (1 - 1)
+    // Profile - AccountControllers (1 - 1)
     //modelBuilder.Entity<Profile>()
-    //    .HasOne(p => p.Account)
+    //    .HasOne(p => p.AccountControllers)
     //    .WithOne(a => a.Profile)
     //    .HasForeignKey<Profile>(p => p.AccountId)
     //    .OnDelete(DeleteBehavior.Cascade);
 
-    //// PasswordAudit - Account (1 - N)
+    //// PasswordAudit - AccountControllers (1 - N)
     //modelBuilder.Entity<PasswordAudit>()
-    //    .HasOne(p => p.Account)
+    //    .HasOne(p => p.AccountControllers)
     //    .WithMany(a => a.PasswordAudits)
     //    .HasForeignKey(p => p.AccountId)
     //    .OnDelete(DeleteBehavior.Cascade);
@@ -137,8 +139,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     //    .HasForeignKey(bb => bb.BookDetailId)
     //    .OnDelete(DeleteBehavior.Restrict);
 
-    //// Account - Role (N - 1)
-    //modelBuilder.Entity<Account>()
+    //// AccountControllers - Role (N - 1)
+    //modelBuilder.Entity<AccountControllers>()
     //    .HasOne(a => a.Role)
     //    .WithMany(r => r.Accounts)
     //    .HasForeignKey(a => a.RoleId)
@@ -151,9 +153,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     //    .HasForeignKey(bd => bd.BookId)
     //    .OnDelete(DeleteBehavior.Cascade);
 
-    //// Notification - Account (N - 1)
+    //// Notification - AccountControllers (N - 1)
     //modelBuilder.Entity<Notification>()
-    //    .HasOne(n => n.Account)
+    //    .HasOne(n => n.AccountControllers)
     //    .WithMany(a => a.Notifications)
     //    .HasForeignKey(n => n.AccountId)
     //    .OnDelete(DeleteBehavior.Cascade);
@@ -172,7 +174,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     //    .WithOne(bl => bl.Bookshelf);
 
     //modelBuilder.Entity<Borrower>()
-    //     .HasOne(b => b.Account)
+    //     .HasOne(b => b.AccountControllers)
     //     .WithOne(a => a.Borrower)
     //     .HasForeignKey<Borrower>(b => b.AccountId)
     //     .OnDelete(DeleteBehavior.Cascade);

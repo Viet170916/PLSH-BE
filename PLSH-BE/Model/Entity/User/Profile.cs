@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Model.Entity
+namespace Model.Entity.User
 {
   public class Profile
   {
@@ -32,6 +27,6 @@ namespace Model.Entity
     public DateTime? UpdatedAt { get; set; }
     public int AccountId { get; set; }
 
-    //public virtual Account Account { get; set; } 
+    //public virtual AccountControllers AccountControllers { get; set; } 
   }
 }

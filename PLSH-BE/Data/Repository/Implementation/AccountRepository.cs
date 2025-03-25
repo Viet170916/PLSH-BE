@@ -4,6 +4,7 @@ using Data.Repository.Interfaces;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
+using Model.Entity.User;
 
 namespace Data.Repository.Implementation;
 
