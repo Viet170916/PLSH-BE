@@ -93,6 +93,7 @@ public class AuthController(
         Message = "Unauthorized access.",
       });
     }
+    
   }
 
   [AllowAnonymous] [HttpPost("login")] public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
