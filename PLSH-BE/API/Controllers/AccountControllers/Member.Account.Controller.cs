@@ -109,7 +109,7 @@ public partial class AccountController
     };
   }
 
-  [HttpPut("member/{accountId:int}")]
+  [HttpGet("member/{accountId:int}")]
   public async Task<BaseResponse<AccountDto>> GetAccountByIdAsync([FromRoute] int accountId)
   {
     var account = await context.Accounts.FindAsync(accountId);
