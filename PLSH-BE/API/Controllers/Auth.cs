@@ -95,14 +95,11 @@ public class AuthController(
     }
   }
 
-  //Login b?ng email và password
   [AllowAnonymous] [HttpPost("login")] public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
   {
     try
     {
       logger.LogInformation($">>>>>>>Request: /api/v1/auth/login...............");
-
-      // Kiểm tra tài khoản có bị khóa không
       var user = await accountService.GetUserByEmailAsync(request.Email);
       if (user == null)
       {
@@ -115,7 +112,6 @@ public class AuthController(
         });
       }
 
-      // Kiểm tra tài khoản có đang bị khóa không
       if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
       {
         return Ok(new ErrorResponse
@@ -127,7 +123,6 @@ public class AuthController(
         });
       }
 
-      // Xác thực mật khẩu
       var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
       if (!isPasswordValid)
       {
