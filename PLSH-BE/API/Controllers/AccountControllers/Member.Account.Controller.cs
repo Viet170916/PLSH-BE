@@ -5,6 +5,7 @@ using Model.Entity.User;
 using System.Linq.Dynamic.Core;
 using API.DTO;
 using API.DTO.Account.AccountDTO;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API.Controllers.AccountControllers;
 
@@ -75,21 +76,28 @@ public partial class AccountController
     return Ok(result);
   }
 
-  [HttpPut("member/update/{accountId:int}")]
-  public async Task<BaseResponse<AccountDto>> UpdateAccountAsync(
-    [FromRoute] int accountId,
-    [FromBody] AccountDto updateDto
+  [HttpPut("member/update")] public async Task<IActionResult> UpdateAccountAsync(
+    [FromBody] AccountGDto updateDto
   )
   {
-    var account = await context.Accounts.FindAsync(accountId);
-    if (account == null) { return new BaseResponse<AccountDto> { message = "Account not found", status = "error" }; }
+    var account = await context.Accounts.FindAsync(updateDto.Id);
+    if (account == null)
+    {
+      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+    }
+
+    var roleId = context.Roles.FirstOrDefault(r => r.Name == updateDto.Role)?.Id;
+    if (roleId is null)
+    {
+      return BadRequest(new { Message = $"Hệ thống không hỗ trợ người dùng này {updateDto.Role}", });
+    }
 
     if (!string.IsNullOrEmpty(updateDto.Email) && updateDto.Email != account.Email)
     {
       var existingAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Email == updateDto.Email);
       if (existingAccount != null)
       {
-        return new BaseResponse<AccountDto> { message = "Email is already in use", status = "error" };
+        return BadRequest(new BaseResponse<AccountGDto> { message = "Email is already in use", status = "error" });
       }
 
       var generatedPassword = GenerateRandomPassword();
@@ -101,24 +109,29 @@ public partial class AccountController
 
     mapper.Map(updateDto, account);
     account.UpdatedAt = DateTime.UtcNow;
+    account.RoleId = (int)roleId;
     context.Accounts.Update(account);
     await context.SaveChangesAsync();
-    return new BaseResponse<AccountDto>
+    return Ok(new BaseResponse<AccountGDto>
     {
-      message = "Account updated successfully", data = mapper.Map<AccountDto>(account), status = "success",
-    };
+      message = "Account updated successfully", data = mapper.Map<AccountGDto>(account), status = "success",
+    });
   }
 
-  [HttpGet("member/{accountId:int}")]
-  public async Task<BaseResponse<AccountDto>> GetAccountByIdAsync([FromRoute] int accountId)
+  [HttpGet("member/{accountId:int}")] public async Task<IActionResult> GetAccountByIdAsync([FromRoute] int accountId)
   {
-    var account = await context.Accounts.FindAsync(accountId);
-    return account == null ?
-      new BaseResponse<AccountDto> { message = "Account not found", status = "error" } :
-      new BaseResponse<AccountDto>
-      {
-        message = "Account retrieved successfully", data = mapper.Map<AccountDto>(account), status = "success"
-      };
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(m=>m.Id == accountId);
+    if (account == null)
+    {
+      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+    }
+
+    return Ok(new BaseResponse<AccountGDto>
+    {
+      message = "Account retrieved successfully", data = mapper.Map<AccountGDto>(account), status = "success"
+    });
   }
 
   private static string GenerateRandomPassword() { return Guid.NewGuid().ToString()[..8]; }

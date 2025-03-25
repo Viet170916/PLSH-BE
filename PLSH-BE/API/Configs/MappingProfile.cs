@@ -53,6 +53,7 @@ public class MappingProfile : Profile
     CreateMap<Account, AccountGDto>()
       .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-      .ReverseMap();
+      .ReverseMap()
+      .ForMember(des => des.Role, opt => opt.Ignore());
   }
 }
