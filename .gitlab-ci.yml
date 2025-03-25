@@ -1,6 +1,7 @@
 stages:
   - build
   - deploy
+  - test
 
 variables:
   DOTNET_VERSION: 8.0
@@ -93,4 +94,8 @@ deploy_be:
       when: always
     - if: '$CI_COMMIT_REF_NAME == "server/develop"'
       when: always
+sast:
+  stage: test
+include:
+- template: Security/SAST.gitlab-ci.yml
 
