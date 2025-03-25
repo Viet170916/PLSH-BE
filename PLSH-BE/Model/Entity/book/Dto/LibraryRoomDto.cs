@@ -13,7 +13,7 @@ public class LibraryRoomDto
     public string? BookAuthor { get; set; }
     public string? BookCategory { get; set; }
     public int? BookId { get; set; }
-    public int Position { get; set; }
+    public int? Position { get; set; }
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
   }
