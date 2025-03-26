@@ -64,4 +64,6 @@ public class Account
 
   [JsonIgnore]
   public Role Role { get; set; }
+
+  public string? ClassRoom { get; set; }
 }

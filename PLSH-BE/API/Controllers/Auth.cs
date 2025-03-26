@@ -420,7 +420,6 @@ public class AuthController(
     }
     catch (Exception ex)
     {
-      // Log lỗi nếu cần
       return StatusCode(500, new { Message = "Đã xảy ra lỗi trong quá trình đăng ký", Error = ex.Message });
     }
   }

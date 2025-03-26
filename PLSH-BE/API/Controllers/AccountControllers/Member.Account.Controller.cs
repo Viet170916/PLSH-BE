@@ -50,27 +50,46 @@ public partial class AccountController
     [FromQuery] int page = 1,
     [FromQuery] int limit = 10,
     [FromQuery] string orderBy = "FullName",
-    [FromQuery] string orderDirection = "asc"
+    [FromQuery] string orderDirection = "asc",
+    [FromQuery] string? keyword = null,
+    [FromQuery] string? role = null,
+    [FromQuery] string? accountStatus = null,
+    [FromQuery] string? approveStatus = null
   )
   {
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
     if (limit > 100) limit = 100;
-    var allowedOrderFields = new List<string> { "FullName", "Email", "CreatedAt", };
+    var allowedOrderFields = new List<string> { "FullName", "Email", "CreatedAt" };
     if (!allowedOrderFields.Contains(orderBy))
     {
       return BadRequest(new { Message = $"orderBy phải là một trong: {string.Join(", ", allowedOrderFields)}" });
     }
 
-    var query = context.Accounts
-                       .Include(a => a.Role)
-                       .AsQueryable();
+    var query = context.Accounts.Include(a => a.Role).AsQueryable();
+
+    // Áp dụng bộ lọc
+    if (!string.IsNullOrEmpty(keyword))
+    {
+      query = query.Where(a => a.FullName.Contains(keyword) || a.Email.Contains(keyword));
+    }
+
+    if (!string.IsNullOrEmpty(role)) { query = query.Where(a => a.Role.Name == role); }
+
+    if (!string.IsNullOrEmpty(accountStatus))
+    {
+      query = accountStatus switch
+      {
+        "isVerify" => query.Where(a => a.IsVerified),
+        "notVerify" => query.Where(a => !a.IsVerified),
+        _ => query
+      };
+    }
+
+    // if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(a => a.Status == approveStatus); }
     query = query.OrderBy($"{orderBy} {orderDirection}");
     var totalCount = await query.CountAsync();
-    var members = await query
-                        .Skip((page - 1) * limit)
-                        .Take(limit)
-                        .ToListAsync();
+    var members = await query.Skip((page - 1) * limit).Take(limit).ToListAsync();
     var membersDto = mapper.Map<List<AccountGDto>>(members);
     var result = new { Data = membersDto, Count = totalCount, Page = page, Limit = limit };
     return Ok(result);
@@ -122,7 +141,7 @@ public partial class AccountController
   {
     var account = await context.Accounts
                                .Include(a => a.Role)
-                               .FirstOrDefaultAsync(m=>m.Id == accountId);
+                               .FirstOrDefaultAsync(m => m.Id == accountId);
     if (account == null)
     {
       return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
