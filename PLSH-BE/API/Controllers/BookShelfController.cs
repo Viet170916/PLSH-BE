@@ -147,7 +147,7 @@ namespace API.Controllers
         //     }
         //     else
         //     {
-        //         return NotFound("No previous location found for this book.");
+        //         return NotFound("No previous location found for this Book.");
         //     }
         // }
         //
@@ -181,16 +181,16 @@ namespace API.Controllers
         //
         //     for (int i = 0; i < booksInShelves.Count; i++)
         //     {
-        //         var book = booksInShelves[i];
-        //        // worksheet.Cells[i + 2, 1].Value = book.BookshelfId;
-        //         //worksheet.Cells[i + 2, 2].Value = book.BookshelfName;
-        //         //worksheet.Cells[i + 2, 3].Value = book.BookId;
-        //         //worksheet.Cells[i + 2, 4].Value = book.BookTitle;
-        //         //worksheet.Cells[i + 2, 5].Value = book.Author;
-        //         //worksheet.Cells[i + 2, 6].Value = book.Publisher;
-        //         //worksheet.Cells[i + 2, 7].Value = book.PublishYear;
-        //         ////worksheet.Cells[i + 2, 8].Value = book.Category;
-        //         //worksheet.Cells[i + 2, 9].Value = book.AvailableCopies;
+        //         var Book = booksInShelves[i];
+        //        // worksheet.Cells[i + 2, 1].Value = Book.BookshelfId;
+        //         //worksheet.Cells[i + 2, 2].Value = Book.BookshelfName;
+        //         //worksheet.Cells[i + 2, 3].Value = Book.BookId;
+        //         //worksheet.Cells[i + 2, 4].Value = Book.BookTitle;
+        //         //worksheet.Cells[i + 2, 5].Value = Book.Author;
+        //         //worksheet.Cells[i + 2, 6].Value = Book.Publisher;
+        //         //worksheet.Cells[i + 2, 7].Value = Book.PublishYear;
+        //         ////worksheet.Cells[i + 2, 8].Value = Book.Category;
+        //         //worksheet.Cells[i + 2, 9].Value = Book.AvailableCopies;
         //     }
         //
         //     var stream = new MemoryStream();

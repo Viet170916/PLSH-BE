@@ -11,14 +11,14 @@ namespace API.Controllers.ResourceControllers;
 
 [Route("api/v1/resource")]
 [ApiController]
-public class ResourceController(
+public partial class ResourceController(
   AppDbContext context,
   ILogger<ResourceController> logger,
   IMapper mapper,
   GoogleCloudStorageHelper googleCloudStorageHelper
 ) : Controller
 {
-  [HttpPost("book/upload/{bookId}")]
+  [HttpPost("Book/upload/{bookId}")]
   public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, [FromRoute] int bookId)
   {
     var book = await context.Books.FindAsync(bookId);

@@ -29,7 +29,7 @@ public class GenAIService : IGenAIService
 
             var request = new
             {
-                prompt = new { text = $"Recommend books based on the following book IDs: {bookIds}" },
+                prompt = new { text = $"Recommend books based on the following Book IDs: {bookIds}" },
                 temperature = 0.7
             };
 

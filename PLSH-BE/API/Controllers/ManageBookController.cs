@@ -60,8 +60,8 @@
 //        {
 //            try
 //            {
-//                var book = _context.Books.Find(id);
-//                if (book == null)
+//                var Book = _context.Books.Find(id);
+//                if (Book == null)
 //                {
 //                    return NotFound(new OkResponse
 //                    {
@@ -77,15 +77,15 @@
 //                    Message = "Book retrieved successfully",
 //                    StatusCode = HttpStatus.OK,
 //                    Status = HttpStatus.OK.ToString(),
-//                    Data = book
+//                    Data = Book
 //                });
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while retrieving the book.");
+//                _logger.LogError(ex, "An error occurred while retrieving the Book.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while retrieving the book",
+//                    Message = "An error occurred while retrieving the Book",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,
@@ -134,7 +134,7 @@
 //                else
 //                {
 //                    // Nếu sách chưa tồn tại, thêm sách mới
-//                    var book = new Book
+//                    var Book = new Book
 //                    {
 //                        Title = bookDto.Title,
 //                        Author = bookDto.Author,
@@ -154,7 +154,7 @@
 //                        UpdateDate = DateTime.Now
 //                    };
 
-//                    _context.Books.Add(book);
+//                    _context.Books.Add(Book);
 //                    _context.SaveChanges();
 
 //                    return Ok(new OkResponse
@@ -162,16 +162,16 @@
 //                        Message = "Book added successfully",
 //                        StatusCode = HttpStatus.OK,
 //                        Status = HttpStatus.OK.ToString(),
-//                        Data = book
+//                        Data = Book
 //                    });
 //                }
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while adding the book.");
+//                _logger.LogError(ex, "An error occurred while adding the Book.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while adding the book",
+//                    Message = "An error occurred while adding the Book",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,
@@ -186,8 +186,8 @@
 //        {
 //            try
 //            {
-//                var book = _context.Books.Find(id);
-//                if (book == null)
+//                var Book = _context.Books.Find(id);
+//                if (Book == null)
 //                {
 //                    return NotFound(new OkResponse
 //                    {
@@ -198,13 +198,13 @@
 //                    });
 //                }
 
-//                book.Title = bookDto.Title;
-//                book.Author = bookDto.Author;
-//                book.Description = bookDto.Description;         
-//                book.PublishDate = bookDto.PublishDate;
-//                book.UpdateDate = DateTime.Now;
+//                Book.Title = bookDto.Title;
+//                Book.Author = bookDto.Author;
+//                Book.Description = bookDto.Description;         
+//                Book.PublishDate = bookDto.PublishDate;
+//                Book.UpdateDate = DateTime.Now;
 
-//                _context.Books.Update(book);
+//                _context.Books.Update(Book);
 //                _context.SaveChanges();
 
 //                return Ok(new OkResponse
@@ -212,15 +212,15 @@
 //                    Message = "Book updated successfully",
 //                    StatusCode = HttpStatus.OK,
 //                    Status = HttpStatus.OK.ToString(),
-//                    Data = book
+//                    Data = Book
 //                });
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while updating the book.");
+//                _logger.LogError(ex, "An error occurred while updating the Book.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while updating the book",
+//                    Message = "An error occurred while updating the Book",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,
@@ -235,8 +235,8 @@
 //        {
 //            try
 //            {
-//                var book = _context.Books.Find(id);
-//                if (book == null)
+//                var Book = _context.Books.Find(id);
+//                if (Book == null)
 //                {
 //                    return NotFound(new OkResponse
 //                    {
@@ -247,7 +247,7 @@
 //                    });
 //                }
 
-//                _context.Books.Remove(book);
+//                _context.Books.Remove(Book);
 //                _context.SaveChanges();
 
 //                return Ok(new OkResponse
@@ -260,10 +260,10 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while deleting the book.");
+//                _logger.LogError(ex, "An error occurred while deleting the Book.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while deleting the book",
+//                    Message = "An error occurred while deleting the Book",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,
@@ -729,14 +729,14 @@
 //        {
 //            try
 //            {
-//                var book = _context.Books
+//                var Book = _context.Books
 //                    .FirstOrDefault(b => b.ISBNumber == isbn);
 
-//                if (book == null)
+//                if (Book == null)
 //                {
 //                    return NotFound(new OkResponse
 //                    {
-//                        Message = "No book found with the given ISBN",
+//                        Message = "No Book found with the given ISBN",
 //                        StatusCode = HttpStatus.NOT_FOUND,
 //                        Status = HttpStatus.NOT_FOUND.ToString(),
 //                        Data = null
@@ -748,15 +748,15 @@
 //                    Message = "Book retrieved successfully by ISBN",
 //                    StatusCode = HttpStatus.OK,
 //                    Status = HttpStatus.OK.ToString(),
-//                    Data = book
+//                    Data = Book
 //                });
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while retrieving the book by ISBN.");
+//                _logger.LogError(ex, "An error occurred while retrieving the Book by ISBN.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while retrieving the book by ISBN",
+//                    Message = "An error occurred while retrieving the Book by ISBN",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,

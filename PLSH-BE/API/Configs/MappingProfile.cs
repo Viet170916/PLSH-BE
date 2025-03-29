@@ -2,8 +2,10 @@ using API.Common;
 using API.Controllers.ResourceControllers;
 using API.DTO.Account.AccountDTO;
 using API.DTO.Book;
+using API.DTO.Loan;
 using Model.Entity;
 using Model.Entity.book;
+using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
 using Model.Entity.User;
 using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
@@ -55,5 +57,7 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
       .ReverseMap()
       .ForMember(des => des.Role, opt => opt.Ignore());
+    CreateMap<Loan, LoanDto>().ReverseMap();
+    CreateMap<BookBorrowing, BookBorrowingDto>().ReverseMap();
   }
 }

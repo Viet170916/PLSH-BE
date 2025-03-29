@@ -1,16 +1,37 @@
+using System.Collections.Generic;
+using API.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Model.Entity.book.Dto;
 
 namespace API.Controllers.BookControllers;
 
 public partial class BookController
 {
-  [HttpGet("{bookId}/book-instance")] public async Task<IActionResult> GetBookInstancesByBookId([FromRoute] int bookId)
+  [HttpGet("book-instances")] public async Task<IActionResult> GetBookInstancesByBookIdOrIsbn(
+    [FromQuery] int? bookId,
+    [FromQuery] string? isbnOrBookCode = null
+  )
   {
-    var bookInstances = await context.BookInstances
-                                     .Where(bi => bi.BookId == bookId && bi.DeletedAt == null)
-                                     .ToListAsync();
-    return Ok(new { bookInstances.Count, Data = bookInstances, });
+    var query = context.BookInstances.Include(i => i.Book)
+                       .Where(bi => bi.DeletedAt == null && bi.IsInBorrowing == false);
+    if (!string.IsNullOrEmpty(isbnOrBookCode))
+    {
+      query = query.Where(bi => bi.Book.IsbNumber10.Contains( isbnOrBookCode) ||
+                                bi.Book.IsbNumber13.Contains(isbnOrBookCode) ||
+                                bi.Book.OtherIdentifier.Contains(isbnOrBookCode) ||
+                                bi.Code.Contains(isbnOrBookCode)||
+                                isbnOrBookCode.Contains( bi.Book.IsbNumber10)||
+                                isbnOrBookCode.Contains( bi.Book.IsbNumber13)||
+                                isbnOrBookCode.Contains( bi.Book.OtherIdentifier)||
+                                isbnOrBookCode.Contains( bi.Code)
+                                );
+    }
+    else { query = query.Where(bi => bi.BookId == bookId); }
+
+    var bookInstances = await query.ToListAsync();
+    var response = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(bookInstances);
+    return Ok(new BaseResponse<List<LibraryRoomDto.BookInstanceDto>> { count = bookInstances.Count, data = response });
   }
 
   [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)

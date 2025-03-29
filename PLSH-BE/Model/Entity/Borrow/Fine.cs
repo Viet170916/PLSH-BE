@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Model.Entity;
+namespace Model.Entity.Borrow;
 
 public class Fine
 {

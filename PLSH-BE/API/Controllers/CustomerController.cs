@@ -167,11 +167,11 @@
 //       //    query = query.Where(b => b.Author.Contains(author));
 //       if (!string.IsNullOrWhiteSpace(category))
 //         query = query.Join(_context.Categories,
-//                        book => book.CategoryId,
+//                        Book => Book.CategoryId,
 //                        cat => cat.Id,
-//                        (book, cat) => new { book, cat })
+//                        (Book, cat) => new { Book, cat })
 //                      .Where(bc => bc.cat.Name.Contains(category))
-//                      .Select(bc => bc.book);
+//                      .Select(bc => bc.Book);
 //       if (!string.IsNullOrWhiteSpace(language)) query = query.Where(b => b.Language.Contains(language));
 //       if (year.HasValue) query = query.Where(b => b.PublishDate.HasValue && b.PublishDate.Value.Year == year.Value);
 //       var books = await query.ToListAsync();
@@ -206,7 +206,7 @@
 //   }
 //
 //   //3	Tra cứu bằng QR code(Quét mã QR trên kệ sách hiển thị thông tin chi tiết sách, công nghệ: QRCode)
-//   [HttpPost("book-by-qrcode")] [AllowAnonymous]
+//   [HttpPost("Book-by-qrcode")] [AllowAnonymous]
 //   public async Task<IActionResult> GetBookByQRCode([FromForm] IFormFile qrImage)
 //   {
 //     try
@@ -236,16 +236,16 @@
 //       }
 //
 //       var qrCode = result.Text;
-//       //var book = await _context.Books
+//       //var Book = await _context.Books
 //       //    .FirstOrDefaultAsync(b => b.QRCode == qrCode);
 //
-//       //if (book == null)
+//       //if (Book == null)
 //       //{
 //       //    return Ok(new ErrorResponse
 //       //    {
 //       //        Status = HttpStatus.NOT_FOUND.GetDescription(),
 //       //        StatusCode = HttpStatus.NOT_FOUND,
-//       //        Message = "No book found with this QR code.",
+//       //        Message = "No Book found with this QR code.",
 //       //    });
 //       //}
 //       return Ok(new OkResponse
@@ -253,12 +253,12 @@
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
 //         Message = "Book retrieved successfully by QR code.",
-//         // Data = book
+//         // Data = Book
 //       });
 //     }
 //     catch (Exception ex)
 //     {
-//       _logger.LogError(ex, "Error occurred while retrieving book by QR code.");
+//       _logger.LogError(ex, "Error occurred while retrieving Book by QR code.");
 //       return Ok(new ErrorResponse
 //       {
 //         Status = HttpStatus.INTERNAL_ERROR.GetDescription(),
@@ -310,8 +310,8 @@
 //   //        string qrCode = result.Text;
 //
 //   //        // Tìm sách theo QR Code
-//   //        var book = await _context.Books.FirstOrDefaultAsync(b => b.QRCode == qrCode);
-//   //        if (book == null)
+//   //        var Book = await _context.Books.FirstOrDefaultAsync(b => b.QRCode == qrCode);
+//   //        if (Book == null)
 //   //        {
 //   //            return Ok(new ErrorResponse
 //   //            {
@@ -329,13 +329,13 @@
 //   //            Message = "Book lookup successful.",
 //   //            Data = new
 //   //            {
-//   //                Id = book.Id,
-//   //                Title = book.Title,
-//   //                Author = book.Author,
-//   //                Description = book.Description,
-//   //                PublishDate = book.PublishDate,
-//   //                Language = book.Language,
-//   //                Thumbnail = book.Thumbnail
+//   //                Id = Book.Id,
+//   //                Title = Book.Title,
+//   //                Author = Book.Author,
+//   //                Description = Book.Description,
+//   //                PublishDate = Book.PublishDate,
+//   //                Language = Book.Language,
+//   //                Thumbnail = Book.Thumbnail
 //   //            }
 //   //        });
 //   //    }
@@ -352,12 +352,12 @@
 //   //}
 //
 //   //4	Xem thông tin sách
-//   [HttpGet("book/{id}")] public async Task<IActionResult> GetBookDetails(int id)
+//   [HttpGet("Book/{id}")] public async Task<IActionResult> GetBookDetails(int id)
 //   {
 //     try
 //     {
-//       var book = await _context.Books.FindAsync(id);
-//       if (book == null)
+//       var Book = await _context.Books.FindAsync(id);
+//       if (Book == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -372,12 +372,12 @@
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
 //         Message = "Book details retrieved successfully.",
-//         Data = book
+//         Data = Book
 //       });
 //     }
 //     catch (Exception ex)
 //     {
-//       _logger.LogError(ex, "Error occurred while retrieving book details.");
+//       _logger.LogError(ex, "Error occurred while retrieving Book details.");
 //       return Ok(new ErrorResponse
 //       {
 //         Status = HttpStatus.INTERNAL_ERROR.GetDescription(),
@@ -430,8 +430,8 @@
 //   {
 //     try
 //     {
-//       var book = await _context.Books.FindAsync(bookId);
-//       if (book == null)
+//       var Book = await _context.Books.FindAsync(bookId);
+//       if (Book == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -444,7 +444,7 @@
 //       var books = await (
 //         from b in _context.Books
 //         join c in _context.Categories on b.CategoryId equals c.Id
-//         where b.CategoryId == book.CategoryId && b.Id != bookId
+//         where b.CategoryId == Book.CategoryId && b.Id != bookId
 //         select new
 //         {
 //           b.Id,
@@ -593,7 +593,7 @@
 //   }
 //
 //   //7	Xem đánh giá/bình luận
-//   [HttpGet("book-reviews/{bookId}")] public async Task<IActionResult> GetBookReviews(int bookId)
+//   [HttpGet("Book-reviews/{bookId}")] public async Task<IActionResult> GetBookReviews(int bookId)
 //   {
 //     try
 //     {
@@ -608,7 +608,7 @@
 //     }
 //     catch (Exception ex)
 //     {
-//       _logger.LogError(ex, "Error occurred while retrieving book reviews.");
+//       _logger.LogError(ex, "Error occurred while retrieving Book reviews.");
 //       return Ok(new ErrorResponse
 //       {
 //         Status = HttpStatus.INTERNAL_ERROR.GetDescription(),
@@ -619,7 +619,7 @@
 //   }
 //
 //   //8	Đánh giá sách
-//   [HttpPost("rate-book")] [Authorize] public async Task<IActionResult> RateBook([FromBody] BookReviewDto reviewDto)
+//   [HttpPost("rate-Book")] [Authorize] public async Task<IActionResult> RateBook([FromBody] BookReviewDto reviewDto)
 //   {
 //     try
 //     {
@@ -634,8 +634,8 @@
 //         });
 //       }
 //
-//       var book = await _context.Books.FindAsync(reviewDto.BookId);
-//       if (book == null)
+//       var Book = await _context.Books.FindAsync(reviewDto.BookId);
+//       if (Book == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -665,7 +665,7 @@
 //     }
 //     catch (Exception ex)
 //     {
-//       _logger.LogError(ex, "Error occurred while rating the book.");
+//       _logger.LogError(ex, "Error occurred while rating the Book.");
 //       return Ok(new ErrorResponse
 //       {
 //         Status = HttpStatus.INTERNAL_ERROR.GetDescription(),
@@ -676,7 +676,7 @@
 //   }
 //
 //   //9	Viết bình luận
-//   [HttpPost("comment-book")] [Authorize]
+//   [HttpPost("comment-Book")] [Authorize]
 //   public async Task<IActionResult> CommentBook([FromBody] BookReviewDto commentDto)
 //   {
 //     try
@@ -692,8 +692,8 @@
 //         });
 //       }
 //
-//       var book = await _context.Books.FindAsync(commentDto.BookId);
-//       if (book == null)
+//       var Book = await _context.Books.FindAsync(commentDto.BookId);
+//       if (Book == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -785,13 +785,13 @@
 //       {
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
-//         Message = "Personalized book recommendations retrieved successfully.",
+//         Message = "Personalized Book recommendations retrieved successfully.",
 //         Data = recommendedBooks
 //       });
 //     }
 //     catch (Exception ex)
 //     {
-//       _logger.LogError(ex, "Error occurred while generating personalized book recommendations.");
+//       _logger.LogError(ex, "Error occurred while generating personalized Book recommendations.");
 //       return Ok(new ErrorResponse
 //       {
 //         Status = HttpStatus.INTERNAL_ERROR.GetDescription(),

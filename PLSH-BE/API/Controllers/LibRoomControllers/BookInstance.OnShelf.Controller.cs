@@ -15,7 +15,7 @@ public partial class LibraryRoomController
         if (bookInstancesDto == null || bookInstancesDto.Count == 0)
         {
             return BadRequest( new{
-                Message="List of book instances cannot be empty."
+                Message="List of Book instances cannot be empty."
             });
         }
 
@@ -73,7 +73,7 @@ public partial class LibraryRoomController
     if (bookInstanceIds == null || bookInstanceIds.Count == 0)
     {
       return BadRequest(new{
-          Message="List of book instance IDs cannot be empty."
+          Message="List of Book instance IDs cannot be empty."
       });
     }
 
@@ -81,7 +81,7 @@ public partial class LibraryRoomController
                                      .Where(b => bookInstanceIds.Contains(b.Id))
                                      .ToListAsync();
     if (!bookInstances.Any()) { return NotFound(new{
-       Message= "No matching book instances found."
+       Message= "No matching Book instances found."
     }); }
 
     foreach (var instance in bookInstances)
@@ -96,14 +96,14 @@ public partial class LibraryRoomController
       new { Message = "Book instances removed from RowShelf successfully.", Success = true, Data = updatedDtos });
   }
 
-  [HttpGet("book-instances/on-shelf")]
+  [HttpGet("Book-instances/on-shelf")]
   public async Task<IActionResult> GetBookInstancesByBookAndShelf([FromQuery] int bookId, [FromQuery] int rowShelfId)
   {
     var bookInstances = await context.BookInstances
                                      .Where(b => b.BookId == bookId && b.RowShelfId == rowShelfId)
                                      .ToListAsync();
     if (!bookInstances.Any()) { return NotFound(new{
-        Message="No matching book instances found."
+        Message="No matching Book instances found."
     }); }
 
     var bookInstanceDtos = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(bookInstances);

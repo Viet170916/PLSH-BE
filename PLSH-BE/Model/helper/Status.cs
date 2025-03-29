@@ -4,7 +4,7 @@ public static class Status
 {
   public abstract class AvailabilityType
   {
-    public static string Ebook { get; } = "e-book";
+    public static string Ebook { get; } = "e-Book";
     public static string Audio { get; } = "audio";
     public static string Physical { get; } = "physical";
   }

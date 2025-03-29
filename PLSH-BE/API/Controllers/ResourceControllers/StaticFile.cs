@@ -59,7 +59,7 @@ public class FileController(StorageClient storageClient, AppDbContext context) :
     if (book.EpubResource?.LocalUrl is null) return NotFound(new { message = "Book Preview Resource not found.", });
     try
     {
-      var tempEpubPath = Path.Combine(Path.GetTempPath(), "book.epub");
+      var tempEpubPath = Path.Combine(Path.GetTempPath(), "Book.epub");
       var path = book.EpubResource.LocalUrl;
       await DownloadEpubFromGcs(path, tempEpubPath);
       var epubBook = await EpubReader.ReadBookAsync(tempEpubPath);

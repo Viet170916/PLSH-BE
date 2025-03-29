@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Model;
 using Model.Entity;
 using Model.Entity.book;
+using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
 using Model.Entity.User;
 

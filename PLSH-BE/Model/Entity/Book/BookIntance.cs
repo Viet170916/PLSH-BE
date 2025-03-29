@@ -17,6 +17,7 @@ public sealed class BookInstance
   public long? RowShelfId { get; set; }
   public int? BookId { get; set; }
   public int? Position { get; set; }
+  public bool IsInBorrowing { get; set; } = false;
   public DateTime? DeletedAt { get; set; }
   public DateTime CreatedAt { get; set; } = DateTime.Now;
   public int? BookIdRestore { get; set; }

@@ -31,7 +31,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving book details");
+                logger.LogError(ex, "Error retrieving Book details");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",
@@ -68,7 +68,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving book detail");
+                logger.LogError(ex, "Error retrieving Book detail");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",
@@ -85,7 +85,7 @@ namespace API.Controllers
         {
             try
             {
-                // Validate book exists
+                // Validate Book exists
                 if (!context.Books.Any(b => b.Id == dto.BookId))
                 {
                     return BadRequest(new OkResponse
@@ -120,7 +120,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating book detail");
+                logger.LogError(ex, "Error creating Book detail");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",
@@ -177,7 +177,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating book detail");
+                logger.LogError(ex, "Error updating Book detail");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",
@@ -217,7 +217,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting book detail");
+                logger.LogError(ex, "Error deleting Book detail");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",
@@ -242,7 +242,7 @@ namespace API.Controllers
                 {
                     return NotFound(new OkResponse
                     {
-                        Message = "No details found for this book",
+                        Message = "No details found for this Book",
                         StatusCode = HttpStatus.NOT_FOUND,
                         Status = HttpStatus.NOT_FOUND.ToString()
                     });
@@ -258,7 +258,7 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving book details");
+                logger.LogError(ex, "Error retrieving Book details");
                 return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
                 {
                     Message = "Internal server error",

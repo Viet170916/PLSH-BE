@@ -15,7 +15,7 @@
 // using Common.Enums;
 // using Common.Helper;
 // using Model.Entity;
-// using Model.Entity.book;
+// using Model.Entity.Book;
 //
 // namespace API.Controllers
 // {
@@ -69,7 +69,7 @@
 //             }
 //
 //             // Tạo đối tượng sách từ BookDTO
-//             var book = new Book
+//             var Book = new Book
 //             {
 //                 Title = bookDto.Title,
 //                 Description = bookDto.Description,
@@ -92,9 +92,9 @@
 //             };
 //
 //             // Sinh QR Code và lưu base64 vào sách
-//             var qrContent = $"Title: {book.Title}, " +
-//                 //$"Author: {book.Author}, " +
-//                 $"ISBNumber: {book.IsbNumber13}";
+//             var qrContent = $"Title: {Book.Title}, " +
+//                 //$"Author: {Book.Author}, " +
+//                 $"ISBNumber: {Book.IsbNumber13}";
 //             if (!string.IsNullOrEmpty(qrContent))
 //             {
 //                 var qrGenerator = new QRCodeGenerator();
@@ -104,16 +104,16 @@
 //                 using (var memoryStream = new MemoryStream())
 //                 {
 //                     qrCodeImage.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
-//                    // book.QRCode = Convert.ToBase64String(memoryStream.ToArray());
+//                    // Book.QRCode = Convert.ToBase64String(memoryStream.ToArray());
 //                 }
 //             }
 //
 //             // Thêm sách vào database
-//             context.Books.Add(book);
+//             context.Books.Add(Book);
 //             await context.SaveChangesAsync();
 //
 //             return Ok(new { message = "Book added successfully."
-//                 //, QRCode = book.QRCode 
+//                 //, QRCode = Book.QRCode 
 //             });
 //         }
 //
@@ -505,7 +505,7 @@
 //             try
 //             {
 //                 // Lấy thông tin sách từ cơ sở dữ liệu
-//                 var book = await context.Books
+//                 var Book = await context.Books
 //                    // .Include(b => b.Category)
 //                     .Where(b => b.Id == id)
 //                     .Select(b => new BookDto
@@ -522,13 +522,13 @@
 //                     })
 //                     .FirstOrDefaultAsync();
 //
-//                 if (book == null)
+//                 if (Book == null)
 //                 {
 //                     return NotFound("Book not found");
 //                 }
 //
 //                 // Tạo chuỗi thông tin sách để mã hóa thành QR code
-//                 string bookInfo = $"Title: {book.Title}\nAuthor: {book.Author}\nISBN: {book.ISBNumber}\nCategory: {book.Category.Name}";
+//                 string bookInfo = $"Title: {Book.Title}\nAuthor: {Book.Author}\nISBN: {Book.ISBNumber}\nCategory: {Book.Category.Name}";
 //
 //                 // Tạo QR code
 //                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
@@ -727,14 +727,14 @@
 //
 //
 //         //Phân loại sách bằng GENAI
-//         [HttpPost("classify-book-genai/{id}")]
+//         [HttpPost("classify-Book-genai/{id}")]
 //         public async Task<IActionResult> ClassifyBookByGenAI(int id)
 //         {
 //             try
 //             {
 //                 // 1. Lấy thông tin sách từ database
-//                 var book = await context.Books.FindAsync(id);
-//                 if (book == null)
+//                 var Book = await context.Books.FindAsync(id);
+//                 if (Book == null)
 //                 {
 //                     return NotFound(new ErrorResponse
 //                     {
@@ -747,7 +747,7 @@
 //                 }
 //
 //                 // 2. Chuẩn bị nội dung để phân loại (ví dụ: tiêu đề và mô tả)
-//                 var textForClassification = $"Title: {book.Title}\nDescription: {book.Description}";
+//                 var textForClassification = $"Title: {Book.Title}\nDescription: {Book.Description}";
 //
 //                 // 3. Gọi API GENAI bên ngoài để phân loại sách
 //                 //    (Thay đổi URL dưới đây theo endpoint của dịch vụ GENAI mà bạn sử dụng)
@@ -775,9 +775,9 @@
 //                 string predictedCategory = result?.category ?? "Không xác định";
 //
 //                 // 4. Cập nhật lại category cho sách (tùy chọn)
-//                // book.Category = predictedCategory;
-//                 book.UpdateDate = DateTime.Now;
-//                 context.Books.Update(book);
+//                // Book.Category = predictedCategory;
+//                 Book.UpdateDate = DateTime.Now;
+//                 context.Books.Update(Book);
 //                 await context.SaveChangesAsync();
 //
 //                 // Trả về kết quả
@@ -787,7 +787,7 @@
 //                     StackTrace = null,
 //                     StatusCode = HttpStatus.OK,
 //                     Status = HttpStatus.OK.ToString(),
-//                     Data = new { book.Id, book.Title, Category = predictedCategory }
+//                     Data = new { Book.Id, Book.Title, Category = predictedCategory }
 //                 });
 //             }
 //             catch (Exception ex)

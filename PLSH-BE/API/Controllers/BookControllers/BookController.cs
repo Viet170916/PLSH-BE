@@ -16,7 +16,7 @@ using Model.ResponseModel;
 
 namespace API.Controllers.BookControllers
 {
-  [Route("api/v1/book")]
+  [Route("api/v1/Book")]
   [ApiController]
   public partial class BookController(
     AppDbContext context,

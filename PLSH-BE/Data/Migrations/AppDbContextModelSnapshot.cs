@@ -50,58 +50,6 @@ namespace Data.Migrations
                     b.ToTable("Albums");
                 });
 
-            modelBuilder.Entity("Model.Entity.BookBorrowing", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BookConditionDescription")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("BookConditionUrl")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<int>("BookDetailId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("BorrowingDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("BorrowingStatus")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("FineType")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsFined")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("LoanId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<int?>("PageCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ReturnDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BookBorrowings");
-                });
-
             modelBuilder.Entity("Model.Entity.BookLocation", b =>
                 {
                     b.Property<int>("Id")
@@ -186,7 +134,7 @@ namespace Data.Migrations
                     b.ToTable("BookReviews");
                 });
 
-            modelBuilder.Entity("Model.Entity.Favorite", b =>
+            modelBuilder.Entity("Model.Entity.Borrow.BookBorrowing", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -194,28 +142,59 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AddedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("BookId")
+                    b.Property<int>("BookInstanceId")
                         .HasColumnType("int");
 
-                    b.Property<int>("BorrowerId")
+                    b.Property<DateTime>("BorrowDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("BorrowingStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ExtendDatesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("FineType")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsFined")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("LoanId")
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
-                    b.Property<int>("Status")
+                    b.Property<string>("NoteAfterBorrow")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NoteBeforeBorrow")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReturnDatesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TransactionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Favorites");
+                    b.HasIndex("BookInstanceId");
+
+                    b.HasIndex("LoanId");
+
+                    b.ToTable("BookBorrowings");
                 });
 
-            modelBuilder.Entity("Model.Entity.Fine", b =>
+            modelBuilder.Entity("Model.Entity.Borrow.Fine", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -251,6 +230,71 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Fines");
+                });
+
+            modelBuilder.Entity("Model.Entity.Borrow.Loan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AprovalStatus")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("BorrowerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BorrowingDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("LibrarianId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime?>("ReturnDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BorrowerId");
+
+                    b.HasIndex("LibrarianId");
+
+                    b.ToTable("Loans");
+                });
+
+            modelBuilder.Entity("Model.Entity.Favorite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BorrowerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Favorites");
                 });
 
             modelBuilder.Entity("Model.Entity.HistoryReview", b =>
@@ -390,41 +434,6 @@ namespace Data.Migrations
                     b.ToTable("LifeSkills");
                 });
 
-            modelBuilder.Entity("Model.Entity.Loan", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AprovalStatus")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BorrowerId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BorrowingDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ExtensionCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LibrarianId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime?>("ReturnDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Loans");
-                });
-
             modelBuilder.Entity("Model.Entity.Magazine", b =>
                 {
                     b.Property<int>("Id")
@@ -555,6 +564,12 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BookBorrowingId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BookBorrowingId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("FileType")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
@@ -576,6 +591,10 @@ namespace Data.Migrations
                         .HasColumnType("varchar(10)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookBorrowingId");
+
+                    b.HasIndex("BookBorrowingId1");
 
                     b.ToTable("Resources");
                 });
@@ -1164,6 +1183,9 @@ namespace Data.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsInBorrowing")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int?>("Position")
                         .HasColumnType("int");
 
@@ -1298,6 +1320,42 @@ namespace Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Model.Entity.Borrow.BookBorrowing", b =>
+                {
+                    b.HasOne("Model.Entity.book.BookInstance", "BookInstance")
+                        .WithMany()
+                        .HasForeignKey("BookInstanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.Borrow.Loan", "Loan")
+                        .WithMany("BookBorrowings")
+                        .HasForeignKey("LoanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BookInstance");
+
+                    b.Navigation("Loan");
+                });
+
+            modelBuilder.Entity("Model.Entity.Borrow.Loan", b =>
+                {
+                    b.HasOne("Model.Entity.User.Account", "Borrower")
+                        .WithMany()
+                        .HasForeignKey("BorrowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Model.Entity.User.Account", "Librarian")
+                        .WithMany()
+                        .HasForeignKey("LibrarianId");
+
+                    b.Navigation("Borrower");
+
+                    b.Navigation("Librarian");
+                });
+
             modelBuilder.Entity("Model.Entity.LibraryRoom.RowShelf", b =>
                 {
                     b.HasOne("Model.Entity.LibraryRoom.Shelf", "Shelf")
@@ -1318,6 +1376,17 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("LibraryRoom");
+                });
+
+            modelBuilder.Entity("Model.Entity.Resource", b =>
+                {
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
+                        .WithMany("BookImagesAfterBorrow")
+                        .HasForeignKey("BookBorrowingId");
+
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
+                        .WithMany("BookImagesBeforeBorrow")
+                        .HasForeignKey("BookBorrowingId1");
                 });
 
             modelBuilder.Entity("Model.Entity.User.Account", b =>
@@ -1386,6 +1455,18 @@ namespace Data.Migrations
                     b.Navigation("Book");
 
                     b.Navigation("RowShelf");
+                });
+
+            modelBuilder.Entity("Model.Entity.Borrow.BookBorrowing", b =>
+                {
+                    b.Navigation("BookImagesAfterBorrow");
+
+                    b.Navigation("BookImagesBeforeBorrow");
+                });
+
+            modelBuilder.Entity("Model.Entity.Borrow.Loan", b =>
+                {
+                    b.Navigation("BookBorrowings");
                 });
 
             modelBuilder.Entity("Model.Entity.LibraryRoom.LibraryRoom", b =>

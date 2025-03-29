@@ -28,7 +28,7 @@ var secretKey = Environment.GetEnvironmentVariable(Constants.JWT_SECRET) ?? "";
 // var credentialsPath = googleCloudConfig["CredentialsPath"];
 Log.Logger = new LoggerConfiguration()
              .WriteTo.Console() // Ghi log ra console
-             .WriteTo.File("Logs/pl-book-hive-.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
+             .WriteTo.File("Logs/pl-Book-hive-.log", rollingInterval: RollingInterval.Day) // Ghi log vào file
              .CreateLogger();
 builder.Host.UseSerilog();
 
@@ -76,16 +76,16 @@ builder.Services.AddCors(options =>
   options.AddPolicy("AllowSpecificOrigins",
     policy => policy
               // .WithOrigins(
-              //   "https://www.book-hive.space",
+              //   "https://www.Book-hive.space",
               //   "http://104.197.134.164",
               //   "http://localhost:5281",
               //   "http://localhost:3000",
-              //   "https://book-hive.space")
+              //   "https://Book-hive.space")
               .AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader()
-              // .AllowCredentials()
-              );
+    // .AllowCredentials()
+  );
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -133,13 +133,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
          };
        });
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+       .AddPolicy("AdminPolicy", policy => policy.RequireRole("admin"))
+       .AddPolicy("BorrowerPolicy", policy => policy.RequireRole("student", "teacher"))
+       .AddPolicy("LibrarianPolicy", policy => policy.RequireRole("librarian", "admin"));
+
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
        .AddJsonOptions(options =>
        {
-         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+         options.JsonSerializerOptions.ReferenceHandler =
+           System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
        });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureEmailService();
@@ -167,6 +171,19 @@ app.Use(async (context, next) =>
 // app.UseCorsMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
+app.Use(async (context, next) =>
+{
+  if (context.Request.Headers.ContainsKey("Authorization"))
+  {
+    var token = context.Request.Headers["Authorization"];
+    Console.WriteLine($"🟢 Received Token: {token}");
+  }
+  else
+  {
+    Console.WriteLine("🔴 No Authorization Header Found!");
+  }
+  await next();
+});
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();

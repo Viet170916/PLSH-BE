@@ -16,6 +16,14 @@ public class GoogleCloudStorageHelper(StorageClient storageClient)
     await storageClient.UploadObjectAsync(_bucketName, objectName, contentType, fileStream);
     return $"{objectName}";
   }
+  public async Task<string> UploadFileAsync(Stream fileStream, string pathTofFle, string contentType)
+  {
+    if (fileStream == null || string.IsNullOrEmpty(pathTofFle))
+      throw new ArgumentException("Invalid input parameters.");
+    var objectName = $"{pathTofFle}";
+    await storageClient.UploadObjectAsync(_bucketName, objectName, contentType, fileStream);
+    return $"{objectName}";
+  }
   public async Task DownloadEpubFromGcs(string objectPath, string destinationPath)
   {
     await using var outputFile = File.OpenWrite(destinationPath);

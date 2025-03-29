@@ -96,15 +96,18 @@ public partial class AccountController(AppDbContext context, IEmailService email
       var fullName = payload.Name;
       var googleUserId = payload.Subject;
       var avatarUrl = payload.Picture;
-      var account = await context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+      var account = await context.Accounts
+                                 .Include(ac => ac.Role)
+                                 .FirstOrDefaultAsync(a => a.Email == email);
       var roleId = context.Roles.FirstOrDefault(r => r.Name == request.Role)?.Id;
-      if (roleId is null)
-      {
-        return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
-      }
+      
 
       if (account == null)
       {
+        if (roleId is null)
+        {
+          return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
+        }
         account = new Account
         {
           FullName = request.FullName ?? fullName,
@@ -123,7 +126,7 @@ public partial class AccountController(AppDbContext context, IEmailService email
         await context.SaveChangesAsync();
       }
 
-      var token = GenerateJwtToken(account, request.Role, TimeSpan.FromDays(1));
+      var token = GenerateJwtToken(account, account?.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
       return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
@@ -140,12 +143,14 @@ public partial class AccountController(AppDbContext context, IEmailService email
     {
       Subject = new ClaimsIdentity(new[]
       {
-        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()), new Claim(ClaimTypes.Email, account.Email),
+        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+        new Claim(ClaimTypes.Email, account.Email),
         new Claim(ClaimTypes.Role, role)
       }),
       Expires = DateTime.UtcNow.Add(expiration),
-      SigningCredentials =
-        new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+      Issuer = Constants.Issuer,  
+      Audience = Constants.Audience, 
+      SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
     };
     var token = tokenHandler.CreateToken(tokenDescriptor);
     return tokenHandler.WriteToken(token);
@@ -163,17 +168,10 @@ public partial class AccountController(AppDbContext context, IEmailService email
     [Required]
     public string GoogleToken { get; set; } = string.Empty;
 
-    [Required]
     public string? Email { get; set; } = string.Empty;
-
-    [Required]
     public string? FullName { get; set; } = string.Empty;
-
     public string? IdentityCardNumber { get; set; }
-
-    [Required]
     public string? Role { get; set; } = string.Empty;
-
     public string? GoogleUserId { get; set; }
     public string? ClassRoom { get; set; }
     public string? PhoneNumber { get; set; }

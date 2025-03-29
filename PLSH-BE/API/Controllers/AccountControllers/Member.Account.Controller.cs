@@ -36,7 +36,7 @@ public partial class AccountController
     };
     context.Accounts.Add(newAccount);
     await context.SaveChangesAsync();
-    var appLink = "https://book-hive.space/login";
+    var appLink = "https://Book-hive.space/login";
     await emailService.SendWelcomeEmailAsync(account.FullName, account.Email, generatedPassword, appLink);
     return Ok(new
     {
@@ -122,7 +122,7 @@ public partial class AccountController
       var generatedPassword = GenerateRandomPassword();
       account.Email = updateDto.Email;
       account.Password = BCrypt.Net.BCrypt.HashPassword(generatedPassword);
-      var appLink = "https://book-hive.space/login";
+      var appLink = "https://Book-hive.space/login";
       await emailService.SendWelcomeEmailAsync(account.FullName, account.Email, generatedPassword, appLink);
     }
 
