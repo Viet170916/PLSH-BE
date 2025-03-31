@@ -6,6 +6,7 @@ public class LibraryRoomDto
   {
     public int Id { get; set; }
     public string? Code { get; set; }
+    public bool? IsInBorrowing { get; set; }
     public int? RowShelfId { get; set; }
     public string? BookName { get; set; }
     public string? BookThumbnail { get; set; }

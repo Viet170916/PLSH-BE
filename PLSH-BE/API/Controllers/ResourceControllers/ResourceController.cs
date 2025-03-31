@@ -1,3 +1,5 @@
+using System.Net.Http;
+using System.Text;
 using API.Common;
 using AutoMapper;
 using Data.DatabaseContext;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Model.Entity;
 using Model.helper;
+using Newtonsoft.Json;
 
 namespace API.Controllers.ResourceControllers;
 
@@ -18,7 +21,7 @@ public partial class ResourceController(
   GoogleCloudStorageHelper googleCloudStorageHelper
 ) : Controller
 {
-  [HttpPost("Book/upload/{bookId}")]
+  [HttpPost("book/upload/{bookId}")]
   public async Task<IActionResult> UploadBookResource([FromForm] ResourceDto resource, [FromRoute] int bookId)
   {
     var book = await context.Books.FindAsync(bookId);
@@ -77,6 +80,8 @@ public partial class ResourceController(
     await context.SaveChangesAsync();
     return Ok(new { Message = "Resource uploaded", BookId = bookId, resource = resourceEntity, });
   }
+
+
 }
 
 public class ResourceDto

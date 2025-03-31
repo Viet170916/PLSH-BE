@@ -13,23 +13,89 @@ using Model.Entity.Borrow;
 
 namespace API.Controllers.BorrowControllers;
 
-[Authorize(Policy = "LibrarianPolicy")]
 [Route("api/v1/loan")]
 [ApiController]
-public class LoanController(AppDbContext context, IMapper mapper) : ControllerBase
+public partial class LoanController(
+  AppDbContext context,
+  IMapper mapper,
+  GoogleCloudStorageHelper googleCloudStorageHelper
+) : ControllerBase
 {
-  [HttpGet] public async Task<IActionResult> GetLoans()
+  public class UpdateLoanStatusDto
   {
-    var loans = await context.Loans
-                             .Include(l => l.BookBorrowings)
-                             .ToListAsync();
-    return Ok(new BaseResponse<List<LoanDto>> { data = mapper.Map<List<LoanDto>>(loans), });
+    public string Status { get; set; } = string.Empty;
   }
 
-  [HttpGet("{id}")] public async Task<ActionResult<LoanDto>> GetLoan(int id)
+  [Authorize(Policy = "LibrarianPolicy")] [HttpGet]
+  public async Task<IActionResult> GetLoans(
+    [FromQuery] string? keyword,
+    [FromQuery] string? approveStatus,
+    [FromQuery] string? orderBy,
+    [FromQuery] int page = 1,
+    [FromQuery] int limit = 10
+  )
+  {
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 10;
+    var query = context.Loans
+                       // .Include(l => l.BookBorrowings)
+                       // .ThenInclude(b=>b.BookInstance)
+                       // .ThenInclude(b=>b.Book)
+                       // .ThenInclude(b=>b.CoverImageResource)
+                       .Include(l => l.BookBorrowings)
+                       // .ThenInclude(l=>l.BookImagesBeforeBorrow)
+                       // .Include(l => l.BookBorrowings)
+                       // .ThenInclude(l=>l.BookImagesAfterBorrow)
+                       .Include(l => l.Borrower)
+                       .Include(l => l.Librarian)
+                       .AsQueryable();
+    if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(l => l.AprovalStatus == approveStatus); }
+
+    if (!string.IsNullOrEmpty(keyword))
+    {
+      query = query.Where(l => l.Note.Contains(keyword) || l.BorrowerId.ToString().Contains(keyword));
+    }
+
+    query = orderBy?.ToLower() switch
+    {
+      "id" => query.OrderBy(l => l.Id),
+      "borrowingDate" => query.OrderBy(l => l.BorrowingDate),
+      "returnDate" => query.OrderBy(l => l.ReturnDate),
+      _ => query.OrderByDescending(l => l.BorrowingDate)
+    };
+    int totalRecords = await query.CountAsync();
+    int pageCount = (int)Math.Ceiling((double)totalRecords / limit);
+    var loans = await query
+                      .Skip((page - 1) * limit)
+                      .Take(limit)
+                      .ToListAsync();
+    return Ok(new BaseResponse<List<LoanDto>>
+    {
+      message = "Lấy danh sách đơn mượn thành công.",
+      status = "success",
+      data = mapper.Map<List<LoanDto>>(loans),
+      count = totalRecords,
+      page = page,
+      limit = limit,
+      currenPage = page,
+      pageCount = pageCount // Thêm số tổng số trang vào response
+    });
+  }
+
+  [Authorize(Policy = "LibrarianPolicy")] [HttpGet("{id}")]
+  public async Task<ActionResult<LoanDto>> GetLoan(int id)
   {
     var loan = await context.Loans
                             .Include(l => l.BookBorrowings)
+                            .ThenInclude(b => b.BookInstance)
+                            .ThenInclude(b => b.Book)
+                            .ThenInclude(b => b.CoverImageResource)
+                            .Include(l => l.BookBorrowings)
+                            .ThenInclude(l => l.BookImagesBeforeBorrow)
+                            .Include(l => l.BookBorrowings)
+                            .ThenInclude(l => l.BookImagesAfterBorrow)
+                            .Include(l => l.Borrower)
+                            .Include(l => l.Librarian)
                             .FirstOrDefaultAsync(l => l.Id == id);
     if (loan == null) return NotFound(new BaseResponse<string> { message = "Loan not found", });
     return Ok(new BaseResponse<LoanDto> { data = mapper.Map<LoanDto>(loan), });
@@ -61,26 +127,17 @@ public class LoanController(AppDbContext context, IMapper mapper) : ControllerBa
     loan.LibrarianId = librarianId;
     context.Loans.Add(loan);
     await context.SaveChangesAsync();
+    loan = await context.Loans
+                        .Include(l => l.BookBorrowings)
+                        .ThenInclude(bb => bb.BookInstance)
+                        .FirstOrDefaultAsync(l => l.Id == loan.Id);
+    if (loan == null) { return NotFound("Loan not found after save."); }
+
+    loan.BookBorrowings
+        .ToList()
+        .ForEach(bi => { bi.BookInstance.IsInBorrowing = true; });
+    await context.SaveChangesAsync();
     var beforeResponse = mapper.Map<LoanDto>(loan);
     return Ok(new BaseResponse<LoanDto> { data = beforeResponse });
-  }
-
-  [HttpPut("update/{id}")] public async Task<IActionResult> UpdateLoan(int id, [FromBody] LoanDto loanDto)
-  {
-    if (id != loanDto.Id) return BadRequest();
-    var existingLoan = await context.Loans.Include(l => l.BookBorrowings).FirstOrDefaultAsync(l => l.Id == id);
-    if (existingLoan == null) return NotFound();
-    mapper.Map(loanDto, existingLoan);
-    await context.SaveChangesAsync();
-    return NoContent();
-  }
-
-  [HttpDelete("delete/{id}")] public async Task<IActionResult> DeleteLoan(int id)
-  {
-    var loan = await context.Loans.FindAsync(id);
-    if (loan == null) return NotFound();
-    context.Loans.Remove(loan);
-    await context.SaveChangesAsync();
-    return NoContent();
   }
 }

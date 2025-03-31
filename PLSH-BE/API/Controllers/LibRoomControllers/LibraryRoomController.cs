@@ -35,34 +35,53 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
   {
     if (request is null) return BadRequest(new { Message = "Invalid data." });
     var existingRoom = await context.LibraryRooms
+                                    .Include(r => r.Shelves)
                                     .FirstOrDefaultAsync();
     if (existingRoom is null)
     {
+      // Thêm mới nếu chưa có phòng
       var room = await context.LibraryRooms.AddAsync(request);
       await context.SaveChangesAsync();
-      request.Shelves.ForEach(s => { s.RoomId = room.Entity.Id; });
+      request.Shelves.ForEach(s => s.RoomId = room.Entity.Id);
+      await context.BulkInsertAsync(request.Shelves);
     }
     else
     {
+      // Cập nhật kích thước phòng
       existingRoom.ColumnSize = request.ColumnSize;
       existingRoom.RowSize = request.RowSize;
-      await context.Shelves
-                   .Where(s => s.RoomId == existingRoom.Id)
-                   .ExecuteDeleteAsync();
-      request.Shelves.ForEach(s => s.RoomId = existingRoom.Id);
+
+      // Lấy danh sách các shelf hiện tại theo RoomId
+      var existingShelves = existingRoom.Shelves.ToDictionary(s => s.Id);
+
+      // Duyệt qua danh sách mới, nếu shelf đã tồn tại thì chỉ cập nhật vị trí x, y
+      foreach (var shelf in request.Shelves)
+      {
+        if (existingShelves.TryGetValue(shelf.Id, out var existingShelf))
+        {
+          existingShelf.X = shelf.X;
+          existingShelf.Y = shelf.Y;
+        }
+        else
+        {
+          shelf.RoomId = existingRoom.Id;
+          await context.Shelves.AddAsync(shelf);
+        }
+      }
+
+      await context.SaveChangesAsync();
     }
 
-    await context.BulkInsertAsync(request.Shelves);
-    var newShelves =
-      from shelves in context.Shelves
-      join row in context.RowShelves on shelves.Id equals row.ShelfId into grouped
-      where !grouped.Any()
-      select shelves;
-    newShelves.ToList()
-              .ForEach(sh =>
-              {
-                context.RowShelves.Add(new RowShelf() { MaxCol = 10, Position = 0, ShelfId = sh.Id, });
-              });
+    // Kiểm tra các shelves chưa có RowShelves và thêm mới
+    var newShelves = await context.Shelves
+                                  .Where(s => s.RoomId == existingRoom.Id &&
+                                              !context.RowShelves.Any(rs => rs.ShelfId == s.Id))
+                                  .ToListAsync();
+    foreach (var sh in newShelves)
+    {
+      context.RowShelves.Add(new RowShelf { MaxCol = 10, Position = 0, ShelfId = sh.Id });
+    }
+
     await context.SaveChangesAsync();
     return Ok(request);
   }

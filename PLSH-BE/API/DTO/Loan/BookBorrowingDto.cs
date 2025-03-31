@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Model.Entity;
+using Model.Entity.book;
+using Model.Entity.book.Dto;
 
 namespace API.DTO.Loan;
 
@@ -9,8 +11,11 @@ public class BookBorrowingDto
 
   // public int ?TransactionId { get; set; }
   public int BookInstanceId { get; set; }
+  public LibraryRoomDto.BookInstanceDto? BookInstance { get; set; }
   public List<Resource> BookImagesBeforeBorrow { get; set; } = new();
+  public List<string>? BookImageUrlsBeforeBorrow { get; set; } = new();
   public List<Resource>? BookImagesAfterBorrow { get; set; } = new();
+  public List<string>? BookImageUrlsAfterBorrow { get; set; } = new();
   public string? NoteBeforeBorrow { get; set; }
   public string? NoteAfterBorrow { get; set; }
   public int? LoanId { get; set; }
@@ -19,8 +24,11 @@ public class BookBorrowingDto
   public DateTime? CreatedAt { get; set; }
   public int? ReferenceId { get; set; }
   public List<DateTime> ReturnDates { get; set; } = new();
+  public DateTime? ReturnDate { get; set; }
   public List<DateTime>? ExtendDates { get; set; }
+  public DateTime? ExtendDate { get; set; }
   public bool IsFined { get; set; }
   public string? FineType { get; set; }
   public string? Note { get; set; }
+  public int overdueDays { get; set; } = 0;
 }

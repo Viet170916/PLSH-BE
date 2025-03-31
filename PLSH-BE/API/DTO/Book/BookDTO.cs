@@ -18,7 +18,7 @@
         [StringLength(200, ErrorMessage = "Publisher name cannot be longer than 200 characters.")]
         public string? Publisher { get; set; }
 
-        public DateTime? PublishDate { get; set; }
+        public string? PublishDate { get; set; }
 
         [StringLength(50, ErrorMessage = "Language cannot be longer than 50 characters.")]
         public string? Language { get; set; }

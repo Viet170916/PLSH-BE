@@ -9,4 +9,5 @@ public class BaseResponse<TDataType>
   public int? page { get; set; }
   public int? limit { get; set; }
   public int? currenPage { get; set; }
+  public int? pageCount { get; set; }
 }

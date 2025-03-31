@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using Common.Enums;
 using Model.Entity.book;
+using Model.Entity.User;
 
 namespace Model.Entity.Borrow;
 
@@ -10,7 +11,12 @@ public class BookBorrowing
 {
   public int Id { get; set; }
   public int TransactionId { get; set; }
+
   public int BookInstanceId { get; set; }
+  // public int? ConfirmationLibrarianId { get; set; }
+  //
+  // [ForeignKey("ConfirmationLibrarianId")]
+  // public Librarian? ConfirmationLibrarian { get; set; }
 
   [ForeignKey("BookInstanceId")]
   public BookInstance BookInstance { get; set; }
@@ -62,4 +68,6 @@ public class BookBorrowing
 
   [ForeignKey("LoanId")]
   public virtual Loan? Loan { get; set; }
+
+  public DateTime? ActualReturnDate { get; set; }
 }

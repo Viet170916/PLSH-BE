@@ -76,7 +76,7 @@ public partial class BookController
     }
 
     var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : keyword!;
-    var apiKey = Environment.GetEnvironmentVariable("GOOGLE_BOOK_API_KEY");
+    var apiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
     var baseUrl = string.IsNullOrWhiteSpace(apiKey) ?
       $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
       $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}&key={apiKey}";

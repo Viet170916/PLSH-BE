@@ -13,19 +13,20 @@ public partial class BookController
     [FromQuery] string? isbnOrBookCode = null
   )
   {
-    var query = context.BookInstances.Include(i => i.Book)
+    var query = context.BookInstances
+                       .Include(i => i.Book)
+                       .ThenInclude(b => b.CoverImageResource)
                        .Where(bi => bi.DeletedAt == null && bi.IsInBorrowing == false);
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {
-      query = query.Where(bi => bi.Book.IsbNumber10.Contains( isbnOrBookCode) ||
+      query = query.Where(bi => bi.Book.IsbNumber10.Contains(isbnOrBookCode) ||
                                 bi.Book.IsbNumber13.Contains(isbnOrBookCode) ||
                                 bi.Book.OtherIdentifier.Contains(isbnOrBookCode) ||
-                                bi.Code.Contains(isbnOrBookCode)||
-                                isbnOrBookCode.Contains( bi.Book.IsbNumber10)||
-                                isbnOrBookCode.Contains( bi.Book.IsbNumber13)||
-                                isbnOrBookCode.Contains( bi.Book.OtherIdentifier)||
-                                isbnOrBookCode.Contains( bi.Code)
-                                );
+                                bi.Code.Contains(isbnOrBookCode) ||
+                                isbnOrBookCode.Contains(bi.Book.IsbNumber10) ||
+                                isbnOrBookCode.Contains(bi.Book.IsbNumber13) ||
+                                isbnOrBookCode.Contains(bi.Book.OtherIdentifier) ||
+                                isbnOrBookCode.Contains(bi.Code));
     }
     else { query = query.Where(bi => bi.BookId == bookId); }
 
