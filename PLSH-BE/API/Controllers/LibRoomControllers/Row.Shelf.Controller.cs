@@ -5,7 +5,7 @@ using Model.Entity.book.Dto;
 using Model.Entity.LibraryRoom;
 
 namespace API.Controllers.LibRoomControllers;
-[Authorize("LibrarianPolicy")]
+// [Authorize("LibrarianPolicy")]
 
 public partial class LibraryRoomController
 {

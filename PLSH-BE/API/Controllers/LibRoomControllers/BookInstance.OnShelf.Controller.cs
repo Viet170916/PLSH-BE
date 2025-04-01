@@ -7,7 +7,7 @@ using Model.Entity.book;
 using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
 
 namespace API.Controllers.LibRoomControllers;
-[Authorize("LibrarianPolicy")]
+// [Authorize("LibrarianPolicy")]
 
 public partial class LibraryRoomController
 {
