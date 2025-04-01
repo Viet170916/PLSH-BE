@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Model.Entity.book;
 
 namespace API.Controllers.BookControllers;
-[Authorize("LibrarianPolicy")]
+// [Authorize("LibrarianPolicy")]
 
 public partial class BookController
 {

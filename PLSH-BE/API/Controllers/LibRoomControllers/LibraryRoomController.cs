@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Model.Entity.LibraryRoom;
 
 namespace API.Controllers.LibRoomControllers;
-[Authorize("LibrarianPolicy")]
+// [Authorize("LibrarianPolicy")]
 
 [ApiController]
 [Route("api/v1/library-room")]

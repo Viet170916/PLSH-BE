@@ -18,7 +18,7 @@ using Model.ResponseModel;
 
 namespace API.Controllers.BookControllers
 {
-  [Authorize("LibrarianPolicy")]
+  // [Authorize("LibrarianPolicy")]
 
   [Route("api/v1/Book")]
   [ApiController]
