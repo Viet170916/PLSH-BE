@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using API.Common;
 using Data.DatabaseContext;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Model.Entity;
@@ -17,6 +18,7 @@ using Newtonsoft.Json;
 
 namespace API.Controllers.ResourceControllers;
 
+[Authorize("LibrarianPolicy")]
 [ApiController]
 [Route("static/v1")]
 public class FileController(

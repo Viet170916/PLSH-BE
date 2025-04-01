@@ -5,12 +5,14 @@ using Model.Entity.User;
 using System.Linq.Dynamic.Core;
 using API.DTO;
 using API.DTO.Account.AccountDTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
+  [Authorize("LibrarianPolicy")]
   [HttpPost("member/create")] public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest account)
   {
     if (await context.Accounts.AnyAsync(a => a.Email == account.Email))
@@ -45,7 +47,7 @@ public partial class AccountController
       Data = mapper.Map<Account>(newAccount),
     });
   }
-
+  [Authorize("LibrarianPolicy")]
   [HttpGet("member")] public async Task<IActionResult> GetMembers(
     [FromQuery] int page = 1,
     [FromQuery] int limit = 10,
@@ -95,6 +97,9 @@ public partial class AccountController
     return Ok(result);
   }
 
+
+  [Authorize]
+
   [HttpPut("member/update")] public async Task<IActionResult> UpdateAccountAsync(
     [FromBody] AccountGDto updateDto
   )
@@ -136,6 +141,7 @@ public partial class AccountController
       message = "Account updated successfully", data = mapper.Map<AccountGDto>(account), status = "success",
     });
   }
+  [Authorize]
 
   [HttpGet("member/{accountId:int}")] public async Task<IActionResult> GetAccountByIdAsync([FromRoute] int accountId)
   {

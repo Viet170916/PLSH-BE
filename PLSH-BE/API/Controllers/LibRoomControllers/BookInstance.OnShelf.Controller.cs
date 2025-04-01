@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using EFCore.BulkExtensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.book;
 using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
 
 namespace API.Controllers.LibRoomControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class LibraryRoomController
 {
@@ -58,12 +60,12 @@ public partial class LibraryRoomController
         await context.BulkUpdateAsync(successfulInstances);
 
         var successfulDtos = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(successfulInstances);
-        return Ok(new { 
-            Message = "Books placed on shelf successfully.", 
-            Success = true, 
-            Data = successfulDtos, 
-            Failed = failedInstances, 
-            FailedCount = failedInstances.Count 
+        return Ok(new {
+            Message = "Books placed on shelf successfully.",
+            Success = true,
+            Data = successfulDtos,
+            Failed = failedInstances,
+            FailedCount = failedInstances.Count
         });
     }
 

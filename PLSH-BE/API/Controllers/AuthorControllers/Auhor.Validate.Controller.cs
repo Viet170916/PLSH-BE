@@ -3,10 +3,12 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using FuzzySharp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.AuthorControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class AuthorController
 {

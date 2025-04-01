@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using API.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.book.Dto;
 
 namespace API.Controllers.BookControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class BookController
 {

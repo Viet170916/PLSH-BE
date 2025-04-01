@@ -1,6 +1,7 @@
 using API.Common;
 using API.DTO.Book;
 using Data.DatabaseContext;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
@@ -8,6 +9,7 @@ using Model.Entity.book;
 using Model.helper;
 
 namespace API.Controllers.AuthorControllers;
+[Authorize("LibrarianPolicy")]
 
 [Route("api/v1/author")]
 public partial class AuthorController(AppDbContext context, GoogleCloudStorageHelper fileHelper) : Controller
@@ -71,5 +73,5 @@ public partial class AuthorController(AppDbContext context, GoogleCloudStorageHe
     return Ok(authors);
   }
 
-  
+
 }

@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.book.Dto;
 
 namespace API.Controllers.LibRoomControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class LibraryRoomController
 {

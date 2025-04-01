@@ -1,12 +1,14 @@
 using AutoMapper;
 using Data.DatabaseContext;
 using EFCore.BulkExtensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Model.Entity.LibraryRoom;
 
 namespace API.Controllers.LibRoomControllers;
+[Authorize("LibrarianPolicy")]
 
 [ApiController]
 [Route("api/v1/library-room")]

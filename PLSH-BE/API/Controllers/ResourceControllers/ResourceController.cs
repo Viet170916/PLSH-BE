@@ -3,6 +3,7 @@ using System.Text;
 using API.Common;
 using AutoMapper;
 using Data.DatabaseContext;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using Model.helper;
 using Newtonsoft.Json;
 
 namespace API.Controllers.ResourceControllers;
+[Authorize("LibrarianPolicy")]
 
 [Route("api/v1/resource")]
 [ApiController]

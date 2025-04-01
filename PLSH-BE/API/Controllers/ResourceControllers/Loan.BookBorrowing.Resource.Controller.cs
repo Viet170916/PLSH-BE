@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using API.Common;
 using API.DTO;
 using Google.Api.Gax.ResourceNames;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Model.Entity;
 
 namespace API.Controllers.ResourceControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class ResourceController
 {

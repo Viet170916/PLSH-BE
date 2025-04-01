@@ -13,6 +13,7 @@ using Model.Entity.Borrow;
 
 namespace API.Controllers.BorrowControllers;
 
+[Authorize("LibrarianPolicy")]
 [Route("api/v1/loan")]
 [ApiController]
 public partial class LoanController(

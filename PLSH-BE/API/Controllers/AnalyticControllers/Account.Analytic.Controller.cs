@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using API.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.AnalyticControllers;
 
+[Authorize("LibrarianPolicy")]
 public partial class AnalyticController
 {
   [HttpGet("account/{accountId}")] public async Task<IActionResult> GetAccountAnalytics(int accountId)

@@ -7,6 +7,7 @@ using BU.Services.Interface;
 using Common.Enums;
 using Common.Helper;
 using Data.DatabaseContext;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +15,11 @@ using Microsoft.Extensions.Logging;
 using Model.Entity.book;
 using Model.ResponseModel;
 
+
 namespace API.Controllers.BookControllers
 {
+  [Authorize("LibrarianPolicy")]
+
   [Route("api/v1/Book")]
   [ApiController]
   public partial class BookController(

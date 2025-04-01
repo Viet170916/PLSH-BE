@@ -11,6 +11,7 @@ using System.Text.Json;
 using Model.Entity.Borrow;
 
 namespace API.Controllers.BorrowControllers;
+[Authorize("LibrarianPolicy")]
 
 public partial class LoanController
 {

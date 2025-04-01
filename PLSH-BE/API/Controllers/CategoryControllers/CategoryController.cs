@@ -3,11 +3,13 @@ using API.DTO.Book;
 using AutoMapper;
 using Data.DatabaseContext;
 using FuzzySharp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.book;
 
 namespace API.Controllers.CategoryControllers;
+[Authorize("LibrarianPolicy")]
 
 [Route("api/v1/category")]
 [ApiController]
