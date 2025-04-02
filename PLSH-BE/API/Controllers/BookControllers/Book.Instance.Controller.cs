@@ -18,6 +18,8 @@ public partial class BookController
     var query = context.BookInstances
                        .Include(i => i.Book)
                        .ThenInclude(b => b.CoverImageResource)
+                       .Include(b=>b.RowShelf)
+                       .ThenInclude(r=>r.Shelf)
                        .Where(bi => bi.DeletedAt == null && bi.IsInBorrowing == false);
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {

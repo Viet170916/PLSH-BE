@@ -15,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Model.Entity.book;
 using Model.ResponseModel;
 
-
 namespace API.Controllers.BookControllers
 {
   // [Authorize("LibrarianPolicy")]
@@ -32,7 +31,7 @@ namespace API.Controllers.BookControllers
   )
     : ControllerBase
   {
-    [HttpPost("add")] public async Task<IActionResult> AddOrUpdateBook([FromForm] BookNewDto? bookDto)
+    [HttpPost("add")] public async Task<IActionResult> AddOrUpdateBook([FromBody] BookNewDto? bookDto)
     {
       logger.LogInformation($"{nameof(AddOrUpdateBook)} called.");
       try

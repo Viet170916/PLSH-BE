@@ -102,6 +102,8 @@ public partial class LibraryRoomController
   public async Task<IActionResult> GetBookInstancesByBookAndShelf([FromQuery] int bookId, [FromQuery] int rowShelfId)
   {
     var bookInstances = await context.BookInstances
+                                     .Include(b=>b.RowShelf)
+                                     .ThenInclude(r=>r.Shelf)
                                      .Where(b => b.BookId == bookId && b.RowShelfId == rowShelfId)
                                      .ToListAsync();
     if (!bookInstances.Any()) { return NotFound(new{

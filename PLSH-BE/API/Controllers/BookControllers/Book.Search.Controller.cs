@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using API.Common;
+using API.DTO;
 using API.DTO.Book;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,18 +55,19 @@ public partial class BookController
     {
       "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
       "createdate" => descending ? query.OrderByDescending(b => b.CreateDate) : query.OrderBy(b => b.CreateDate),
-      _ => query.OrderBy(b => b.Title)
+      _ => query.OrderBy(b => b.CreateDate)
     };
     var totalRecords = await query.CountAsync();
     var booksQueryPagging = query.Skip((page - 1) * limit).Take(limit);
     var books = await booksQueryPagging.ToListAsync();
     var bookDtos = mapper.Map<List<BookNewDto>>(books);
-    var response = new
+    var response = new BaseResponse<List<BookNewDto>>
     {
-      PageCount = (int)Math.Ceiling((double)totalRecords / limit),
-      CurrentPage = page,
-      TotalBook = totalRecords,
-      Data = bookDtos,
+      pageCount = (int)Math.Ceiling((double)totalRecords / limit),
+      currenPage = page,
+      count = totalRecords,
+      page = page,
+      data = bookDtos,
     };
     return Ok(response);
   }

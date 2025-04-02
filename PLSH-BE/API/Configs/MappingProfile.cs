@@ -42,6 +42,10 @@ public class MappingProfile : Profile
         opt => opt.MapFrom(src => src.Book.Thumbnail ?? Converter.ToImageUrl(src.Book.CoverImageResource.LocalUrl)))
       .ForMember(dest => dest.BookAuthor, opt => opt.MapFrom(src => src.Book.Authors.FirstOrDefault().FullName))
       .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.Book.Category.Name))
+      .ForMember(dest => dest.ShelfPosition,
+        opt => opt.MapFrom(src => src.RowShelfId != null ?
+          $"Kệ x-{src.RowShelf.Shelf.X}_y-{src.RowShelf.Shelf.Y}, Hàng {src.RowShelf.Name}, Ngăn {src.Position}" :
+          "Chưa có trên kệ"))
       .ReverseMap();
     CreateMap<RowShelf, LibraryRoomDto.RowShelfDto>()
       .ForMember(dest => dest.BookInstances, opt => opt.MapFrom(src => src.BookInstances))

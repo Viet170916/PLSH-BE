@@ -15,7 +15,16 @@ public partial class LibraryRoomController
                                .Include(s => s.RowShelves)
                                .ThenInclude(rs => rs.BookInstances)
                                .ToListAsync();
-    return Ok(mapper.Map<List<LibraryRoomDto.ShelfDto>>(shelves));
+    var result = mapper.Map<List<LibraryRoomDto.ShelfDto>>(shelves);
+    foreach (var rowShelfDtose in result.Select(r => r.RowShelves))
+    {
+      foreach (var rowShelfDto in rowShelfDtose)
+      {
+        rowShelfDto.BookInstances = [];
+      }
+    }
+
+    return Ok(result);
   }
 
   [HttpGet("shelf/check")]
@@ -35,7 +44,8 @@ public partial class LibraryRoomController
                              .Include(sh => sh.RowShelves)
                              .ThenInclude(rs => rs.BookInstances)!
                              .ThenInclude(bit => bit.Book)
-                             .ThenInclude(book => book.Category).Include(sh => sh.RowShelves)
+                             .ThenInclude(book => book.Category)
+                             .Include(sh => sh.RowShelves)
                              .ThenInclude(rs => rs.BookInstances)!
                              .ThenInclude(bit => bit.Book)
                              .ThenInclude(book => book.CoverImageResource)
