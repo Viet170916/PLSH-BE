@@ -73,6 +73,7 @@ namespace API.Controllers.BookControllers
 
           book = new Book { CreateDate = DateTime.UtcNow, };
           context.Books.Add(book);
+          await context.SaveChangesAsync();
         }
 
         IList<string> authorNames = new List<string>();
@@ -89,6 +90,8 @@ namespace API.Controllers.BookControllers
                                           .Where(a => authorNames.Contains(a.FullName))
                                           .ToListAsync();
         }
+
+        if (book.Id is not null) { await bookInstanceService.AddBookInstancesIfNeeded(book.Id, bookDto.Quantity); }
 
         book.Title = bookDto.Title;
         book.Description = bookDto.Description;
@@ -119,9 +122,7 @@ namespace API.Controllers.BookControllers
           if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
         await context.SaveChangesAsync();
-
         var bookAdded = mapper.Map<BookNewDto>(book);
-        await bookInstanceService.AddBookInstancesIfNeeded(book.Id, bookDto.Quantity);
         return Ok(bookAdded);
       }
       catch (Exception ex)
