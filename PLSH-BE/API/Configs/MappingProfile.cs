@@ -26,6 +26,8 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors))
       .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.BookInstances.Count))
       .ForMember(dest => dest.PublishDate, opt => opt.MapFrom(src => src.PublishDate))
+      .ForMember(dest => dest.AvailableBookCount,
+        opt => opt.MapFrom(src => (src.BookInstances.Count(b => !b.IsInBorrowing))))
       .ReverseMap()
       .ForMember(dest => dest.IsbNumber10, opt => opt.MapFrom(src => src.IsbnNumber13))
       .ForMember(dest => dest.IsbNumber10, opt => opt.MapFrom(src => src.IsbnNumber10));

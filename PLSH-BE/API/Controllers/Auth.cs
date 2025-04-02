@@ -93,7 +93,7 @@ public class AuthController(
         Message = "Unauthorized access.",
       });
     }
-    
+
   }
 
   [AllowAnonymous] [HttpPost("login")] public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
@@ -339,7 +339,7 @@ public class AuthController(
     return Convert.ToBase64String(randomNumber);
   }
 
-  // [Authorize(Policy = "Bearer")] 
+  // [Authorize(Policy = "Bearer")]
   private async Task<GoogleUserInfo> GetGoogleUserInfo(string googleToken)
   {
     var client = new HttpClient();
@@ -395,7 +395,7 @@ public class AuthController(
         GoogleUserId = null,
         AvatarUrl = null,
         IsVerified = false, // Mặc định chưa xác minh
-        Status = 0, // Chờ duyệt
+        Status = "active", // Chờ duyệt
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
         DeletedAt = DateTime.MinValue,

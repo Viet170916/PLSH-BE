@@ -11,6 +11,7 @@ using DotNetEnv;
 using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -135,8 +136,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorizationBuilder()
        .AddPolicy("AdminPolicy", policy => policy.RequireRole("admin"))
        .AddPolicy("BorrowerPolicy", policy => policy.RequireRole("student", "teacher"))
-       .AddPolicy("LibrarianPolicy", policy => policy.RequireRole("librarian", "admin"));
-
+       .AddPolicy("LibrarianPolicy", policy => policy.RequireRole("librarian", "admin"))
+       .AddPolicy("NotVerifiedPolicy", policy => policy.RequireRole("notVerifiedUser"));
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
@@ -173,15 +174,33 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.Use(async (context, next) =>
 {
-  if (context.Request.Headers.ContainsKey("Authorization"))
+  var path = context.Request.Path;
+
+  if (path.StartsWithSegments("/api/v1/account/b-change-password")
+      || path.StartsWithSegments("/api/v1/account/b-login/google")
+      || path.StartsWithSegments("/api/v1/account/b-login")
+      || path.StartsWithSegments("/api/v1/account/is-verified")
+      || path.StartsWithSegments("/api/v1/account/login")
+      || path.StartsWithSegments("/api/v1/account/login/google")
+     )
   {
-    var token = context.Request.Headers["Authorization"];
-    Console.WriteLine($"🟢 Received Token: {token}");
+    await next();
+    return;
   }
-  else
+
+  if (context.User.IsInRole("notVerifiedUser"))
   {
-    Console.WriteLine("🔴 No Authorization Header Found!");
+    context.Response.StatusCode = 403;
+    context.Response.ContentType = "application/json";
+    var response = new
+    {
+      status = "notChangePasswordYet",
+      message = "Tài khoản của bạn chưa được đổi mật khẩu. Vui lòng đổi mật khẩu để tiếp tục."
+    };
+    await context.Response.WriteAsJsonAsync(response);
+    return;
   }
+
   await next();
 });
 app.UseHttpsRedirection();

@@ -40,7 +40,7 @@ public class Account
   public string? GoogleUserId { get; set; }
 
   public bool IsVerified { get; set; } = false;
-  public int Status { get; set; } = 0;
+  public string Status { get; set; } = "active";
   public DateTime CreatedAt { get; set; }
   public DateTime? UpdatedAt { get; set; }
   public DateTime? DeletedAt { get; set; }

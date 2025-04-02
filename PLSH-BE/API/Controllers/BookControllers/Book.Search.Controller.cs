@@ -36,18 +36,47 @@ public partial class BookController
     [FromQuery] int page = 1,
     [FromQuery] int limit = 10,
     [FromQuery] string orderBy = "title",
-    [FromQuery] bool descending = false
+    [FromQuery] bool descending = false,
+    [FromQuery] string infoEachBook = "big"
   )
   {
     limit = Math.Clamp(limit, 1, 40);
-    var query = context.Books
-                       .Include(b => b.Authors)
-                       .Include(b => b.Category)
-                       .Include(b => b.AudioResource)
-                       .Include(b => b.EpubResource)
-                       .Include(b => b.CoverImageResource)
-                       .Include(b => b.PreviewPdfResource)
-                       .AsQueryable();
+    var gatherInfo = context.Books.AsQueryable();
+    switch (infoEachBook)
+    {
+      case "small":
+        gatherInfo = gatherInfo
+                     .Include(b => b.CoverImageResource)
+                     .Include(b => b.Authors)
+                     .Include(b => b.Category);
+        break;
+      case "medium":
+        gatherInfo = gatherInfo
+                     .Include(b => b.CoverImageResource)
+                     .Include(b => b.Authors)
+                     .Include(b => b.Category)
+                     .Include(b => b.AudioResource);
+        break;
+      case "big":
+        gatherInfo = gatherInfo
+                     .Include(b => b.CoverImageResource)
+                     .Include(b => b.Authors)
+                     .Include(b => b.Category)
+                     .Include(b => b.AudioResource)
+                     .Include(b => b.EpubResource);
+        break;
+      case "all":
+        gatherInfo = gatherInfo
+                     .Include(b => b.CoverImageResource)
+                     .Include(b => b.Authors)
+                     .Include(b => b.Category)
+                     .Include(b => b.AudioResource)
+                     .Include(b => b.EpubResource);
+                     // .Include(b => b.PreviewPdfResource);
+        break;
+    }
+
+    var query = gatherInfo.AsQueryable();
     if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title.Contains(keyword));
     if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
     if (authorId.HasValue) query = query.Where(b => b.Authors.Any(a => a.Id == authorId));

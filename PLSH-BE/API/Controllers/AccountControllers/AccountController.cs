@@ -3,11 +3,13 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using API.DTO;
+using API.DTO.Account.AccountDTO;
 using AutoMapper;
 using BU.Services.Interface;
 using Common.Library;
 using Data.DatabaseContext;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +20,26 @@ namespace API.Controllers.AccountControllers;
 
 [ApiController]
 [Route("api/v1/account")]
-// [Authorize(Roles = "Admin")] // Chỉ Admin 
+// [Authorize(Roles = "Admin")] // Chỉ Admin
 public partial class AccountController(AppDbContext context, IEmailService emailService, IMapper mapper) : Controller
 {
+  [Authorize] [HttpGet()] public async Task<IActionResult> GetAccountAsync()
+  {
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(m => m.Id == accountId);
+    if (account == null)
+    {
+      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+    }
+
+    return Ok(new BaseResponse<AccountGDto>
+    {
+      message = "Account retrieved successfully", data = mapper.Map<AccountGDto>(account), status = "success"
+    });
+  }
+
   public class VerifiedResponse
   {
     public bool EmailExisted { get; set; }
@@ -100,14 +119,13 @@ public partial class AccountController(AppDbContext context, IEmailService email
                                  .Include(ac => ac.Role)
                                  .FirstOrDefaultAsync(a => a.Email == email);
       var roleId = context.Roles.FirstOrDefault(r => r.Name == request.Role)?.Id;
-      
-
       if (account == null)
       {
         if (roleId is null)
         {
           return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
         }
+
         account = new Account
         {
           FullName = request.FullName ?? fullName,
@@ -143,14 +161,14 @@ public partial class AccountController(AppDbContext context, IEmailService email
     {
       Subject = new ClaimsIdentity(new[]
       {
-        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
-        new Claim(ClaimTypes.Email, account.Email),
+        new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()), new Claim(ClaimTypes.Email, account.Email),
         new Claim(ClaimTypes.Role, role)
       }),
       Expires = DateTime.UtcNow.Add(expiration),
-      Issuer = Constants.Issuer,  
-      Audience = Constants.Audience, 
-      SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+      Issuer = Constants.Issuer,
+      Audience = Constants.Audience,
+      SigningCredentials =
+        new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
     };
     var token = tokenHandler.CreateToken(tokenDescriptor);
     return tokenHandler.WriteToken(token);

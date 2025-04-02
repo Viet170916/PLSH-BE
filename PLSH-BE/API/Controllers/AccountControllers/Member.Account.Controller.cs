@@ -12,8 +12,8 @@ namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
-  [Authorize("LibrarianPolicy")]
-  [HttpPost("member/create")] public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest account)
+  [Authorize("LibrarianPolicy")] [HttpPost("member/create")]
+  public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest account)
   {
     if (await context.Accounts.AnyAsync(a => a.Email == account.Email))
     {
@@ -38,7 +38,7 @@ public partial class AccountController
     };
     context.Accounts.Add(newAccount);
     await context.SaveChangesAsync();
-    var appLink = "https://Book-hive.space/login";
+    var appLink = "https://book-hive.space/auth/sign-in";
     await emailService.SendWelcomeEmailAsync(account.FullName, account.Email, generatedPassword, appLink);
     return Ok(new
     {
@@ -47,8 +47,9 @@ public partial class AccountController
       Data = mapper.Map<Account>(newAccount),
     });
   }
-  [Authorize("LibrarianPolicy")]
-  [HttpGet("member")] public async Task<IActionResult> GetMembers(
+
+  [Authorize("LibrarianPolicy")] [HttpGet("member")]
+  public async Task<IActionResult> GetMembers(
     [FromQuery] int page = 1,
     [FromQuery] int limit = 10,
     [FromQuery] string orderBy = "FullName",
@@ -97,10 +98,7 @@ public partial class AccountController
     return Ok(result);
   }
 
-
-  [Authorize]
-
-  [HttpPut("member/update")] public async Task<IActionResult> UpdateAccountAsync(
+  [Authorize] [HttpPut("member/update")] public async Task<IActionResult> UpdateAccountAsync(
     [FromBody] AccountGDto updateDto
   )
   {
@@ -141,9 +139,9 @@ public partial class AccountController
       message = "Account updated successfully", data = mapper.Map<AccountGDto>(account), status = "success",
     });
   }
-  [Authorize]
 
-  [HttpGet("member/{accountId:int}")] public async Task<IActionResult> GetAccountByIdAsync([FromRoute] int accountId)
+  [Authorize] [HttpGet("member/{accountId:int}")]
+  public async Task<IActionResult> GetAccountByIdAsync([FromRoute] int accountId)
   {
     var account = await context.Accounts
                                .Include(a => a.Role)

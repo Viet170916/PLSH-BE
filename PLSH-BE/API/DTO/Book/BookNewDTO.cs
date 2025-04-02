@@ -10,6 +10,7 @@ namespace API.DTO.Book
   public class BookNewDto
   {
     public int? Id { get; set; }
+    public int? AvailableBookCount { get; set; }
     public required string Title { get; set; }
     public string? Description { get; set; }
     public string? Thumbnail { get; set; }

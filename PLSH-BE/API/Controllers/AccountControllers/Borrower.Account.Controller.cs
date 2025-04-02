@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using API.DTO;
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +35,76 @@ public partial class AccountController
     return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập thành công." });
   }
 
-  [HttpPost("b-login/google")] public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
+  public class ChangePasswordRequest
+  {
+    public string? OldPassword { get; set; }
+    public required string Password { get; set; }
+    public required string ReEnterPassword { get; set; }
+  }
+
+  [Authorize] [HttpPost("b-change-password")]
+  public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+  {
+    if (string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.ReEnterPassword))
+    {
+      return BadRequest(new BaseResponse<string> { message = "Mật khẩu không được để trống." });
+    }
+
+    if (request.Password != request.ReEnterPassword)
+    {
+      return BadRequest(new BaseResponse<string> { message = "Mật khẩu xác nhận không khớp." });
+    }
+
+    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Id == userId);
+    if (account == null) { return NotFound(new BaseResponse<string> { message = "Không tìm thấy người dùng." }); }
+
+    if (!account.IsVerified)
+    {
+      if (request.Password != request.ReEnterPassword)
+      {
+        return BadRequest(new BaseResponse<string> { message = "Mật khẩu và mật khẩu nhập lại không khớp." });
+      }
+
+      account.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+      account.IsVerified = true;
+      context.Accounts.Update(account);
+      await context.SaveChangesAsync();
+      var token = GenerateJwtToken(account, account.Role.Name, TimeSpan.FromDays(10));
+      return Ok(new BaseResponse<string>
+      {
+        data = token, message = "Mật khẩu đã được thay đổi thành công và tài khoản đã được xác minh."
+      });
+    }
+    else
+    {
+      if (request.OldPassword == null || request.Password == null || request.ReEnterPassword == null)
+      {
+        return BadRequest(new BaseResponse<string> { message = "Vui lòng nhập đầy đủ thông tin." });
+      }
+
+      var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.OldPassword, account.Password);
+      if (!isPasswordValid) { return Unauthorized(new BaseResponse<string> { message = "Mật khẩu cũ không đúng." }); }
+
+      if (request.Password != request.ReEnterPassword)
+      {
+        return BadRequest(new BaseResponse<string> { message = "Mật khẩu và mật khẩu nhập lại không khớp." });
+      }
+
+      account.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+      context.Accounts.Update(account);
+      await context.SaveChangesAsync();
+      var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
+      var tokenExpiration = TimeSpan.FromDays(7);
+      var token = GenerateJwtToken(account, role, tokenExpiration);
+      return Ok(new BaseResponse<string> { data = token, message = "Mật khẩu đã được thay đổi thành công." });
+    }
+  }
+
+  [HttpPost("b-login/google")]
+  public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
   {
     try
     {
@@ -46,14 +117,13 @@ public partial class AccountController
                                  .Include(ac => ac.Role)
                                  .FirstOrDefaultAsync(a => a.Email == email);
       var roleId = context.Roles.FirstOrDefault(r => r.Name == request.Role)?.Id;
-
-
       if (account == null)
       {
         if (roleId is null)
         {
           return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
         }
+
         account = new Account
         {
           FullName = request.FullName ?? fullName,
