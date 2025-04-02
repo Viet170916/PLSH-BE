@@ -75,7 +75,6 @@ namespace API.Controllers.BookControllers
           context.Books.Add(book);
         }
 
-        await bookInstanceService.AddBookInstancesIfNeeded(book.Id, bookDto.Quantity);
         IList<string> authorNames = new List<string>();
         if (bookDto.Authors is not null && bookDto.Authors.Any())
         {
@@ -120,7 +119,9 @@ namespace API.Controllers.BookControllers
           if (bookDto.Category is not null) { book.Category = new Category { Name = bookDto.Category.Name }; }
 
         await context.SaveChangesAsync();
+
         var bookAdded = mapper.Map<BookNewDto>(book);
+        await bookInstanceService.AddBookInstancesIfNeeded(book.Id, bookDto.Quantity);
         return Ok(bookAdded);
       }
       catch (Exception ex)
