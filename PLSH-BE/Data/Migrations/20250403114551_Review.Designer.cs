@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250403114551_Review")]
+    partial class Review
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -453,7 +456,7 @@ namespace Data.Migrations
                     b.ToTable("Magazines");
                 });
 
-            modelBuilder.Entity("Model.Entity.Notification.Notification", b =>
+            modelBuilder.Entity("Model.Entity.Notification", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -465,21 +468,14 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Reference")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<int>("ReferenceId")
+                    b.Property<int>("Reference")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -491,8 +487,6 @@ namespace Data.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
 
                     b.ToTable("Notifications");
                 });
@@ -1284,50 +1278,6 @@ namespace Data.Migrations
                     b.ToTable("EBooks");
                 });
 
-            modelBuilder.Entity("Model.Entity.book.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(3000)
-                        .HasColumnType("varchar(3000)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("RepliedId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReviewId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RepliedId");
-
-                    b.HasIndex("ResourceId");
-
-                    b.HasIndex("ReviewId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Messages");
-                });
-
             modelBuilder.Entity("Model.Entity.book.Page", b =>
                 {
                     b.Property<int>("Id")
@@ -1402,13 +1352,13 @@ namespace Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<float>("Rating")
-                        .HasColumnType("float");
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
 
                     b.Property<int?>("ResourceId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("UpdatedDate")
+                    b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -1493,17 +1443,6 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("LibraryRoom");
-                });
-
-            modelBuilder.Entity("Model.Entity.Notification.Notification", b =>
-                {
-                    b.HasOne("Model.Entity.User.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Model.Entity.Resource", b =>
@@ -1596,37 +1535,6 @@ namespace Data.Migrations
                     b.Navigation("RowShelf");
                 });
 
-            modelBuilder.Entity("Model.Entity.book.Message", b =>
-                {
-                    b.HasOne("Model.Entity.User.Account", "RepliedPerson")
-                        .WithMany()
-                        .HasForeignKey("RepliedId");
-
-                    b.HasOne("Model.Entity.Resource", "Resource")
-                        .WithMany()
-                        .HasForeignKey("ResourceId");
-
-                    b.HasOne("Model.Entity.book.Review", "Review")
-                        .WithMany("Messages")
-                        .HasForeignKey("ReviewId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.User.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RepliedPerson");
-
-                    b.Navigation("Resource");
-
-                    b.Navigation("Review");
-
-                    b.Navigation("Sender");
-                });
-
             modelBuilder.Entity("Model.Entity.book.Review", b =>
                 {
                     b.HasOne("Model.Entity.User.Account", "AccountSender")
@@ -1697,11 +1605,6 @@ namespace Data.Migrations
             modelBuilder.Entity("Model.Entity.book.Category", b =>
                 {
                     b.Navigation("Books");
-                });
-
-            modelBuilder.Entity("Model.Entity.book.Review", b =>
-                {
-                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

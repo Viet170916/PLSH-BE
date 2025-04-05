@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
 
 namespace Model.Entity.book;
@@ -21,6 +22,8 @@ public sealed class BookInstance
   public DateTime? DeletedAt { get; set; }
   public DateTime CreatedAt { get; set; } = DateTime.Now;
   public int? BookIdRestore { get; set; }
+  public string BookStatus { get; set; } = "normal";
+  public ICollection<BookBorrowing> BookBorrowings { get; set; } = new List<BookBorrowing>();
 
   [JsonIgnore]
   [ForeignKey("BookId")]

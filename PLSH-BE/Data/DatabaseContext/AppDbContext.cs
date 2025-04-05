@@ -6,6 +6,7 @@ using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
+using Model.Entity.Notification;
 using Model.Entity.User;
 
 namespace Data.DatabaseContext;
@@ -41,8 +42,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
   public DbSet<Magazine> Magazines { get; set; }
   public DbSet<PhysicalBook> PhysicalBooks { get; set; }
   public DbSet<Video> Videos { get; set; }
+  public DbSet<Review> Reviews { get; set; }
+  public DbSet<Message> Messages { get; set; }
 
-  //public DbSet<Availability> Availabilities { get; set; } 
+  //public DbSet<Availability> Availabilities { get; set; }
   public DbSet<Resource> Resources { get; set; }
   public DbSet<Author> Authors { get; set; }
   public DbSet<ShortBookInfo> ShortBookInfos { get; set; }

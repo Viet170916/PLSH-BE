@@ -3,10 +3,12 @@ using API.Controllers.ResourceControllers;
 using API.DTO.Account.AccountDTO;
 using API.DTO.Book;
 using API.DTO.Loan;
+using API.DTO.Notification;
 using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
+using Model.Entity.Notification;
 using Model.Entity.User;
 using LibraryRoomDto = Model.Entity.book.Dto.LibraryRoomDto;
 using Profile = AutoMapper.Profile;
@@ -79,6 +81,44 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.overdueDays,
         opt => opt.MapFrom(src => DateTimeConverter.CalculateOverdueDays(src.BorrowDate, src.ReturnDates,
           src.ExtendDates, src.ActualReturnDate ?? DateTime.Now)))
+      .ReverseMap();
+    CreateMap<Review, ReviewDto>()
+      .ForMember(dest => dest.ResourceUrl,
+        opt => opt.MapFrom(src => (Converter.ToImageUrl(src.Resource!.LocalUrl))))
+      .ForMember(dest => dest.AccountSenderAvatar,
+        opt => opt.MapFrom(src => (src.AccountSender.AvatarUrl)))
+      .ForMember(dest => dest.AccountSenderName,
+        opt => opt.MapFrom(src => (src.AccountSender.FullName)))
+      .ForMember(dest => dest.IsYouAreSender, opt => opt.MapFrom((src, dest, destMember, context) =>
+      {
+        var currentUserId = context.Items.TryGetValue("CurrentUserId", out var value) ? (int)value : 0;
+        return src.AccountSenderId == currentUserId;
+      }))
+      .ReverseMap();
+
+    CreateMap<Notification, NotificationDto>()
+      .ForMember(dest => dest.ReferenceData, opt => opt.MapFrom((src, dest, destMember, context) =>
+      {
+        var referenceData = context.Items.TryGetValue("ReferenceData", out var value) ? value : null;
+        return referenceData;
+      })).ReverseMap();
+
+    CreateMap<Message, MessageDto>()
+      .ForMember(dest => dest.ResourceUrl,
+        opt => opt.MapFrom(src => (Converter.ToImageUrl(src.Resource!.LocalUrl))))
+      .ForMember(dest => dest.SenderAvatar,
+        opt => opt.MapFrom(src => src.Sender.AvatarUrl))
+      .ForMember(dest => dest.RepliedAvatar,
+        opt => opt.MapFrom(src => (src.RepliedPerson!.AvatarUrl)))
+      .ForMember(dest => dest.SenderName,
+        opt => opt.MapFrom(src => src.Sender.FullName))
+      .ForMember(dest => dest.RepliedPersonName,
+        opt => opt.MapFrom(src => (src.RepliedPerson!.FullName)))
+      .ForMember(dest => dest.IsYouAreSender, opt => opt.MapFrom((src, dest, destMember, context) =>
+      {
+        var currentUserId = context.Items.TryGetValue("CurrentUserId", out var value) ? (int)value : 0;
+        return src.SenderId == currentUserId;
+      }))
       .ReverseMap();
   }
 }

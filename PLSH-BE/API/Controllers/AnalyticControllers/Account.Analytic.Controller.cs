@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers.AnalyticControllers;
 
-[Authorize("LibrarianPolicy")]
 public partial class AnalyticController
 {
-  [HttpGet("account/{accountId}")] public async Task<IActionResult> GetAccountAnalytics(int accountId)
+  [Authorize("LibrarianPolicy")] [HttpGet("account/{accountId}")]
+  public async Task<IActionResult> GetAccountAnalytics(int accountId)
   {
     var loans = await context.Loans
                              .Include(l => l.BookBorrowings)

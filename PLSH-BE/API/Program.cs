@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using System.Text;
 using API.Common;
 using API.Configs;
+using API.Hubs;
 using API.Middlewares;
+using API.Provider;
 using BU.Extensions;
 using Common.Library;
 using Data.DatabaseContext;
@@ -12,6 +15,7 @@ using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -76,17 +80,16 @@ builder.Services.AddCors(options =>
 {
   options.AddPolicy("AllowSpecificOrigins",
     policy => policy
-              // .WithOrigins(
-              //   "https://www.Book-hive.space",
-              //   "http://104.197.134.164",
-              //   "http://localhost:5281",
-              //   "http://localhost:3000",
-              //   "https://Book-hive.space")
-              .AllowAnyOrigin()
+              .WithOrigins("https://www.book-hive.space",
+                "https://librarian.book-hive.space",
+                "http://localhost:5281",
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "https://book-hive.space")
+              // .AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader()
-    // .AllowCredentials()
-  );
+              .AllowCredentials());
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -102,6 +105,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //DI
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IUserIdProvider,AppUserIdProvider>();
 builder.Services.AddSingleton(StorageClient.Create());
 builder.Services.AddSingleton<GoogleCloudStorageHelper>();
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -109,6 +113,7 @@ builder.Services.AddBusinessLayer();
 builder.Services.AddLockBusinessLayer();
 
 //
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
        {
@@ -125,10 +130,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
          };
          options.Events = new JwtBearerEvents
          {
-           OnAuthenticationFailed = context => { return Task.CompletedTask; },
-           OnTokenValidated = context =>
+           OnMessageReceived = context =>
            {
-             Console.WriteLine("Token is valid!");
+             var accessToken = context.Request.Query["access_token"];
+
+             var path = context.HttpContext.Request.Path;
+             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/bookHiveHub"))
+             {
+               context.Token = accessToken;
+             }
+
              return Task.CompletedTask;
            }
          };
@@ -138,6 +149,7 @@ builder.Services.AddAuthorizationBuilder()
        .AddPolicy("BorrowerPolicy", policy => policy.RequireRole("student", "teacher"))
        .AddPolicy("LibrarianPolicy", policy => policy.RequireRole("librarian", "admin"))
        .AddPolicy("NotVerifiedPolicy", policy => policy.RequireRole("notVerifiedUser"));
+builder.Services.AddSignalR();
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
@@ -148,6 +160,7 @@ builder.Services.AddControllers()
        });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureEmailService();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -175,7 +188,6 @@ app.UseAuthorization();
 app.Use(async (context, next) =>
 {
   var path = context.Request.Path;
-
   if (path.StartsWithSegments("/api/v1/account/b-change-password")
       || path.StartsWithSegments("/api/v1/account/b-login/google")
       || path.StartsWithSegments("/api/v1/account/b-login")
@@ -205,4 +217,5 @@ app.Use(async (context, next) =>
 });
 app.UseHttpsRedirection();
 app.MapControllers();
+app.MapHub<ReviewHub>("/bookHiveHub");
 app.Run();
