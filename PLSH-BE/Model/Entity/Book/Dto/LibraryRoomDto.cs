@@ -17,7 +17,7 @@ public class LibraryRoomDto
     public int? Position { get; set; }
     public string? ShelfPosition { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
   }
 
   public class RowShelfDto

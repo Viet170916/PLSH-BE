@@ -1,10 +1,15 @@
+using System.Collections.Generic;
 using System.Security.Claims;
 using API.DTO;
-using API.DTO.Loan;
+using BU.Models.DTO;
+using BU.Models.DTO.Loan;
+using BU.Models.DTO.Notification;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.Borrow;
+using Model.Entity.Notification;
 
 namespace API.Controllers.BorrowControllers;
 
@@ -14,6 +19,47 @@ public partial class LoanController
   {
     public int BookId { get; set; }
     public int Quantity { get; set; }
+  }
+
+  [Authorize("BorrowerPolicy")] [HttpDelete("book-borrowing/{id}")]
+  public async Task<IActionResult> DeleteBookBorrowing(int id)
+  {
+    var accountId = User.FindFirst(ClaimTypes.NameIdentifier);
+    if (accountId == null)
+    {
+      return Unauthorized(new BaseResponse<string>
+      {
+        status = "fail", message = "Không xác thực: Thiếu thông tin người dùng trong token."
+      });
+    }
+
+    if (!int.TryParse(accountId.Value, out var userId))
+    {
+      return Unauthorized(new BaseResponse<string>
+      {
+        status = "fail", message = "Token không hợp lệ: Không thể lấy ID người dùng."
+      });
+    }
+
+    var bookBorrowing = await context.BookBorrowings
+                                     .Include(bb => bb.Loan)
+                                     .FirstOrDefaultAsync(bb => bb.Id == id);
+    if (bookBorrowing == null)
+    {
+      return NotFound(new BaseResponse<string> { status = "fail", message = "Không tìm thấy thông tin mượn sách." });
+    }
+
+    if (bookBorrowing.Loan == null || bookBorrowing.Loan.BorrowerId != userId || !bookBorrowing.Loan.IsCart)
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        status = "fail", message = "Không thể xoá vì yêu cầu không hợp lệ hoặc quyền truy cập bị từ chối."
+      });
+    }
+
+    context.BookBorrowings.Remove(bookBorrowing);
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<string> { status = "success", message = "Xoá thông tin mượn sách thành công." });
   }
 
   [Authorize("BorrowerPolicy")] [HttpPost("add-to-cart")]
@@ -94,9 +140,8 @@ public partial class LoanController
         if (availableInstance == null) continue;
         loan.BookBorrowings.Add(new BookBorrowing
         {
-          BookInstance = availableInstance, BorrowingStatus = "on-loan", BorrowDate = DateTime.Now
+          BookInstance = availableInstance, BorrowingStatus = "on-loan", BorrowDate = DateTime.UtcNow
         });
-        // availableInstance.IsInBorrowing = true;
       }
 
       await context.SaveChangesAsync();
@@ -149,5 +194,76 @@ public partial class LoanController
       return StatusCode(500,
         new BaseResponse<string> { message = $"Lỗi khi lấy giỏ mượn: {ex.Message}", status = "unsuccessful" });
     }
+  }
+  [Authorize("BorrowerPolicy")]
+  [HttpPost("confirm-loan")] public async Task<IActionResult> ConfirmLoan([FromBody] LoanDto loanDto)
+  {
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+    if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+    {
+      return Unauthorized(new BaseResponse<string>
+      {
+        status = "fail", message = "Không xác thực: Token không hợp lệ."
+      });
+    }
+    var user = await context.Accounts.FindAsync(userId);
+
+    var loan = await context.Loans
+                            .Include(l => l.BookBorrowings)
+                            .FirstOrDefaultAsync(l => l.Id == loanDto.Id);
+    if (loan == null)
+    {
+      return NotFound(new BaseResponse<string> { status = "fail", message = "Không tìm thấy yêu cầu mượn sách." });
+    }
+
+    if (loan.BorrowerId != userId || !loan.IsCart)
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        status = "fail", message = "Bạn không có quyền xác nhận yêu cầu này hoặc yêu cầu đã được gửi trước đó."
+      });
+    }
+
+    loan.IsCart = false;
+    loan.AprovalStatus = "pending";
+    loan.BorrowingDate = loanDto.BorrowingDate;
+    // loan.ReturnDate = loanDto.ReturnDate;
+    foreach (var item in loan.BookBorrowings)
+    {
+      var updated = loanDto.BookBorrowings.FirstOrDefault(b => b.Id == item.Id);
+      if (updated == null) continue;
+      item.BorrowDate = updated.BorrowDate;
+      if (updated.ReturnDates is { Count: > 0, }) item.ReturnDates = updated.ReturnDates;
+    }
+
+    await context.SaveChangesAsync();
+    var librarians = await context.Accounts
+                                  .Where(a => a.Role.Name == "librarian")
+                                  .ToListAsync();
+    var notifications = librarians.Select(librarian => new Notification
+                                  {
+                                    Title = "Yêu cầu mượn sách mới",
+                                    Content = $"Người dùng {user?.FullName} vừa gửi yêu cầu mượn sách.",
+                                    AccountId = librarian.Id,
+                                    Date = DateTime.UtcNow,
+                                    IsRead = false,
+                                    Reference = "Loan",
+                                    ReferenceId = loan.Id,
+                                  })
+                                  .ToList();
+    await context.Notifications.AddRangeAsync(notifications);
+    await context.SaveChangesAsync();
+    var notificationDtos = notifications.Select(n =>
+                                          mapper.Map<NotificationDto>(n, opt => opt.Items["ReferenceData"] = loanDto))
+                                        .ToList();
+    foreach (var librarian in librarians)
+    {
+      var userNotification = notificationDtos.FirstOrDefault(n => n.AccountId == librarian.Id);
+      await hubContext.Clients.User(librarian.Id.ToString())
+                      .SendAsync("ReceiveNotification", userNotification);
+    }
+
+    return Ok(new BaseResponse<LoanDto> { status = "success", message = "Gửi yêu cầu mượn sách thành công.", data = loanDto});
   }
 }

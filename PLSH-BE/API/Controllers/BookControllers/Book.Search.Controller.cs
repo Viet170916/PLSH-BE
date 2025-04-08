@@ -3,6 +3,7 @@ using System.Text.Json;
 using API.Common;
 using API.DTO;
 using API.DTO.Book;
+using BU.Models.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

@@ -185,7 +185,7 @@ namespace Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("TransactionId")
+                    b.Property<int?>("TransactionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

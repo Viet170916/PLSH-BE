@@ -20,7 +20,7 @@ public sealed class BookInstance
   public int? Position { get; set; }
   public bool IsInBorrowing { get; set; } = false;
   public DateTime? DeletedAt { get; set; }
-  public DateTime CreatedAt { get; set; } = DateTime.Now;
+  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
   public int? BookIdRestore { get; set; }
   public string BookStatus { get; set; } = "normal";
   public ICollection<BookBorrowing> BookBorrowings { get; set; } = new List<BookBorrowing>();

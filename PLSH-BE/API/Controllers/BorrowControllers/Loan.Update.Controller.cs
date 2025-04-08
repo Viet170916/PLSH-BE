@@ -1,14 +1,19 @@
 using System.Collections.Generic;
 using API.Common;
 using API.DTO;
-using API.DTO.Loan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
 using System.Text.Json;
+using BU.Models.DTO;
+using BU.Models.DTO.Loan;
+using BU.Models.DTO.Notification;
+using EFCore.BulkExtensions;
+using Microsoft.AspNetCore.SignalR;
 using Model.Entity.Borrow;
+using Model.Entity.Notification;
 
 namespace API.Controllers.BorrowControllers;
 
@@ -62,7 +67,7 @@ public partial class LoanController
 
     bookBorrowing.BorrowingStatus = "returned";
     bookBorrowing.BookInstance.IsInBorrowing = false;
-    bookBorrowing.ActualReturnDate = DateTime.Now;
+    bookBorrowing.ActualReturnDate = DateTime.UtcNow;
     await context.SaveChangesAsync();
     return Ok(new BaseResponse<List<Resource>>
     {
@@ -79,18 +84,23 @@ public partial class LoanController
   [Authorize(Policy = "LibrarianPolicy")] [HttpPut("{id}/approve-status")]
   public async Task<IActionResult> UpdateLoanStatus(int id, [FromBody] UpdateLoanStatusDto request)
   {
-    var validStatuses = new[] { "pending", "approved", "rejected" };
+    var validStatuses = new[] { "pending", "approved", "rejected", "cancel", "taken", "return-all", };
     if (!validStatuses.Contains(request.Status.ToLower()))
     {
       return BadRequest(new BaseResponse<object?>
       {
-        message = "Trạng thái không hợp lệ. Chỉ chấp nhận: pending, approved, rejected.",
+        message =
+          "Trạng thái không hợp lệ. Chỉ chấp nhận: \"pending\", \"approved\", \"rejected\", \"cancel\", \"taken\", \"return-all\"",
         status = "error",
         data = null
       });
     }
 
-    var loan = await context.Loans.FindAsync(id);
+    var loan = await context.Loans
+                            .Include(l => l.BookBorrowings)
+                            .ThenInclude(b => b.BookInstance)
+                            .Include(loan => loan.Borrower)
+                            .FirstOrDefaultAsync(l => l.Id == id);
     if (loan == null)
     {
       return NotFound(new BaseResponse<object?>
@@ -100,7 +110,61 @@ public partial class LoanController
     }
 
     loan.AprovalStatus = request.Status;
+    switch (request.Status)
+    {
+      case "taken":
+        if (loan.BookBorrowings?.Count > 0)
+        {
+          foreach (var loanBookBorrowing in loan.BookBorrowings)
+          {
+            loanBookBorrowing.BorrowingStatus = "on-loan";
+            var now = DateTime.Now;
+            if (loanBookBorrowing.ReturnDates.Count != 0)
+            {
+              loanBookBorrowing.ReturnDates = loanBookBorrowing.ReturnDates
+                                                               .Select(date =>
+                                                                 now+((date - loanBookBorrowing.BorrowDate)))
+                                                               .ToList();
+            }
+
+            loanBookBorrowing.BorrowDate = now;
+            loanBookBorrowing.BookInstance.IsInBorrowing = true;
+          }
+
+          await context.BulkUpdateAsync(loan.BookBorrowings);
+        }
+
+        break;
+      case "return-all":
+        if (loan.BookBorrowings?.Count>0)
+        {
+          foreach (var loanBookBorrowing in loan.BookBorrowings)
+          {
+            loanBookBorrowing.BorrowingStatus = "returned";
+            loanBookBorrowing.ActualReturnDate = DateTime.UtcNow;
+            loanBookBorrowing.BookInstance.IsInBorrowing = false;
+          }
+
+          await context.BulkUpdateAsync(loan.BookBorrowings);
+        }
+
+        break;
+    }
+
     await context.SaveChangesAsync();
+
+    var loanDto = mapper.Map<LoanDto>(loan);
+    var notificationDto = new NotificationDto
+    {
+      Title = "Trạng thái đơn mượn đã cập nhật",
+      Content = $"Trạng thái đơn mượn #{loan.Id} đã được cập nhật thành \"{request.Status}\".",
+      Reference = "Loan",
+      ReferenceId = loan.Id,
+      ReferenceData = loanDto,
+    };
+
+    await notificationService.SendNotificationToUserAsync(loan.Borrower.Id, notificationDto);
+
     return Ok(new BaseResponse<LoanDto>
     {
       message = "Cập nhật trạng thái thành công.", status = "success", data = mapper.Map<Loan, LoanDto>(loan),
@@ -147,6 +211,28 @@ public partial class LoanController
     bookBorrowing.ReturnDatesJson = JsonSerializer.Serialize(returnDates);
     await context.SaveChangesAsync();
     var resultDto = mapper.Map<BookBorrowingDto>(bookBorrowing);
+    var borrower = await context.Accounts.FindAsync(bookBorrowing.Loan?.BorrowerId);
+    if (borrower == null)
+      return Ok(new BaseResponse<BookBorrowingDto>
+      {
+        message = "Gia hạn thành công.", data = resultDto, status = "success"
+      });
+    var notification = new Notification
+    {
+      Title = "Gia hạn mượn sách thành công",
+      Content = $"Yêu cầu gia hạn sách (ID: {bookBorrowing.Id}) đã được chấp thuận.",
+      Date = DateTime.UtcNow,
+      Reference = "BookBorrowing",
+      ReferenceId = bookBorrowing.Id,
+      AccountId = borrower.Id,
+      IsRead = false
+    };
+    context.Notifications.Add(notification);
+    await context.SaveChangesAsync();
+    var notificationDto = mapper.Map<NotificationDto>(notification,
+      opt => opt.Items["ReferenceData"] = resultDto);
+    await hubContext.Clients.User(borrower.Id.ToString())
+                    .SendAsync("ReceiveNotification", notificationDto);
     return Ok(new BaseResponse<BookBorrowingDto>
     {
       message = "Gia hạn thành công.", data = resultDto, status = "success"

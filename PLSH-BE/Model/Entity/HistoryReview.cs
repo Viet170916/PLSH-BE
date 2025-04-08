@@ -10,9 +10,9 @@ namespace Model.Entity
         public int AccountId { get; set; }
         [MaxLength(255)]
 
-        public string? SearchQuery { get; set; }  
+        public string? SearchQuery { get; set; }
 
-        public DateTime? CreateAt { get; set; } = DateTime.Now;
+        public DateTime? CreateAt { get; set; } = DateTime.UtcNow;
 
 
         //[ForeignKey("AccountId")]

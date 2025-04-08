@@ -1,9 +1,10 @@
 using API.Common;
 using API.Controllers.ResourceControllers;
-using API.DTO.Account.AccountDTO;
 using API.DTO.Book;
-using API.DTO.Loan;
-using API.DTO.Notification;
+using BU.Models.DTO.Account.AccountDTO;
+using BU.Models.DTO.Book;
+using BU.Models.DTO.Loan;
+using BU.Models.DTO.Notification;
 using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.Borrow;
@@ -75,12 +76,12 @@ public class MappingProfile : Profile
         opt => opt.MapFrom(src => src.BookImagesAfterBorrow.Select(img => Converter.ToImageUrl(img.LocalUrl))))
       .ForMember(dest => dest.BorrowingStatus,
         opt => opt.MapFrom(src =>
-          (src.BorrowingStatus != "returned" && src.ReturnDates.Count > 0 && src.ReturnDates.Max() < DateTime.Now) ?
+          (src.BorrowingStatus != "returned" && src.ReturnDates.Count > 0 && src.ReturnDates.Max() < DateTime.UtcNow) ?
             "overdue" :
             src.BorrowingStatus))
       .ForMember(dest => dest.overdueDays,
         opt => opt.MapFrom(src => DateTimeConverter.CalculateOverdueDays(src.BorrowDate, src.ReturnDates,
-          src.ExtendDates, src.ActualReturnDate ?? DateTime.Now)))
+          src.ExtendDates, src.ActualReturnDate ?? DateTime.UtcNow)))
       .ReverseMap();
     CreateMap<Review, ReviewDto>()
       .ForMember(dest => dest.ResourceUrl,

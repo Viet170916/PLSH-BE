@@ -46,7 +46,7 @@ public class Account
   public DateTime? DeletedAt { get; set; }
   public long CardMemberNumber { get; set; } = GenerateUniqueId();
   public int CardMemberStatus { get; set; } = 0;
-  public DateTime CardMemberExpiredDate { get; set; } = DateTime.Now;
+  public DateTime CardMemberExpiredDate { get; set; } = DateTime.UtcNow;
 
   [MaxLength(255)]
   public string? RefreshToken { get; set; }

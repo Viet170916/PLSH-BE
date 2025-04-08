@@ -10,7 +10,7 @@ namespace Model.Entity.Borrow;
 public class BookBorrowing
 {
   public int Id { get; set; }
-  public int TransactionId { get; set; }
+  public int? TransactionId { get; set; }
 
   public int BookInstanceId { get; set; }
   // public int? ConfirmationLibrarianId { get; set; }
@@ -35,9 +35,9 @@ public class BookBorrowing
 
   // [MaxLength(255)]
   // public string? BookConditionDescription { get; set; }
-  public string BorrowingStatus { get; set; } = "on-loan";
-  public DateTime BorrowDate { get; set; } = DateTime.Now;
-  public DateTime CreatedAt { get; set; } = DateTime.Now;
+  public string BorrowingStatus { get; set; } = "undefined";
+  public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
+  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
   [Column(TypeName = "text")]
   public string ReturnDatesJson { get; set; } = "[]";

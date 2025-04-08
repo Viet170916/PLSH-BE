@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Data.DatabaseContext;
-using API.DTO.Account.AccountDTO;
+using BU.Models.DTO.Account.AccountDTO;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using API.DTO;
+using BU.Models.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

@@ -11,11 +11,11 @@ namespace BU.Extensions
   {
     public static void AddBusinessLayer(this IServiceCollection services)
     {
-      // add automapper auto binding
       services.AddAutoMapper(Assembly.GetExecutingAssembly());
       services.AddTransient<IAccountService, AccountService>();
       services.AddTransient<IBookInstanceService, BookInstanceService>();
       services.AddTransient<IAuthorService, AuthorService>();
+      services.AddTransient<INotificationService, NotificationService>();
     }
   }
 }

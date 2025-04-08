@@ -34,7 +34,7 @@ public class Message
   public Resource? Resource { get; set; }
 
   [Required]
-  public DateTime CreatedDate { get; set; } = DateTime.Now;
+  public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
   public DateTime? UpdatedDate { get; set; }
 }

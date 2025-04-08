@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Model.ResponseModel;
 using Microsoft.Extensions.Logging;
 using API.DTO.Book;
+using BU.Models.DTO.Book;
 using Common.Enums;
 using Model.Entity;
 using Model.Entity.book;

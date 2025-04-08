@@ -2,11 +2,15 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using API.Common;
 using API.DTO;
-using API.DTO.Loan;
 using AutoMapper;
+using BU.Hubs;
+using BU.Models.DTO;
+using BU.Models.DTO.Loan;
+using BU.Services.Interface;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity;
 using Model.Entity.Borrow;
@@ -19,7 +23,9 @@ namespace API.Controllers.BorrowControllers;
 public partial class LoanController(
   AppDbContext context,
   IMapper mapper,
-  GoogleCloudStorageHelper googleCloudStorageHelper
+  GoogleCloudStorageHelper googleCloudStorageHelper,
+  IHubContext<ReviewHub> hubContext,
+  INotificationService notificationService
 ) : ControllerBase
 {
   public class UpdateLoanStatusDto
@@ -104,26 +110,26 @@ public partial class LoanController(
 
   [HttpPost("create")] public async Task<IActionResult> CreateLoan([FromBody] LoanDto loanDto)
   {
-    var librarianId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+    var librarianId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
     var loan = mapper.Map<Loan>(loanDto);
     loanDto.BookBorrowings.ForEach(bb =>
     {
+
       var addedBorrowedBook = loan.BookBorrowings.FirstOrDefault(br => br.BookInstanceId == bb.BookInstanceId);
-      if (addedBorrowedBook is not null)
-      {
-        addedBorrowedBook.BookImagesBeforeBorrow = bb
-                                                   .BookImagesBeforeBorrow
-                                                   .Select(image => new Resource
-                                                   {
-                                                     Type = image.Type,
-                                                     FileType = image.FileType,
-                                                     Name = image.Name,
-                                                     SizeByte = image.SizeByte,
-                                                     LocalUrl =
-                                                       $"{StaticFolder.DIRPath_BORROWING_BEFORE}/{DateTimeOffset.Now.ToUnixTimeSeconds()}-{image.Name}",
-                                                   })
-                                                   .ToList();
-      }
+      if (addedBorrowedBook is null) return;
+      addedBorrowedBook.BorrowingStatus = "on-loan";
+      addedBorrowedBook.BookImagesBeforeBorrow = bb
+                                                 .BookImagesBeforeBorrow
+                                                 .Select(image => new Resource
+                                                 {
+                                                   Type = image.Type,
+                                                   FileType = image.FileType,
+                                                   Name = image.Name,
+                                                   SizeByte = image.SizeByte,
+                                                   LocalUrl =
+                                                     $"{StaticFolder.DIRPath_BORROWING_BEFORE}/{DateTimeOffset.Now.ToUnixTimeSeconds()}-{image.Name}",
+                                                 })
+                                                 .ToList();
     });
     loan.LibrarianId = librarianId;
     context.Loans.Add(loan);

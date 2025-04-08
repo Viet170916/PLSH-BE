@@ -32,7 +32,7 @@ public class Review
   public string Content { get; set; }
 
   [Required]
-  public DateTime CreatedDate { get; set; } = DateTime.Now;
+  public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
   public DateTime? UpdatedDate { get; set; }
   public ICollection<Message> Messages { get; set; } = new List<Message>();

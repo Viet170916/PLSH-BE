@@ -3,9 +3,11 @@ using System.Security.Claims;
 using API.Common;
 using API.DTO;
 using API.DTO.Book;
-using API.DTO.Notification;
-using API.Hubs;
 using AutoMapper;
+using BU.Hubs;
+using BU.Models.DTO;
+using BU.Models.DTO.Book;
+using BU.Models.DTO.Notification;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +44,6 @@ public partial class ReviewController(
   {
     var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
     var currentAccountId = senderId ?? accountId;
-
     var totalReviewCount = await context.Reviews
                                         .Where(r => r.BookId == bookId)
                                         .CountAsync();
@@ -64,111 +65,99 @@ public partial class ReviewController(
 
     var reviewDtos = mapper.Map<List<ReviewDto>>(reviews, opt => { opt.Items["CurrentUserId"] = accountId; });
     return Ok(new
-    ReviewResponse(){
-      message = "Reviews retrieved successfully.",
-      status = "success",
-      isAccountHasReviewForThisBook = await context.Reviews
-                                                   .AnyAsync(r => r.BookId == bookId && r.AccountSenderId == accountId),
-      data = reviewDtos,
-      page = page,
-      limit = limit,
-      pageCount = totalPage,
-      count = totalReviewCount
+      ReviewResponse()
+      {
+        message = "Reviews retrieved successfully.",
+        status = "success",
+        isAccountHasReviewForThisBook = await context.Reviews
+                                                     .AnyAsync(
+                                                       r => r.BookId == bookId && r.AccountSenderId == accountId),
+        data = reviewDtos,
+        page = page,
+        limit = limit,
+        pageCount = totalPage,
+        count = totalReviewCount
+      });
+  }
+
+  [HttpPost("send")] public async Task<IActionResult> PostReview([FromForm] ReviewDto request)
+  {
+    if (request.BookId is null)
+    {
+      return BadRequest(new BaseResponse<string> { message = "Không tìm thấy sách, id trống", status = "error" });
+    }
+
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+    if (string.IsNullOrWhiteSpace(request.Content))
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        message = "Nội dung đánh giá không được để trống.", status = "error"
+      });
+    }
+
+    var review = new Review
+    {
+      AccountSenderId = accountId,
+      BookId = (int)request.BookId,
+      Rating = (float)request.Rating,
+      Content = request.Content,
+      CreatedDate = DateTime.UtcNow,
+      UpdatedDate = DateTime.UtcNow
+    };
+    if (request.ResourceFile is not null)
+    {
+      var url = await cloudStorageHelper.UploadFileAsync(request.ResourceFile.OpenReadStream(),
+        request.ResourceFile.FileName,
+        request.ResourceFile.ContentType);
+      review.Resource = new Resource
+      {
+        LocalUrl = url,
+        FileType = request.ResourceFile.ContentType,
+        Type = "image",
+        Name = request.ResourceFile.FileName,
+        SizeByte = request.ResourceFile.Length,
+      };
+    }
+
+    context.Reviews.Add(review);
+    await context.SaveChangesAsync();
+    var reviewWithDetails = await context.Reviews
+                                         .Include(r => r.AccountSender)
+                                         .Include(r => r.Book)
+                                         .FirstOrDefaultAsync(r => r.Id == review.Id);
+    var reviewDto = mapper.Map<ReviewDto>(reviewWithDetails, opt => { opt.Items["CurrentUserId"] = accountId; });
+    var librarians = await context.Accounts
+                                  .Where(a => a.Role.Name == "librarian")
+                                  .ToListAsync();
+    var notifications = librarians.Select(lib => new Notification
+                                  {
+                                    Title = "Đánh giá mới",
+                                    Content = $"Có một đánh giá mới cho sách \"{reviewWithDetails?.Book.Title}\".",
+                                    Date = DateTime.UtcNow,
+                                    Reference = "Review",
+                                    ReferenceId = review.Id,
+                                    AccountId = lib.Id,
+                                    IsRead = false,
+                                  })
+                                  .ToList();
+    context.Notifications.AddRange(notifications);
+    await context.SaveChangesAsync();
+    var notificationDtos = notifications.Select(n =>
+                                          mapper.Map<NotificationDto>(n, opt => opt.Items["ReferenceData"] = reviewDto))
+                                        .ToList();
+    foreach (var librarian in librarians)
+    {
+      var userNotification = notificationDtos.FirstOrDefault(n => n.AccountId == librarian.Id);
+      await hubContext.Clients.User(librarian.Id.ToString())
+                      .SendAsync("ReceiveNotification", userNotification);
+    }
+
+    await hubContext.Clients.Group($"get-new-review-with-book-{review.BookId}")
+                    .SendAsync("ReceiveReview", reviewDto);
+    return Ok(new BaseResponse<ReviewDto>
+    {
+      message = "Gửi đánh giá thành công và đã thông báo đến thủ thư.", data = reviewDto, status = "success"
     });
   }
-
-
-  [HttpPost("send")]
-public async Task<IActionResult> PostReview([FromForm] ReviewDto request)
-{
-  if (request.BookId is null)
-  {
-    return BadRequest(new BaseResponse<string> { message = "Không tìm thấy sách, id trống", status = "error" });
-  }
-
-  var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
-
-  if (string.IsNullOrWhiteSpace(request.Content))
-  {
-    return BadRequest(new BaseResponse<string> { message = "Nội dung đánh giá không được để trống.", status = "error" });
-  }
-
-  var review = new Review
-  {
-    AccountSenderId = accountId,
-    BookId = (int)request.BookId,
-    Rating = (float)request.Rating,
-    Content = request.Content,
-    CreatedDate = DateTime.UtcNow,
-    UpdatedDate = DateTime.UtcNow
-  };
-
-  if (request.ResourceFile is not null)
-  {
-    var url = await cloudStorageHelper.UploadFileAsync(
-      request.ResourceFile.OpenReadStream(),
-      request.ResourceFile.FileName,
-      request.ResourceFile.ContentType
-    );
-
-    review.Resource = new Resource
-    {
-      LocalUrl = url,
-      FileType = request.ResourceFile.ContentType,
-      Type = "image",
-      Name = request.ResourceFile.FileName,
-      SizeByte = request.ResourceFile.Length,
-    };
-  }
-
-  context.Reviews.Add(review);
-  await context.SaveChangesAsync();
-
-  var reviewWithDetails = await context.Reviews
-                                       .Include(r => r.AccountSender)
-                                       .Include(r => r.Book)
-                                       .FirstOrDefaultAsync(r => r.Id == review.Id);
-
-  var reviewDto = mapper.Map<ReviewDto>(reviewWithDetails, opt => { opt.Items["CurrentUserId"] = accountId; });
-
-  var librarians = await context.Accounts
-                                .Where(a => a.Role.Name == "librarian")
-                                .ToListAsync();
-
-  var notifications = librarians.Select(lib => new Notification
-  {
-    Title = "Đánh giá mới",
-    Content = $"Có một đánh giá mới cho sách \"{reviewWithDetails?.Book.Title}\".",
-    Date = DateTime.UtcNow,
-    Reference = "Review",
-    ReferenceId = review.Id,
-    AccountId = lib.Id,
-    IsRead = false,
-  }).ToList();
-
-  context.Notifications.AddRange(notifications);
-  await context.SaveChangesAsync();
-
-  var notificationDtos = notifications.Select(n =>
-    mapper.Map<NotificationDto>(n, opt => opt.Items["ReferenceData"] = reviewDto)
-  ).ToList();
-
-  foreach (var librarian in librarians)
-  {
-    var userNotification = notificationDtos.FirstOrDefault(n => n.AccountId == librarian.Id);
-    await hubContext.Clients.User(librarian.Id.ToString())
-                   .SendAsync("ReceiveNotification", userNotification);
-  }
-
-  await hubContext.Clients.Group($"get-new-review-with-book-{review.BookId}")
-                          .SendAsync("ReceiveReview", reviewDto);
-
-  return Ok(new BaseResponse<ReviewDto>
-  {
-    message = "Gửi đánh giá thành công và đã thông báo đến thủ thư.",
-    data = reviewDto,
-    status = "success"
-  });
-}
-
 }

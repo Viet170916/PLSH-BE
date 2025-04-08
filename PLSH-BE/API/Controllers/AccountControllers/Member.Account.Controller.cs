@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Model.Entity.User;
 using System.Linq.Dynamic.Core;
 using API.DTO;
-using API.DTO.Account.AccountDTO;
+using BU.Models.DTO;
+using BU.Models.DTO.Account.AccountDTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 
