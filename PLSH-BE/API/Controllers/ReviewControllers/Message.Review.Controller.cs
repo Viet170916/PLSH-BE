@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 using API.DTO;
-using API.DTO.Book;
 using BU.Models.DTO;
 using BU.Models.DTO.Book;
 using BU.Models.DTO.Notification;

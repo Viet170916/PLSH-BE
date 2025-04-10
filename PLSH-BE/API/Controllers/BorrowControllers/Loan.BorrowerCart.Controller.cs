@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Security.Claims;
+using API.Common;
 using API.DTO;
 using BU.Models.DTO;
 using BU.Models.DTO.Loan;
@@ -195,11 +196,11 @@ public partial class LoanController
         new BaseResponse<string> { message = $"Lỗi khi lấy giỏ mượn: {ex.Message}", status = "unsuccessful" });
     }
   }
-  [Authorize("BorrowerPolicy")]
-  [HttpPost("confirm-loan")] public async Task<IActionResult> ConfirmLoan([FromBody] LoanDto loanDto)
+
+  [Authorize("BorrowerPolicy")] [Authorize("BorrowerPolicy")] [HttpPost("confirm-loan")]
+  public async Task<IActionResult> ConfirmLoan([FromBody] LoanDto loanDto)
   {
     var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
     if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
     {
       return Unauthorized(new BaseResponse<string>
@@ -207,11 +208,11 @@ public partial class LoanController
         status = "fail", message = "Không xác thực: Token không hợp lệ."
       });
     }
-    var user = await context.Accounts.FindAsync(userId);
 
-    var loan = await context.Loans
-                            .Include(l => l.BookBorrowings)
-                            .FirstOrDefaultAsync(l => l.Id == loanDto.Id);
+    var user = await loanService.GetUserByIdAsync(userId);
+    if (user == null)
+      return Unauthorized(new BaseResponse<string> { status = "fail", message = "Tài khoản không tồn tại." });
+    var loan = await loanService.GetLoanByIdAsync(loanDto.Id);
     if (loan == null)
     {
       return NotFound(new BaseResponse<string> { status = "fail", message = "Không tìm thấy yêu cầu mượn sách." });
@@ -228,42 +229,37 @@ public partial class LoanController
     loan.IsCart = false;
     loan.AprovalStatus = "pending";
     loan.BorrowingDate = loanDto.BorrowingDate;
-    // loan.ReturnDate = loanDto.ReturnDate;
     foreach (var item in loan.BookBorrowings)
     {
       var updated = loanDto.BookBorrowings.FirstOrDefault(b => b.Id == item.Id);
       if (updated == null) continue;
       item.BorrowDate = updated.BorrowDate;
-      if (updated.ReturnDates is { Count: > 0, }) item.ReturnDates = updated.ReturnDates;
+      if (updated.ReturnDates is { Count: > 0 }) item.ReturnDates = updated.ReturnDates;
     }
 
-    await context.SaveChangesAsync();
-    var librarians = await context.Accounts
-                                  .Where(a => a.Role.Name == "librarian")
-                                  .ToListAsync();
-    var notifications = librarians.Select(librarian => new Notification
+    await loanService.UpdateLoanAsync(loan);
+    var librarians = await loanService.GetLibrariansAsync();
+    var notifications = librarians.Select(librarian => new NotificationDto
                                   {
                                     Title = "Yêu cầu mượn sách mới",
-                                    Content = $"Người dùng {user?.FullName} vừa gửi yêu cầu mượn sách.",
+                                    Content = $"Người dùng {user.FullName} vừa gửi yêu cầu mượn sách.",
                                     AccountId = librarian.Id,
-                                    Date = DateTime.UtcNow,
-                                    IsRead = false,
                                     Reference = "Loan",
                                     ReferenceId = loan.Id,
+                                    ReferenceData = loanDto
                                   })
                                   .ToList();
-    await context.Notifications.AddRangeAsync(notifications);
-    await context.SaveChangesAsync();
-    var notificationDtos = notifications.Select(n =>
-                                          mapper.Map<NotificationDto>(n, opt => opt.Items["ReferenceData"] = loanDto))
-                                        .ToList();
+    await notificationService.SendNotificationToUsersAsync(librarians.Select(l => l.Id), notifications.First());
+    var loanLink = $"{Const.LIB_CLIENT_HOST}/borrow/{loan.Id}";
     foreach (var librarian in librarians)
     {
-      var userNotification = notificationDtos.FirstOrDefault(n => n.AccountId == librarian.Id);
-      await hubContext.Clients.User(librarian.Id.ToString())
-                      .SendAsync("ReceiveNotification", userNotification);
+      await emailService.SendBorrowConfirmationEmailAsync(librarian.Email, user.FullName, user.PhoneNumber, loan.Id,
+        loanLink);
     }
 
-    return Ok(new BaseResponse<LoanDto> { status = "success", message = "Gửi yêu cầu mượn sách thành công.", data = loanDto});
+    return Ok(new BaseResponse<LoanDto>
+    {
+      status = "success", message = "Gửi yêu cầu mượn sách thành công.", data = loanDto,
+    });
   }
 }

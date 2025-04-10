@@ -1,5 +1,5 @@
 using API.Common;
-using API.DTO.Book;
+using BU.Models.DTO.Book;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

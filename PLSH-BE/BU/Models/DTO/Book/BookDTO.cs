@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using API.DTO.Book;
 
 namespace BU.Models.DTO.Book
 {

@@ -44,7 +44,7 @@ public class Account
   public DateTime CreatedAt { get; set; }
   public DateTime? UpdatedAt { get; set; }
   public DateTime? DeletedAt { get; set; }
-  public long CardMemberNumber { get; set; } = GenerateUniqueId();
+  public string CardMemberNumber { get; set; } = GenerateUniqueId();
   public int CardMemberStatus { get; set; } = 0;
   public DateTime CardMemberExpiredDate { get; set; } = DateTime.UtcNow;
 
@@ -53,10 +53,10 @@ public class Account
 
   public DateTime? RefreshTokenExpiry { get; set; }
 
-  private static long GenerateUniqueId()
+  private static string GenerateUniqueId()
   {
     var random = new Random();
-    return random.NextInt64(100000000, 999999999); // Sinh số ngẫu nhiên từ 9 chữ số
+    return random.NextInt64(100000000, 999999999).ToString(); // Sinh số ngẫu nhiên từ 9 chữ số
   }
 
   public int FailedLoginAttempts { get; set; } = 0; // Đếm số lần đăng nhập sai

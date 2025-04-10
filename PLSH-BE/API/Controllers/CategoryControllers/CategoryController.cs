@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using API.DTO.Book;
 using AutoMapper;
+using BU.Models.DTO.Book;
 using Data.DatabaseContext;
 using FuzzySharp;
 using Microsoft.AspNetCore.Authorization;

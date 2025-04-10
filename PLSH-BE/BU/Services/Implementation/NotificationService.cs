@@ -50,7 +50,7 @@ public class NotificationService(AppDbContext context, IMapper mapper, IHubConte
             Reference = notificationDto.Reference ?? "Unknown",
             ReferenceId = notificationDto.ReferenceId ?? 0,
             AccountId = userId,
-            IsRead = false
+            IsRead = false,
         }).ToList();
 
         context.Notifications.AddRange(notifications);

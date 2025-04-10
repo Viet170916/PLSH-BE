@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Security.Claims;
 using API.Common;
 using API.DTO;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,7 @@ using EFCore.BulkExtensions;
 using Microsoft.AspNetCore.SignalR;
 using Model.Entity.Borrow;
 using Model.Entity.Notification;
+using static System.Int32;
 
 namespace API.Controllers.BorrowControllers;
 
@@ -25,9 +27,14 @@ public partial class LoanController
     [FromForm] ReturnInfoRequestDto request
   )
   {
+    var tryParse = TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "", out var accountId);
+    var librarian = await context.Accounts.FindAsync(accountId);
     var bookBorrowing = await context.BookBorrowings
-                                     .Include(bb => bb.BookInstance) // Thêm Include để lấy thông tin book instance
+                                     .Include(bb => bb.BookInstance)
+                                     .ThenInclude(bookInstance => bookInstance.Book)
                                      .Include(bb => bb.BookImagesAfterBorrow)
+                                     .Include(bookBorrowing => bookBorrowing.Loan)
+                                     .ThenInclude(loan => loan.Borrower)
                                      .FirstOrDefaultAsync(bb => bb.Id == bookBorrowingId);
     if (bookBorrowing == null)
     {
@@ -69,6 +76,15 @@ public partial class LoanController
     bookBorrowing.BookInstance.IsInBorrowing = false;
     bookBorrowing.ActualReturnDate = DateTime.UtcNow;
     await context.SaveChangesAsync();
+    var link = $"{Const.CLIENT_HOST}/borrow/{bookBorrowing.Loan?.Id}";
+    _ = emailService.SendReturnConfirmationEmailAsync(bookBorrowing.Loan?.Borrower?.Email,
+      bookBorrowing.Loan?.Borrower?.FullName,
+      bookBorrowing.BookInstance.Book.Title,
+      bookBorrowing.Loan?.Id ?? 0,
+      bookBorrowing.ActualReturnDate.ToString(),
+      librarian?.FullName,
+      bookBorrowing.Loan?.Borrower?.PhoneNumber,
+      link);
     return Ok(new BaseResponse<List<Resource>>
     {
       message = "Cập nhật thông tin trả sách thành công.", data = uploadedResources, status = "success"
@@ -84,6 +100,8 @@ public partial class LoanController
   [Authorize(Policy = "LibrarianPolicy")] [HttpPut("{id}/approve-status")]
   public async Task<IActionResult> UpdateLoanStatus(int id, [FromBody] UpdateLoanStatusDto request)
   {
+    var tryParse = TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "", out var accountId);
+    var librarian = await context.Accounts.FindAsync(accountId);
     var validStatuses = new[] { "pending", "approved", "rejected", "cancel", "taken", "return-all", };
     if (!validStatuses.Contains(request.Status.ToLower()))
     {
@@ -123,7 +141,7 @@ public partial class LoanController
             {
               loanBookBorrowing.ReturnDates = loanBookBorrowing.ReturnDates
                                                                .Select(date =>
-                                                                 now+((date - loanBookBorrowing.BorrowDate)))
+                                                                 now + ((date - loanBookBorrowing.BorrowDate)))
                                                                .ToList();
             }
 
@@ -136,7 +154,7 @@ public partial class LoanController
 
         break;
       case "return-all":
-        if (loan.BookBorrowings?.Count>0)
+        if (loan.BookBorrowings?.Count > 0)
         {
           foreach (var loanBookBorrowing in loan.BookBorrowings)
           {
@@ -152,7 +170,6 @@ public partial class LoanController
     }
 
     await context.SaveChangesAsync();
-
     var loanDto = mapper.Map<LoanDto>(loan);
     var notificationDto = new NotificationDto
     {
@@ -162,9 +179,10 @@ public partial class LoanController
       ReferenceId = loan.Id,
       ReferenceData = loanDto,
     };
-
     await notificationService.SendNotificationToUserAsync(loan.Borrower.Id, notificationDto);
-
+    var link = $"{Const.CLIENT_HOST}/borrow/{loan.Id}";
+    _ = emailService.SendStatusUpdateEmailAsync(loan.Borrower.Email, librarian.FullName, loan.AprovalStatus,
+      loan.Borrower.FullName, loan.Borrower.PhoneNumber, loan.Id, link);
     return Ok(new BaseResponse<LoanDto>
     {
       message = "Cập nhật trạng thái thành công.", status = "success", data = mapper.Map<Loan, LoanDto>(loan),
@@ -185,7 +203,10 @@ public partial class LoanController
       });
     }
 
-    var bookBorrowing = await context.BookBorrowings.FindAsync(bookBorrowingId);
+    var bookBorrowing =
+      await context.BookBorrowings
+                   .Include(b => b.Loan)
+                   .FirstOrDefaultAsync(b => b.Id == bookBorrowingId);
     if (bookBorrowing == null)
     {
       return NotFound(new BaseResponse<string>
@@ -225,7 +246,7 @@ public partial class LoanController
       Reference = "BookBorrowing",
       ReferenceId = bookBorrowing.Id,
       AccountId = borrower.Id,
-      IsRead = false
+      IsRead = false,
     };
     context.Notifications.Add(notification);
     await context.SaveChangesAsync();
@@ -233,6 +254,12 @@ public partial class LoanController
       opt => opt.Items["ReferenceData"] = resultDto);
     await hubContext.Clients.User(borrower.Id.ToString())
                     .SendAsync("ReceiveNotification", notificationDto);
+    var link = $"{Const.CLIENT_HOST}/borrow/{bookBorrowing.Loan?.Id}";
+    _ = emailService.SendExtendConfirmationEmailAsync(borrower.Email,
+      borrower.FullName,
+      request.ReturnDate,
+      bookBorrowing.Loan?.Id ?? 0,
+      link);
     return Ok(new BaseResponse<BookBorrowingDto>
     {
       message = "Gia hạn thành công.", data = resultDto, status = "success"

@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250409043454_notification-read-at")]
+    partial class notificationreadat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -711,9 +714,8 @@ namespace Data.Migrations
                     b.Property<DateTime>("CardMemberExpiredDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("CardMemberNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<long>("CardMemberNumber")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("CardMemberStatus")
                         .HasColumnType("int");
@@ -1640,7 +1642,7 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.HasOne("Model.Entity.book.Book", "Book")
-                        .WithMany("Reviews")
+                        .WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1691,8 +1693,6 @@ namespace Data.Migrations
             modelBuilder.Entity("Model.Entity.book.Book", b =>
                 {
                     b.Navigation("BookInstances");
-
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("Model.Entity.book.BookInstance", b =>

@@ -25,7 +25,9 @@ public partial class LoanController(
   IMapper mapper,
   GoogleCloudStorageHelper googleCloudStorageHelper,
   IHubContext<ReviewHub> hubContext,
-  INotificationService notificationService
+  INotificationService notificationService,
+  ILoanService loanService,
+  IEmailService emailService
 ) : ControllerBase
 {
   public class UpdateLoanStatusDto
@@ -60,7 +62,12 @@ public partial class LoanController(
 
     if (!string.IsNullOrEmpty(keyword))
     {
-      query = query.Where(l => l.Note.Contains(keyword) || l.BorrowerId.ToString().Contains(keyword));
+      query = query.Where(l => l.Note.Contains(keyword)
+                               || string.Concat(l.Id).Contains(keyword)
+                               || string.Concat(l.BorrowerId).Contains(keyword)
+                               || l.Borrower.PhoneNumber.Contains(keyword)
+                               || l.Borrower.CardMemberNumber.Contains(keyword)
+                               || l.Borrower.FullName.Contains(keyword));
     }
 
     query = orderBy?.ToLower() switch
@@ -70,8 +77,8 @@ public partial class LoanController(
       "returnDate" => query.OrderBy(l => l.ReturnDate),
       _ => query.OrderByDescending(l => l.BorrowingDate)
     };
-    int totalRecords = await query.CountAsync();
-    int pageCount = (int)Math.Ceiling((double)totalRecords / limit);
+    var totalRecords = await query.CountAsync();
+    var pageCount = (int)Math.Ceiling((double)totalRecords / limit);
     var loans = await query
                       .Skip((page - 1) * limit)
                       .Take(limit)
@@ -108,13 +115,13 @@ public partial class LoanController(
     return Ok(new BaseResponse<LoanDto> { data = mapper.Map<LoanDto>(loan), });
   }
 
-  [HttpPost("create")] public async Task<IActionResult> CreateLoan([FromBody] LoanDto loanDto)
+  [Authorize(Policy = "LibrarianPolicy")] [HttpPost("create")]
+  public async Task<IActionResult> CreateLoan([FromBody] LoanDto loanDto)
   {
     var librarianId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
     var loan = mapper.Map<Loan>(loanDto);
     loanDto.BookBorrowings.ForEach(bb =>
     {
-
       var addedBorrowedBook = loan.BookBorrowings.FirstOrDefault(br => br.BookInstanceId == bb.BookInstanceId);
       if (addedBorrowedBook is null) return;
       addedBorrowedBook.BorrowingStatus = "on-loan";

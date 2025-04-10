@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using API.Common;
 using API.DTO;
-using API.DTO.Book;
 using AutoMapper;
 using BU.Hubs;
 using BU.Models.DTO;

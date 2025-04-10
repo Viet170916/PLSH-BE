@@ -97,4 +97,6 @@ public class Book
 
   [JsonIgnore]
   public ICollection<BookInstance>? BookInstances { get; set; } = new List<BookInstance>();
+
+  public ICollection<Review>? Reviews { get; set; } = new List<Review>();
 }

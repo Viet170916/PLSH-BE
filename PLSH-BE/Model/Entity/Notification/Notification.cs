@@ -15,6 +15,7 @@ public class Notification
   public string? Content { get; set; } = "Bạn nhận được thông báo";
 
   public DateTime Date { get; set; }
+  public DateTime? ReadDate { get; set; }
   public int Status { get; set; } = 0;
   public bool IsRead { get; set; } = false;
 

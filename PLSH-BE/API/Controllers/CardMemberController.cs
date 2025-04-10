@@ -23,8 +23,7 @@ namespace API.Controllers
 
         if (account.CardMemberNumber != null) { return BadRequest("Tài khoản đã có thẻ thành viên"); }
 
-        account.CardMemberNumber = DateTime.Now.Ticks;
-        account.CardMemberStatus = 1; // 1: Hoạt động
+        account.CardMemberStatus = 1;
         account.CardMemberExpiredDate = DateTime.Now.AddYears(1); //Thẻ thành viên add 1 năm
         account.UpdatedAt = DateTime.Now;
         context.Accounts.Update(account);
@@ -79,7 +78,6 @@ namespace API.Controllers
         var account = context.Accounts.FirstOrDefault(a => a.Id == notification.AccountId);
         if (account == null) { return NotFound("Tài khoản không tồn tại"); }
 
-        account.CardMemberNumber = DateTime.Now.Ticks;
         account.CardMemberStatus = 1; // 1: Hoạt động
         account.CardMemberExpiredDate = DateTime.Now.AddYears(1);
         account.UpdatedAt = DateTime.Now;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
+using API.Common;
 using API.DTO;
 using BU.Models.DTO;
 using BU.Models.DTO.Loan;
@@ -77,6 +78,13 @@ public partial class LoanController
       var userNotification = notificationDtos.FirstOrDefault(n => n.AccountId == librarian.Id);
       await hubContext.Clients.User(librarian.Id.ToString())
                       .SendAsync("ReceiveNotification", userNotification);
+    }
+
+    var loanLink = $"{Const.LIB_CLIENT_HOST}/borrow/{loan.Id}";
+    foreach (var librarian in librarians)
+    {
+      _ = emailService.SendStatusUpdateEmailAsync(librarian.Email, user?.FullName, request.Status, user?.FullName,
+        user?.PhoneNumber, loan.Id, loanLink);
     }
 
     return Ok(new BaseResponse<LoanDto>

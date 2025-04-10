@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using API.DTO.Book;
 using AutoMapper;
+using BU.Models.DTO.Book;
 using BU.Services.Interface;
 using Common.Enums;
 using Common.Helper;

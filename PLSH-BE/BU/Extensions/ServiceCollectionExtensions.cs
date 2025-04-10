@@ -16,6 +16,7 @@ namespace BU.Extensions
       services.AddTransient<IBookInstanceService, BookInstanceService>();
       services.AddTransient<IAuthorService, AuthorService>();
       services.AddTransient<INotificationService, NotificationService>();
+      services.AddTransient<ILoanService, LoanService>();
     }
   }
 }

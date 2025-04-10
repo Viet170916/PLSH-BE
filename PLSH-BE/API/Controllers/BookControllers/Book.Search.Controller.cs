@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.Text.Json;
 using API.Common;
 using API.DTO;
-using API.DTO.Book;
+using AutoMapper.QueryableExtensions;
 using BU.Models.DTO;
+using BU.Models.DTO.Book;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +18,8 @@ public partial class BookController
   [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
   {
     var book = await context.Books
-                            .Include(b => b.Authors)
-                            .Include(b => b.Category)
-                            .Include(b => b.AudioResource)
-                            .Include(b => b.BookInstances)
-                            .Include(b => b.CoverImageResource)
-                            .Include(b => b.EpubResource)
-                            .Include(b => b.PreviewPdfResource)
+                            .Where(b => b.Id == id)
+                            .ProjectTo<BookNewDto>(mapper.ConfigurationProvider)
                             .FirstOrDefaultAsync(b => b.Id == id);
     var bookDto = mapper.Map<BookNewDto>(book);
     if (bookDto == null) return NotFound();
@@ -35,52 +31,16 @@ public partial class BookController
     [FromQuery] int? categoryId,
     [FromQuery] int? authorId,
     [FromQuery] int page = 1,
-    [FromQuery] int limit = 10,
+    [FromQuery] int limit = 18,
     [FromQuery] string orderBy = "title",
-    [FromQuery] bool descending = false,
-    [FromQuery] string infoEachBook = "big"
+    [FromQuery] bool descending = false
   )
   {
     limit = Math.Clamp(limit, 1, 40);
-    var gatherInfo = context.Books.AsQueryable();
-    switch (infoEachBook)
-    {
-      case "small":
-        gatherInfo = gatherInfo
-                     .Include(b => b.CoverImageResource)
-                     .Include(b => b.Authors)
-                     .Include(b => b.Category);
-        break;
-      case "medium":
-        gatherInfo = gatherInfo
-                     .Include(b => b.CoverImageResource)
-                     .Include(b => b.Authors)
-                     .Include(b => b.Category)
-                     .Include(b => b.AudioResource);
-        break;
-      case "big":
-        gatherInfo = gatherInfo
-                     .Include(b => b.CoverImageResource)
-                     .Include(b => b.Authors)
-                     .Include(b => b.Category)
-                     .Include(b => b.AudioResource)
-                     .Include(b => b.EpubResource);
-        break;
-      case "all":
-        gatherInfo = gatherInfo
-                     .Include(b => b.CoverImageResource)
-                     .Include(b => b.Authors)
-                     .Include(b => b.Category)
-                     .Include(b => b.AudioResource)
-                     .Include(b => b.EpubResource);
-                     // .Include(b => b.PreviewPdfResource);
-        break;
-    }
-
-    var query = gatherInfo.AsQueryable();
-    if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title.Contains(keyword));
+    var query = context.Books.AsQueryable();
+    if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title != null && b.Title.Contains(keyword));
     if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
-    if (authorId.HasValue) query = query.Where(b => b.Authors.Any(a => a.Id == authorId));
+    if (authorId.HasValue) query = query.Where(b => b.Authors != null && b.Authors.Any(a => a.Id == authorId));
     query = orderBy.ToLower() switch
     {
       "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
@@ -88,16 +48,18 @@ public partial class BookController
       _ => query.OrderBy(b => b.CreateDate)
     };
     var totalRecords = await query.CountAsync();
-    var booksQueryPagging = query.Skip((page - 1) * limit).Take(limit);
-    var books = await booksQueryPagging.ToListAsync();
-    var bookDtos = mapper.Map<List<BookNewDto>>(books);
-    var response = new BaseResponse<List<BookNewDto>>
+    var booksQueryPaging = query
+                           .Skip((page - 1) * limit)
+                           .Take(limit)
+                           .ProjectTo<BookMinimalDto>(mapper.ConfigurationProvider);
+    var bookDtos = await booksQueryPaging.ToListAsync();
+    var response = new BaseResponse<List<BookMinimalDto>>
     {
       pageCount = (int)Math.Ceiling((double)totalRecords / limit),
       currenPage = page,
       count = totalRecords,
       page = page,
-      data = bookDtos,
+      data = bookDtos
     };
     return Ok(response);
   }
@@ -120,15 +82,10 @@ public partial class BookController
     if (!response.IsSuccessStatusCode) { return NotFound("Lỗi khi gọi Google Books API với langRestrict=vi."); }
 
     var json = await response.Content.ReadAsStringAsync();
-    using JsonDocument doc = JsonDocument.Parse(json);
+    using var doc = JsonDocument.Parse(json);
     var root = doc.RootElement;
-    List<JsonElement> items = [];
-    if (root.TryGetProperty("items", out JsonElement itemsElem) && itemsElem.ValueKind == JsonValueKind.Array)
-    {
-      items.AddRange(itemsElem.EnumerateArray());
-    }
-
-    if (items.Count == 0)
+    if (!root.TryGetProperty("items", out JsonElement itemsElem) || itemsElem.ValueKind != JsonValueKind.Array ||
+        !itemsElem.EnumerateArray().Any())
     {
       var urlNoLang = baseUrl;
       response = await client.GetAsync(urlNoLang);
@@ -137,16 +94,17 @@ public partial class BookController
       json = await response.Content.ReadAsStringAsync();
       using JsonDocument docFallback = JsonDocument.Parse(json);
       var rootFallback = docFallback.RootElement;
-      if (rootFallback.TryGetProperty("items", out JsonElement itemsElemFallback) &&
-          itemsElemFallback.ValueKind == JsonValueKind.Array)
+      if (!rootFallback.TryGetProperty("items", out JsonElement itemsElemFallback) ||
+          itemsElemFallback.ValueKind != JsonValueKind.Array || !itemsElemFallback.EnumerateArray().Any())
       {
-        items.Clear();
-        items.AddRange(itemsElemFallback.EnumerateArray());
+        return NotFound("Không tìm thấy sách phù hợp với yêu cầu tìm kiếm.");
       }
+
+      itemsElem = itemsElemFallback;
     }
 
     List<Book> books = [];
-    foreach (var item in items)
+    foreach (var item in itemsElem.EnumerateArray())
     {
       if (!item.TryGetProperty("volumeInfo", out JsonElement volumeInfo)) continue;
       var book = new Book
@@ -163,25 +121,11 @@ public partial class BookController
           thumbElem.GetString() :
           null,
         PublishDate = volumeInfo.TryGetProperty("publishedDate", out var dateElem) ? dateElem.GetString() : null,
-        CoverImageResourceId = null,
-        PreviewPdfResourceId = null,
-        AudioResourceId = null,
-        Version = null,
-        CategoryId = 0,
-        IsbNumber13 = null,
-        IsbNumber10 = null,
-        TotalCopies = 0,
-        AvailableCopies = 0,
-        Price = null,
-        Fine = null,
-        CreateDate = DateTime.UtcNow,
-        UpdateDate = null,
-        DeletedAt = null,
-        IsChecked = false,
-        BookReviewId = 0,
-        Quantity = 0,
-        Availabilities = [],
         Authors = new List<Author>(),
+        Category = null,
+        Version = volumeInfo.TryGetProperty("contentVersion", out var contentVersionElem) ?
+          contentVersionElem.GetString() :
+          null,
       };
       if (volumeInfo.TryGetProperty("industryIdentifiers", out JsonElement identifiers) &&
           identifiers.ValueKind == JsonValueKind.Array)
@@ -197,7 +141,6 @@ public partial class BookController
           {
             case "ISBN_13": book.IsbNumber13 = idValue; break;
             case "ISBN_10": book.IsbNumber10 = idValue; break;
-            default: book.OtherIdentifier = idValue; break;
           }
         }
       }
@@ -216,16 +159,8 @@ public partial class BookController
       if (volumeInfo.TryGetProperty("categories", out JsonElement categoriesElem) &&
           categoriesElem.ValueKind == JsonValueKind.Array)
       {
-        var categories =
-        (
-          from cat in categoriesElem.EnumerateArray()
-          where cat.ValueKind == JsonValueKind.String
-          select cat.GetString()).ToList();
-        book.Category = new Category() { Name = categories.FirstOrDefault(), };
+        book.Category = new Category { Name = categoriesElem.EnumerateArray().FirstOrDefault().GetString() };
       }
-
-      if (volumeInfo.TryGetProperty("contentVersion", out JsonElement contentVersionElem) &&
-          contentVersionElem.ValueKind == JsonValueKind.String) { book.Version = contentVersionElem.GetString(); }
 
       books.Add(book);
     }
