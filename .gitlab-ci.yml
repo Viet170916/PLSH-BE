@@ -79,14 +79,14 @@ deploy_be:
     - chmod 600 ~/.ssh/google_compute_engine
     - eval "$(ssh-agent -s)"
     - ssh-add ~/.ssh/google_compute_engine
-    - ssh-keyscan -H 104.197.134.164 >> ~/.ssh/known_hosts
+    - ssh-keyscan -H 34.70.225.68 >> ~/.ssh/known_hosts
   
   script:
     - cd ./PLSH-BE
     - echo "Deploying application to server"
     - ls ./publish
-    - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@104.197.134.164:/var/www/PLBH_App/
-    - ssh -o StrictHostKeyChecking=no namson023@104.197.134.164 "sudo systemctl restart PLBH_App.service"
+    - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@34.70.225.68:/var/www/PLBH_App/
+    - ssh -o StrictHostKeyChecking=no namson023@34.70.225.68 "sudo systemctl restart PLBH_App.service"
   environment:
     name: production
   rules:
