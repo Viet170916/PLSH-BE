@@ -167,4 +167,22 @@ public partial class BookController
 
     return Ok(mapper.Map<List<BookNewDto>>(books));
   }
+
+  [HttpPost("generate-from-gemini")]
+  public async Task<ActionResult<BaseResponse<BookNewDto>>> GetBookFromGemini([FromBody] BookNewDto input)
+  {
+    var geminiResult = await geminiService.GetBookFromGeminiPromptAsync(input);
+    if (geminiResult == null)
+    {
+      return BadRequest(new BaseResponse<BookNewDto>
+      {
+        message = "Có lỗi trong quá trình phân tích, vui lòng thử lại!", data = null!, status = "error"
+      });
+    }
+
+    return Ok(new BaseResponse<BookNewDto>
+    {
+      message = "Lấy thông tin thành công", data = geminiResult, status = "success"
+    });
+  }
 }

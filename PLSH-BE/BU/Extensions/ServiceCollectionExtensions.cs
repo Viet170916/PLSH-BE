@@ -11,12 +11,16 @@ namespace BU.Extensions
   {
     public static void AddBusinessLayer(this IServiceCollection services)
     {
+      services.AddHttpClient<GeminiService>();
       services.AddAutoMapper(Assembly.GetExecutingAssembly());
       services.AddTransient<IAccountService, AccountService>();
       services.AddTransient<IBookInstanceService, BookInstanceService>();
       services.AddTransient<IAuthorService, AuthorService>();
       services.AddTransient<INotificationService, NotificationService>();
       services.AddTransient<ILoanService, LoanService>();
+      services.AddTransient<IGeminiService, GeminiService>();
+      services.AddTransient<IGgServices, GgServices>();
+      services.AddTransient<IChatGptService, ChatGptService>();
     }
   }
 }

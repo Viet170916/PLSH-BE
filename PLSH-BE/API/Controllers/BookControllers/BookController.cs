@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using API.Common;
 using AutoMapper;
 using BU.Models.DTO.Book;
 using BU.Services.Interface;
 using Common.Enums;
 using Common.Helper;
 using Data.DatabaseContext;
+using Google.Cloud.TextToSpeech.V1;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,10 +29,14 @@ namespace API.Controllers.BookControllers
     ILogger<BookController> logger,
     IHttpClientFactory httpClientFactory,
     IMapper mapper,
-    IBookInstanceService bookInstanceService
+    IBookInstanceService bookInstanceService,
+    IGeminiService geminiService,
+    GoogleCloudStorageHelper helper
+
   )
     : ControllerBase
   {
+
     [HttpPost("add")] public async Task<IActionResult> AddOrUpdateBook([FromBody] BookNewDto? bookDto)
     {
       logger.LogInformation($"{nameof(AddOrUpdateBook)} called.");

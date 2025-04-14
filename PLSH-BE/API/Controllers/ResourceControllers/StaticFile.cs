@@ -80,7 +80,7 @@ public class FileController(
   }
 
   [HttpGet("book/{bookId}/text")]
-  public async Task<IActionResult> GetEbupText([FromRoute] int bookId, [FromQuery] int chapter = 1)
+  public async Task<IActionResult> GetEpubText([FromRoute] int bookId, [FromQuery] int chapter = 1)
   {
     var book = await context.Books.Include(b => b.EpubResource).FirstOrDefaultAsync(b => bookId == b.Id);
     if (book is null) return NotFound(new { message = "Book not found." });

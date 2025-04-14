@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using API.Common;
 using AutoMapper;
+using BU.Services.Interface;
 using Data.DatabaseContext;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +21,7 @@ public partial class ResourceController(
   AppDbContext context,
   ILogger<ResourceController> logger,
   IMapper mapper,
+  IGgServices ggServices,
   GoogleCloudStorageHelper googleCloudStorageHelper
 ) : Controller
 {
@@ -41,6 +43,7 @@ public partial class ResourceController(
         context.Resources.Add(resourceEntity);
         await context.SaveChangesAsync();
         book.CoverImageResourceId = resourceEntity.Id;
+        book.Thumbnail = null;
         break;
       case "pdf":
         var contentPdfUrl = await googleCloudStorageHelper.UploadFileAsync(resource.File.OpenReadStream(),

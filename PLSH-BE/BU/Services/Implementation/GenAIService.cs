@@ -8,18 +8,10 @@ using System.Threading.Tasks;
 using System;
 using BU.Services.Interface;
 
-public class GenAIService : IGenAIService
+public class GenAIService(HttpClient httpClient, ILogger<GenAIService> logger) : IGenAIService
 {
-    private readonly HttpClient _httpClient;
-    private readonly ILogger<GenAIService> _logger;
     private const string ApiKey = "AIzaSyC7CudHtjqfDCk3ObZQ0ml1wjPpyc38nTE";
     private const string ApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/text-bison-001:predict";
-
-    public GenAIService(HttpClient httpClient, ILogger<GenAIService> logger)
-    {
-        _httpClient = httpClient;
-        _logger = logger;
-    }
 
     public async Task<List<int>> GetBookRecommendations(string bookIds)
     {
@@ -33,7 +25,7 @@ public class GenAIService : IGenAIService
                 temperature = 0.7
             };
 
-            var response = await _httpClient.PostAsJsonAsync(url, request);
+            var response = await httpClient.PostAsJsonAsync(url, request);
             if (response.IsSuccessStatusCode)
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -46,7 +38,7 @@ public class GenAIService : IGenAIService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while calling GenAI API.");
+            logger.LogError(ex, "Error occurred while calling GenAI API.");
         }
         return new List<int>();
     }

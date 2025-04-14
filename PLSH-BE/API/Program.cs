@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
 using API.Common;
@@ -6,6 +8,7 @@ using API.Middlewares;
 using API.Provider;
 using BU.Extensions;
 using BU.Hubs;
+using BU.Services.Implementation;
 using Common.Library;
 using Data.DatabaseContext;
 using Data.Repository.Implementation;
@@ -105,7 +108,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //DI
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IUserIdProvider,AppUserIdProvider>();
+builder.Services.AddSingleton<IUserIdProvider, AppUserIdProvider>();
 builder.Services.AddSingleton(StorageClient.Create());
 builder.Services.AddSingleton<GoogleCloudStorageHelper>();
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
@@ -113,7 +116,6 @@ builder.Services.AddBusinessLayer();
 builder.Services.AddLockBusinessLayer();
 
 //
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
        {
@@ -133,7 +135,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            OnMessageReceived = context =>
            {
              var accessToken = context.Request.Query["access_token"];
-
              var path = context.HttpContext.Request.Path;
              if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/bookHiveHub"))
              {
@@ -144,6 +145,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            }
          };
        });
+// builder.Services.Configure<GeminiService.GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.AddAuthorizationBuilder()
        .AddPolicy("AdminPolicy", policy => policy.RequireRole("admin"))
        .AddPolicy("BorrowerPolicy", policy => policy.RequireRole("student", "teacher"))
@@ -160,7 +162,6 @@ builder.Services.AddControllers()
        });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureEmailService();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
