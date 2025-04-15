@@ -54,21 +54,10 @@ public class BookMinimalDto
   public int? Id { get; set; }
 
   public required string Title { get; set; }
-
-  // public string? Description { get; set; }
   public string? Thumbnail { get; set; }
-
-  // public int? CategoryId { get; set; }
+  public int? CategoryId { get; set; }
   public required string Version { get; set; }
-
-  // public required string Publisher { get; set; }
-  // public string? PublishDate { get; set; }
-  // public required string Language { get; set; }
   public IList<AuthorDto>? Authors { get; set; }
-
-  // public int Quantity { get; set; } = 0;
-  // public CategoryDto? Category { get; set; }
-  // public IList<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
   public IFormFile? CoverImage { get; set; }
   public float? Rating { get; set; }
 }

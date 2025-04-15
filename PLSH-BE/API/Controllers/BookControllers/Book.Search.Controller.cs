@@ -32,7 +32,7 @@ public partial class BookController
     [FromQuery] int? authorId,
     [FromQuery] int page = 1,
     [FromQuery] int limit = 18,
-    [FromQuery] string orderBy = "title",
+    [FromQuery] string orderBy = "createdate",
     [FromQuery] bool descending = false
   )
   {
@@ -41,11 +41,12 @@ public partial class BookController
     if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title != null && b.Title.Contains(keyword));
     if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
     if (authorId.HasValue) query = query.Where(b => b.Authors != null && b.Authors.Any(a => a.Id == authorId));
+
     query = orderBy.ToLower() switch
     {
       "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
       "createdate" => descending ? query.OrderByDescending(b => b.CreateDate) : query.OrderBy(b => b.CreateDate),
-      _ => query.OrderBy(b => b.CreateDate)
+      _ => query.OrderByDescending(b => b.CreateDate),
     };
     var totalRecords = await query.CountAsync();
     var booksQueryPaging = query

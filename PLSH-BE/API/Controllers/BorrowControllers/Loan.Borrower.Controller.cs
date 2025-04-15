@@ -17,7 +17,7 @@ namespace API.Controllers.BorrowControllers;
 
 public partial class LoanController
 {
-  [Authorize(Policy = "BorrowerPolicy")] [Authorize(Policy = "LibrarianPolicy")] [HttpPut("{id}/status")]
+  [Authorize(Policy = "BorrowerPolicy")] [HttpPut("{id}/status")]
   public async Task<IActionResult> UpdatePersonalLoanStatus(int id, [FromBody] UpdateLoanStatusDto request)
   {
     var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -158,7 +158,11 @@ public partial class LoanController
 
     if (!string.IsNullOrEmpty(keyword))
     {
-      query = query.Where(l => l.Note.Contains(keyword) || l.BorrowerId.ToString().Contains(keyword));
+      query = query.Where(l => l.Note.Contains(keyword)
+                               || string.Concat(l.Id).Contains(keyword)
+                               || l.Borrower.PhoneNumber.Contains(keyword)
+                               || l.Borrower.CardMemberNumber.Contains(keyword)
+                               || l.Borrower.FullName.Contains(keyword));
     }
 
     query = orderBy?.ToLower() switch
