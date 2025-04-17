@@ -1,0 +1,239 @@
+﻿<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row =>
+                    row.some(cell => cell !== '' && cell !== null && cell !== undefined)
+                );
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nội quy Thư viện Trường THCS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+
+        h3 {
+            color: #4a6a8a;
+            margin-top: 15px;
+        }
+
+        p, ul {
+            margin: 10px 0;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        .contact-info {
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nội quy Thư viện Trường THCS</h1>
+
+    <section>
+        <h2>1. Mục đích và Sứ mệnh</h2>
+        <p>Thư viện Trường THCS cam kết cung cấp một môi trường học tập phong phú, hỗ trợ chương trình giảng dạy và khuyến khích học sinh phát triển kỹ năng đọc, tư duy phản biện, và nghiên cứu độc lập. Thư viện là nơi để học sinh khám phá kiến thức, nuôi dưỡng sở thích đọc sách và xây dựng ý thức trách nhiệm với cộng đồng.</p>
+    </section>
+
+    <section>
+        <h2>2. Quản lý Bộ sưu tập Tài liệu</h2>
+        <p>Thư viện có các quy định về lựa chọn, loại bỏ và tiếp nhận tài liệu như sau:</p>
+
+        <h3>2.1. Lựa chọn Tài liệu</h3>
+        <ul>
+            <li>Phù hợp với chương trình giảng dạy và nhu cầu học tập của học sinh THCS (11-15 tuổi).</li>
+            <li>Đa dạng về thể loại (tiểu thuyết, sách khoa học, truyện tranh giáo dục, sách tham khảo) và ngôn ngữ (tiếng Việt, tiếng Anh).</li>
+            <li>Đáp ứng sở thích và khuyến khích sự tò mò trí tuệ của học sinh.</li>
+            <li>Quy trình lựa chọn: Tham khảo đánh giá từ các tạp chí giáo dục uy tín. Lắng nghe đề xuất từ giáo viên, học sinh, và phụ huynh. Đảm bảo nội dung phù hợp về văn hóa, đạo đức, và không chứa thông tin sai lệch.</li>
+        </ul>
+
+        <h3>2.2. Loại bỏ Tài liệu</h3>
+        <ul>
+            <li>Nội dung lỗi thời hoặc không còn chính xác (ví dụ: sách khoa học cũ).</li>
+            <li>Sách bị hư hỏng, rách nát, không thể sử dụng.</li>
+            <li>Tài liệu ít được mượn hoặc không còn phù hợp với chương trình học.</li>
+            <li>Quy trình loại bỏ: Thủ thư kiểm kê và lập danh sách tài liệu cần loại bỏ. Được phê duyệt bởi ban giám hiệu. Tài liệu loại bỏ sẽ được tái chế, quyên góp, hoặc xử lý theo quy định của trường.</li>
+        </ul>
+
+        <h3>2.3. Tiếp nhận Quà tặng</h3>
+        <ul>
+            <li>Thư viện hoan nghênh sách và tài liệu tặng từ học sinh, phụ huynh, hoặc cộng đồng.</li>
+            <li>Các tài liệu tặng phải đáp ứng tiêu chí lựa chọn (phù hợp với lứa tuổi, nội dung giáo dục).</li>
+            <li>Tài liệu không phù hợp sẽ được từ chối hoặc chuyển cho mục đích khác (như quyên góp cho tổ chức từ thiện).</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>3. Quy tắc Sử dụng Thư viện</h2>
+        <p>Các quy định khi sử dụng thư viện:</p>
+
+        <h3>3.1. Quy định Chung</h3>
+        <ul>
+            <li>Thời gian mở cửa: Thư viện hoạt động từ 7:30 sáng đến 4:00 chiều các ngày học (thứ Hai đến thứ Sáu).</li>
+            <li>Học sinh phải giữ yên lặng, không gây ồn ào ảnh hưởng đến người khác.</li>
+            <li>Không mang đồ ăn, thức uống, hoặc vật nuôi vào thư viện.</li>
+            <li>Giữ gìn vệ sinh và không làm hư hại tài sản thư viện (bàn, ghế, kệ sách).</li>
+            <li>Điện thoại di động và máy tính bảng chỉ được sử dụng cho mục đích học tập khi được thủ thư cho phép.</li>
+            <li>Không chơi game, xem video giải trí, hoặc sử dụng mạng xã hội trong thư viện.</li>
+        </ul>
+
+        <h3>3.2. Quy định Mượn và Trả Sách</h3>
+        <ul>
+            <li>Mỗi học sinh được mượn tối đa 2 cuốn sách trong 14 ngày.</li>
+            <li>Sách tham khảo (từ điển, bách khoa thư) chỉ được sử dụng tại thư viện, không được mang về.</li>
+            <li>Học sinh có thể gia hạn thêm 7 ngày nếu sách chưa được người khác đặt trước.</li>
+            <li>Phạt 1.000 VNĐ/ngày/sách nếu trả trễ.</li>
+            <li>Học sinh trả trễ quá 30 ngày sẽ bị tạm khóa quyền mượn sách cho đến khi hoàn thành nghĩa vụ.</li>
+            <li>Nếu làm mất hoặc hư hỏng sách, học sinh phải thay thế bằng một cuốn sách cùng tiêu đề và ấn bản hoặc trả tiền bồi thường dựa trên giá trị sách (do thủ thư xác định).</li>
+        </ul>
+
+        <h3>3.3. Sử dụng Máy tính và Tài liệu Điện tử</h3>
+        <ul>
+            <li>Máy tính trong thư viện chỉ được dùng cho mục đích học tập (tra cứu tài liệu, làm bài tập).</li>
+            <li>Không truy cập các trang web không phù hợp (game, mạng xã hội, nội dung không lành mạnh).</li>
+            <li>Không cài đặt phần mềm hoặc thay đổi cấu hình máy tính.</li>
+            <li>Thời gian sử dụng tối đa là 30 phút nếu có học sinh khác đang chờ.</li>
+            <li>Học sinh cần đăng nhập bằng tài khoản trường cung cấp để truy cập tài liệu điện tử. Tôn trọng bản quyền và không sao chép trái phép.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>4. Xử lý Vi phạm</h2>
+        <p>Các hành vi vi phạm và hình thức xử lý:</p>
+        <ul>
+            <li>Các hành vi vi phạm: Làm ồn, gây rối; Không tuân thủ quy định mượn/trả sách; Làm hư hỏng tài sản; Sử dụng máy tính sai mục đích.</li>
+            <li>Lần 1: Nhắc nhở bằng lời và ghi nhận vào hồ sơ thư viện.</li>
+            <li>Lần 2: Thông báo cho giáo viên chủ nhiệm và phụ huynh.</li>
+            <li>Lần 3: Tạm đình chỉ quyền sử dụng thư viện (từ 1 tuần đến 1 tháng, tùy mức độ).</li>
+            <li>Vi phạm nghiêm trọng (như cố ý phá hoại): Có thể bị kỷ luật theo nội quy trường học.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>5. Quy trình Xử lý Khiếu nại về Tài liệu</h2>
+        <p>Quy trình xử lý khiếu nại về tài liệu không phù hợp:</p>
+        <ul>
+            <li>Nếu học sinh, phụ huynh, hoặc giáo viên cho rằng một tài liệu không phù hợp, họ có thể nộp Biểu mẫu Khiếu nại Tài liệu.</li>
+            <li>Thủ thư nhận biểu mẫu và xác nhận thông tin.</li>
+            <li>Một ủy ban (gồm thủ thư, giáo viên, và đại diện ban giám hiệu) sẽ xem xét trong vòng 14 ngày.</li>
+            <li>Ủy ban đánh giá dựa trên tiêu chí lựa chọn tài liệu và đưa ra quyết định (giữ, loại bỏ, hoặc hạn chế tài liệu).</li>
+            <li>Kết quả được thông báo bằng văn bản cho người khiếu nại.</li>
+            <li>Mọi ý kiến đều được xem xét công bằng, không phân biệt người nộp khiếu nại.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>6. Quyền và Trách nhiệm của Học sinh</h2>
+        <h3>6.1. Quyền</h3>
+        <ul>
+            <li>Được tiếp cận tất cả tài liệu phù hợp trong thư viện mà không bị hạn chế bởi trình độ học vấn hoặc độ tuổi.</li>
+            <li>Được đề xuất sách, tài liệu mới để thư viện xem xét bổ sung.</li>
+            <li>Được hỗ trợ bởi thủ thư trong việc tìm kiếm tài liệu hoặc học kỹ năng nghiên cứu.</li>
+            <li>Được đảm bảo quyền riêng tư khi sử dụng thư viện (thông tin mượn sách không bị tiết lộ).</li>
+        </ul>
+
+        <h3>6.2. Trách nhiệm</h3>
+        <ul>
+            <li>Tôn trọng tài liệu và tài sản của thư viện, giữ sách sạch sẽ, không viết/vẽ lên sách.</li>
+            <li>Tuân thủ các quy định về mượn/trả sách và sử dụng cơ sở vật chất.</li>
+            <li>Báo cáo ngay nếu phát hiện tài liệu bị hư hỏng hoặc mất mát.</li>
+            <li>Hợp tác với thủ thư và các bạn khác để duy trì môi trường học tập tích cực.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>7. Trách nhiệm của Thủ thư</h2>
+        <p>Trách nhiệm của thủ thư bao gồm:</p>
+        <ul>
+            <li>Quản lý và bảo trì bộ sưu tập tài liệu, đảm bảo cập nhật thường xuyên.</li>
+            <li>Hỗ trợ học sinh tìm kiếm tài liệu, sử dụng máy tính, và phát triển kỹ năng đọc/nghiên cứu.</li>
+            <li>Tổ chức các hoạt động khuyến khích đọc sách (Câu lạc bộ đọc sách, buổi giới thiệu sách mới, triển lãm sách theo chủ đề).</li>
+            <li>Theo dõi việc mượn/trả sách và xử lý vi phạm theo quy định.</li>
+            <li>Đảm bảo quyền riêng tư của học sinh và bảo mật thông tin sử dụng thư viện.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>8. Chính sách Bảo mật</h2>
+        <p>Bảo mật thông tin học sinh:</p>
+        <ul>
+            <li>Thông tin cá nhân của học sinh chỉ được sử dụng cho mục đích quản lý thư viện.</li>
+            <li>Dữ liệu sẽ không được chia sẻ với bên thứ ba, trừ khi có yêu cầu từ ban giám hiệu hoặc pháp luật.</li>
+            <li>Tài khoản của học sinh được bảo vệ bằng mật khẩu.</li>
+            <li>Dữ liệu số được mã hóa để đảm bảo an toàn.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>9. Đánh giá và Cập nhật Chính sách</h2>
+        <p>Quy trình cập nhật chính sách:</p>
+        <ul>
+            <li>Chính sách này sẽ được xem xét và cập nhật ít nhất mỗi 2 năm để đảm bảo phù hợp với nhu cầu học sinh và chương trình giảng dạy.</li>
+            <li>Thủ thư, ban giám hiệu, và đại diện phụ huynh sẽ tham gia vào quá trình đánh giá.</li>
+            <li>Học sinh, giáo viên, và phụ huynh được khuyến khích đóng góp ý kiến để cải thiện chính sách.</li>
+            <li>Mọi thay đổi sẽ được thông báo qua bảng tin trường hoặc hệ thống trực tuyến (nếu có).</li>
+        </ul>
+    </section>
+
+    <section class="contact-info">
+        <h2>10. Liên hệ</h2>
+        <p>Thông tin liên hệ:</p>
+        <ul>
+            <li>Thủ thư: Cô Nguyễn Thị Lan</li>
+            <li>Email: thuvien.thcs@example.com</li>
+            <li>Địa điểm: Phòng Thư viện, tầng 2, tòa nhà A, Trường THCS BookHive.</li>
+            <li>Giờ làm việc: 7:30 - 16:00, thứ Hai đến thứ Sáu.</li>
+        </ul>
+    </section>
+</body>
+</html>

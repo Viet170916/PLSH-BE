@@ -54,6 +54,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
   public DbSet<Shelf> Shelves { get; set; }
   public DbSet<RowShelf> RowShelves { get; set; }
   public DbSet<BookInstance> BookInstances { get; set; }
+  public DbSet<ShareLink> ShareLinks { get; set; }    
 
   // public IQueryable<Author> FindSimilarAuthors(IQueryable<Author> , string fullName)
   // {
