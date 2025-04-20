@@ -35,11 +35,9 @@ pipeline {
             script {
                 withSonarQubeEnv('Sonarqube server connection') {
                     sh """
-                        # Cài đặt công cụ dotnet-sonarscanner
                         dotnet tool install --global dotnet-sonarscanner || true
                         export PATH=\$PATH:\$HOME/.dotnet/tools
                         
-                        # Bắt đầu quét với SonarQube
                         dotnet sonarscanner begin \\
                             /k:"plsh-be" \\
                             /d:sonar.sources=API,Common,Data,Model \\  # Thư mục mã nguồn chính
@@ -51,21 +49,16 @@ pipeline {
                             /d:sonar.host.url=${SONAR_SERVER} \\
                             /d:sonar.login=${SONAR_TOKEN}
 
-                        # Build solution
                         dotnet build PLSH-BE.sln -c Release --no-incremental
                         
-                        # Chạy test và thu thập coverage
                         dotnet test PLSH-BE.sln --collect:"XPlat Code Coverage" --logger trx
 
-                        # Kết thúc quét SonarQube
                         dotnet sonarscanner end /d:sonar.login=${SONAR_TOKEN}
                     """
                 }
                 
-                # Chờ 30 giây để SonarQube xử lý kết quả
                 sleep 30
                 
-                # Tạo báo cáo HTML
                 def timestamp = new Date().format("yyyyMMdd_HHmmss")
                 env.TIMESTAMP = timestamp
                 sh """
