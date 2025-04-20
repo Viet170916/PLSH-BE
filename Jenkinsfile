@@ -4,108 +4,83 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         SONAR_SERVER = credentials('sonarqube-server-url')
-        SONAR_TOKEN = credentials('g67_se490_spr25')
-        STAGING_SERVER = 'http://192.168.230.101:5000'
+        STAGING_SERVER = credentials('staging-server-url')
         SNYK_TOKEN = credentials('snyk-api-token')
+        GITLAB_TOKEN = credentials('g4_se1818net_token')
+        PROJECT_PATH = '/var/lib/jenkins/workspace/Lab_iap491/G76_SEP490_SPR25_/PLSH-BE/PLSH-BE'
     }
 
     stages {
         stage('Info') {
             steps {
-                sh 'whoami; pwd; ls'
+                sh(script: """ 
+                    whoami
+                    pwd
+                    ls -la 
+                    dotnet --version
+                """, label: "Initial info")
             }
         }
 
-        stage('Build and Publish .NET') {
+        stage('Restore & Build') {
             steps {
-                dir('PLSH-BE') {
-                    sh '''
-                        dotnet clean PLSH-BE.sln
-                        dotnet restore PLSH-BE.sln
-                        dotnet build PLSH-BE.sln -c Release
-                        dotnet publish API/API.csproj -c Release -o ./publish --self-contained false
-                    '''
+                dir(env.PROJECT_PATH) {
+                    sh 'dotnet restore PLSH-BE.sln'
+                    sh 'dotnet build PLSH-BE.sln --configuration Release --no-restore'
                 }
             }
         }
 
-        stage('SonarQube') {
-    steps {
-        dir('PLSH-BE/PLSH-BE') {  // Điều chỉnh đường dẫn theo cấu trúc của bạn
-            script {
-                withSonarQubeEnv('Sonarqube server connection') {
-                    sh """
-                        dotnet tool install --global dotnet-sonarscanner || true
-                        export PATH=\$PATH:\$HOME/.dotnet/tools
-                        
-                        dotnet sonarscanner begin \\
-                            /k:"plsh-be" \\
-                            /d:sonar.sources=API,Common,Data,Model \\  # Thư mục mã nguồn chính
-                            /d:sonar.tests=BU \\                       # Thư mục chứa test
-                            /d:sonar.cs.vstest.reportsPaths=**/TestResults/*.trx \\
-                            /d:sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml \\
-                            /d:sonar.coverage.exclusions="**Test*.cs,**/BU/**" \\
-                            /d:sonar.exclusions="**/bin/**/*,**/obj/**/*,*.html,*.json" \\
-                            /d:sonar.host.url=${SONAR_SERVER} \\
-                            /d:sonar.login=${SONAR_TOKEN}
-
-                        dotnet build PLSH-BE.sln -c Release --no-incremental
-                        
-                        dotnet test PLSH-BE.sln --collect:"XPlat Code Coverage" --logger trx
-
-                        dotnet sonarscanner end /d:sonar.login=${SONAR_TOKEN}
-                    """
-                }
-                
-                sleep 30
-                
-                def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                env.TIMESTAMP = timestamp
-                sh """
-                    curl -u ${SONAR_TOKEN}: "${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
-                    python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
-                """
-                archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
-            }
-        }
-    }
-}
-
-
-
-
-
-
-        stage('Snyk Scan') {
+        stage('SonarQube Scan') {
             steps {
-                dir('PLSH-BE') {
-                    script {
-                        sh 'npm install -g snyk'
-
-                        sh 'snyk config set api=$SNYK_TOKEN'
+                script {
+                    dir(env.PROJECT_PATH) {
+                        withSonarQubeEnv('Sonarqube server connection') {
+                            sh """
+                                dotnet sonarscanner begin /k:"plsh-be" /d:sonar.host.url=$SONAR_SERVER /d:sonar.login=$GITLAB_TOKEN
+                                dotnet build PLSH-BE.sln --configuration Release
+                                dotnet sonarscanner end /d:sonar.login=$GITLAB_TOKEN
+                            """
+                        }
 
                         def timestamp = new Date().format("yyyyMMdd_HHmmss")
                         env.TIMESTAMP = timestamp
 
                         sh """
-                            snyk test --file=API/API.csproj --severity-threshold=high --json-file-output=snyk.json || true
-                            [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
+                            curl -u $GITLAB_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
+                            python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
                         """
-
-                        archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
+                        archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
                     }
                 }
             }
         }
 
+        stage('Snyk Scan') {
+            steps {
+                script {
+                    dir(env.PROJECT_PATH) {
+                        sh 'snyk config set api=${SNYK_TOKEN}'
+                        sh '''
+                            dotnet restore PLSH-BE.sln
+                            snyk test --severity-threshold=high --json-file-output=snyk-report.json . || true
+                            snyk-to-html -i snyk-report.json -o snyk-report.html || true
+                        '''
+                        archiveArtifacts artifacts: 'snyk-report.html', fingerprint: true
+                    }
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
-                dir('PLSH-BE') {
-                    sh '''
-                        docker build -t plsh-be -f API/Dockerfile .
-                        docker tag plsh-be co0bridae/plsh-be:latest
-                    '''
+                script {
+                    dir(env.PROJECT_PATH) {
+                        sh '''
+                            docker build -t plsh-be -f Dockerfile .
+                            docker tag plsh-be co0bridae/plsh-be:latest
+                        '''
+                    }
                 }
             }
         }
@@ -113,27 +88,94 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 script {
-                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                    env.TIMESTAMP = timestamp
-
-                    sh """
-                        trivy image --timeout 10m --format json --output plsh-be-trivy-${timestamp}.json --severity HIGH,CRITICAL plsh-be
-                        python3 convert_json.py plsh-be-trivy-${timestamp}.json plsh-be-trivy-${timestamp}.html
-                    """
-                    archiveArtifacts artifacts: "plsh-be-trivy-${timestamp}.html", fingerprint: true
+                    dir(env.PROJECT_PATH) {
+                        sh '''
+                            trivy image --timeout 10m --format json --output trivy-report.json --severity HIGH,CRITICAL plsh-be:latest
+                            python3 convert_json.py trivy-report.json trivy-report.html
+                        '''
+                        archiveArtifacts artifacts: 'trivy-report.html', fingerprint: true
+                    }
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push to Docker Hub') {
             steps {
-                sh '''
-                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                    docker push co0bridae/plsh-be:latest
-                '''
+                script {
+                    sh '''
+                        echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                        docker push co0bridae/plsh-be:latest
+                    '''
+                }
             }
         }
 
-        
+        stage('Deploy to Staging') {
+            steps {
+                script {
+                    def deployScript = """
+                        #!/bin/bash
+                        echo "Stopping existing container..."
+                        docker ps -q --filter "name=plsh-be" | xargs -r docker stop
+                        docker ps -a -q --filter "name=plsh-be" | xargs -r docker rm
+
+                        echo "Pulling latest image..."
+                        docker pull co0bridae/plsh-be:latest
+
+                        echo "Starting new container..."
+                        docker run -d --name plsh-be -p 5000:5000 -e ASPNETCORE_ENVIRONMENT=Staging co0bridae/plsh-be:latest
+                    """
+
+                    sshagent(['jenkins-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${env.STAGING_SERVER} 'echo "${deployScript}" > /tmp/deploy_plsh.sh && chmod +x /tmp/deploy_plsh.sh && /tmp/deploy_plsh.sh'
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('ZAP Scan') {
+            steps {
+                script {
+                    sh """
+                        cd /opt/zaproxy
+                        ./zap.sh -daemon -port 8090 -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=.* &
+
+                        READY=0
+                        while [ \$READY -eq 0 ]; do
+                            if curl -s "http://localhost:8090/JSON/core/view/version/" | grep "version"; then
+                                READY=1
+                            else
+                                echo "Waiting for ZAP to start..."
+                                sleep 5
+                            fi
+                        done
+
+                        curl -s "http://localhost:8090/JSON/spider/action/scan/?url=${env.STAGING_SERVER}&contextName=PLSH&recurse=true"
+                        sleep 30
+
+                        curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=${env.STAGING_SERVER}&contextName=PLSH"
+                        sleep 120
+
+                        curl -s "http://localhost:8090/OTHER/core/other/htmlreport/" -o "${env.PROJECT_PATH}/zap_report.html"
+                        curl "http://localhost:8090/JSON/core/action/shutdown/"
+                    """
+                    archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            slackSend(color: "good", message: "PLSH-BE Pipeline SUCCESSFUL: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+        }
+        failure {
+            slackSend(color: "danger", message: "PLSH-BE Pipeline FAILED: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
+        }
     }
 }
