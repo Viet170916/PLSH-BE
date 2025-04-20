@@ -1,101 +1,114 @@
 stages:
-  - build
-  - deploy
-  - test
+  - trigger_jenkins
 
-variables:
-  DOTNET_VERSION: 8.0
+trigger_jenkins_job:
+  stage: trigger_jenkins
+  tags:
+    - jenkins-runner
+  script:
+    - echo "Triggering Jenkins pipeline..."
+    - curl -X POST "http://admin:1185d90d52dbdf516a3a0d5ac9ae4abf22@192.168.230.99:8080/job/Lab_iap491/job/G76_SEP490_SPR25_/job/PLSH-BE/buildWithParameters?GIT_BRANCH=$CI_COMMIT_REF_NAME"
 
-build_fe_borrower_project:
-  stage: build
-  image: node:22.13.0
-  cache:
-    paths:
-      - node_modules/
+
+
+# stages:
+#   - build
+#   - deploy
+#   - test
+
+# variables:
+#   DOTNET_VERSION: 8.0
+
+# build_fe_borrower_project:
+#   stage: build
+#   image: node:22.13.0
+#   cache:
+#     paths:
+#       - node_modules/
       
-  before_script:
-    - source ~/.profile
-    - source ~/.bashrc
-    - export PATH="$PATH:~/.nvm/versions/node/v22.13.0/bin"
-  script:
-    - cd ./plsh-fe-borrower
-    - yarn install
-    - npm run build
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/borrower/develop"'
-      when: always
+#   before_script:
+#     - source ~/.profile
+#     - source ~/.bashrc
+#     - export PATH="$PATH:~/.nvm/versions/node/v22.13.0/bin"
+#   script:
+#     - cd ./plsh-fe-borrower
+#     - yarn install
+#     - npm run build
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/borrower/develop"'
+#       when: always
 
 
-build_fe_librarian_project:
-  stage: build
-  image: node:22.13.0
-  cache:
-    paths:
-      - node_modules/
-  before_script:
-    - source ~/.profile
-    - source ~/.bashrc
-    - export PATH="$PATH:~/.nvm/versions/node/v22.13.0/bin"
-  script:
-    - cd ./plsh-fe-librarian
-    - yarn install
-    - npm run build
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/librarian/develop"'
-      when: always
-  # only:
-  #   - merge_requests
-  #   - client/librarian/develop
+# build_fe_librarian_project:
+#   stage: build
+#   image: node:22.13.0
+#   cache:
+#     paths:
+#       - node_modules/
+#   before_script:
+#     - source ~/.profile
+#     - source ~/.bashrc
+#     - export PATH="$PATH:~/.nvm/versions/node/v22.13.0/bin"
+#   script:
+#     - cd ./plsh-fe-librarian
+#     - yarn install
+#     - npm run build
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "client/librarian/develop"'
+#       when: always
+#   # only:
+#   #   - merge_requests
+#   #   - client/librarian/develop
 
-build_be:
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  stage: build
-  script:
-    - cd ./PLSH-BE
-    - dotnet clean ./PLSH-BE.sln
-    - dotnet restore PLSH-BE.sln
-    - dotnet build ./PLSH-BE.sln -c Release
-    - dotnet publish ./API/API.csproj -c Release -o ./publish --self-contained false
+# build_be:
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   stage: build
+#   script:
+#     - cd ./PLSH-BE
+#     - dotnet clean ./PLSH-BE.sln
+#     - dotnet restore PLSH-BE.sln
+#     - dotnet build ./PLSH-BE.sln -c Release
+#     - dotnet publish ./API/API.csproj -c Release -o ./publish --self-contained false
  
-  artifacts:
-    paths:
-      - PLSH-BE/publish
-    expire_in: 1 hours 
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: always
-    - if: '$CI_COMMIT_REF_NAME == "server/develop"'
-      when: always
+#   artifacts:
+#     paths:
+#       - PLSH-BE/publish
+#     expire_in: 1 hours 
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#       when: always
+#     - if: '$CI_COMMIT_REF_NAME == "server/develop"'
+#       when: always
 
 
 
-deploy_be:
-  stage: deploy
-  image: mcr.microsoft.com/dotnet/sdk:8.0
-  before_script:
-    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - mkdir -p ~/.ssh
-    - 'echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/google_compute_engine'
-    - chmod 600 ~/.ssh/google_compute_engine
-    - eval "$(ssh-agent -s)"
-    - ssh-add ~/.ssh/google_compute_engine
-    - ssh-keyscan -H 34.70.225.68 >> ~/.ssh/known_hosts
+# deploy_be:
+#   stage: deploy
+#   image: mcr.microsoft.com/dotnet/sdk:8.0
+#   before_script:
+#     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+#     - mkdir -p ~/.ssh
+#     - 'echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/google_compute_engine'
+#     - chmod 600 ~/.ssh/google_compute_engine
+#     - eval "$(ssh-agent -s)"
+#     - ssh-add ~/.ssh/google_compute_engine
+#     - ssh-keyscan -H 34.70.225.68 >> ~/.ssh/known_hosts
   
-  script:
-    - cd ./PLSH-BE
-    - echo "Deploying application to server"
-    - ls ./publish
-    - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@34.70.225.68:/var/www/PLBH_App/
-    - ssh -o StrictHostKeyChecking=no namson023@34.70.225.68 "sudo systemctl restart PLBH_App.service"
-  environment:
-    name: production
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: always
-    - if: '$CI_COMMIT_REF_NAME == "server/develop"'
-      when: always
-sast:
-  stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
+#   script:
+#     - cd ./PLSH-BE
+#     - echo "Deploying application to server"
+#     - ls ./publish
+#     - scp -o StrictHostKeyChecking=no -r ./publish/* namson023@34.70.225.68:/var/www/PLBH_App/
+#     - ssh -o StrictHostKeyChecking=no namson023@34.70.225.68 "sudo systemctl restart PLBH_App.service"
+#   environment:
+#     name: production
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#       when: always
+#     - if: '$CI_COMMIT_REF_NAME == "server/develop"'
+#       when: always
+# sast:
+#   stage: test
+# include:
+# - template: Security/SAST.gitlab-ci.yml
 
