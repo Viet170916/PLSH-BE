@@ -35,9 +35,15 @@ pipeline {
         stage('Setup SonarScanner') {
     steps {
         script {
-            // Tải SonarScanner CLI
-            def scannerHome = tool 'SonarScanner'
-            env.PATH = "${scannerHome}/bin:${env.PATH}"
+            sh '''
+                if [ ! -d "sonar-scanner" ]; then
+                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+                    unzip sonar-scanner-cli-*.zip
+                    rm sonar-scanner-cli-*.zip
+                    mv sonar-scanner-* sonar-scanner
+                fi
+            '''
+            env.PATH = "${env.WORKSPACE}/sonar-scanner/bin:${env.PATH}"
         }
     }
 }
