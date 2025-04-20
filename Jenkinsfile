@@ -30,37 +30,37 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            steps {
-                dir('PLSH-BE') {
-                    script {
-                        withSonarQubeEnv('Sonarqube server connection') {
-                            sh '''
-                                dotnet tool install --global dotnet-sonarscanner
-                                export PATH="$PATH:/root/.dotnet/tools"
-                                dotnet sonarscanner begin \
-                                    /k:"plsh-be" \
-                                    /d:sonar.host.url=$SONAR_SERVER \
-                                    /d:sonar.login=$SONAR_TOKEN
-                                dotnet build PLSH-BE.sln
-                                dotnet sonarscanner end /d:sonar.login=$SONAR_TOKEN
-                            '''
-                        }
-
-                        sleep 30 // Đợi SonarQube xử lý kết quả
-
-                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                        env.TIMESTAMP = timestamp
-
-                        sh """
-                            curl -u ${SONAR_TOKEN}: ${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=BLOCKER,HIGH,MEDIUM&statuses=OPEN,CONFIRMED -o issues_${timestamp}.json
-                            python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
-                        """
-
-                        archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
-                    }
+    steps {
+        dir('PLSH-BE') {
+            script {
+                withSonarQubeEnv('Sonarqube server connection') {
+                    sh """
+                        dotnet tool install --global dotnet-sonarscanner
+                        export PATH="\\$PATH:/root/.dotnet/tools"
+                        dotnet-sonarscanner begin \
+                            /k:"plsh-be" \
+                            /d:sonar.host.url=$SONAR_SERVER \
+                            /d:sonar.login=$SONAR_TOKEN
+                        dotnet build PLSH-BE.sln
+                        dotnet-sonarscanner end /d:sonar.login=$SONAR_TOKEN
+                    """
                 }
+
+                sleep 30
+                def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                env.TIMESTAMP = timestamp
+
+                sh """
+                    curl -u ${SONAR_TOKEN}: ${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED -o issues_${timestamp}.json
+                    python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
+                """
+
+                archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
             }
         }
+    }
+}
+
 
 
         stage('Snyk Scan') {
