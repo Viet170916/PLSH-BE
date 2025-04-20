@@ -32,35 +32,41 @@ pipeline {
         }
 
          
-        stage('Install dotnet-sonarscanner') {
+        stage('SonarQube Scan') {
     steps {
-        sh 'dotnet tool install --global dotnet-sonarscanner'
         script {
-            env.PATH = "${env.HOME}/.dotnet/tools:${env.PATH}"
-        }
-    }
-}
+            dir('PLSH-BE') {
+                withSonarQubeEnv('Sonarqube server connection') {
+                    sh """
+                        dotnet tool install --global dotnet-sonarscanner || true
+                        export PATH=\$PATH:\$HOME/.dotnet/tools
+                        
+                        dotnet sonarscanner begin \
+                            /k:"plsh-be" \
+                            /d:sonar.sources=. \
+                            /d:sonar.host.url=${SONAR_SERVER} \
+                            /d:sonar.login=${SONAR_TOKEN}
 
+                        dotnet build PLSH-BE.sln
 
-stage('SonarQube Scan') {
-    steps {
-        dir(env.PROJECT_PATH) {
-            withSonarQubeEnv('Sonarqube server connection') {
-                sh '''
-                    dotnet sonarscanner begin /k:"plsh-be" \
-                        /d:sonar.host.url=$SONAR_SERVER \
-                        /d:sonar.login=$GITLAB_TOKEN \
-                        /d:sonar.exclusions="**/bin/**/*,**/obj/**/*,**/Test*/**/*"
+                        dotnet sonarscanner end /d:sonar.login=${SONAR_TOKEN}
+                    """
+                }
+                sleep 30
 
-                    dotnet build PLSH-BE.sln --configuration Release
+                def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                env.TIMESTAMP = timestamp
 
-                    dotnet sonarscanner end /d:sonar.login=$GITLAB_TOKEN
-                '''
+                sh """
+                    curl -u ${SONAR_TOKEN}: "${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
+                    python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
+                """
+
+                archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
             }
         }
     }
 }
-
 
         stage('Snyk Scan') {
             steps {
