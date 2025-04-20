@@ -29,24 +29,50 @@ pipeline {
             }
         }
 
-        stage('SonarQube Scan') {
+        stage('SonarQube') {
     steps {
-        dir('PLSH-BE') {
+        dir('PLSH-BE/PLSH-BE') {  // Điều chỉnh đường dẫn theo cấu trúc của bạn
             script {
+                withSonarQubeEnv('Sonarqube server connection') {
+                    sh """
+                        # Cài đặt công cụ dotnet-sonarscanner
+                        dotnet tool install --global dotnet-sonarscanner || true
+                        export PATH=\$PATH:\$HOME/.dotnet/tools
+                        
+                        # Bắt đầu quét với SonarQube
+                        dotnet sonarscanner begin \\
+                            /k:"plsh-be" \\
+                            /d:sonar.sources=API,Common,Data,Model \\  # Thư mục mã nguồn chính
+                            /d:sonar.tests=BU \\                       # Thư mục chứa test
+                            /d:sonar.cs.vstest.reportsPaths=**/TestResults/*.trx \\
+                            /d:sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml \\
+                            /d:sonar.coverage.exclusions="**Test*.cs,**/BU/**" \\
+                            /d:sonar.exclusions="**/bin/**/*,**/obj/**/*,*.html,*.json" \\
+                            /d:sonar.host.url=${SONAR_SERVER} \\
+                            /d:sonar.login=${SONAR_TOKEN}
+
+                        # Build solution
+                        dotnet build PLSH-BE.sln -c Release --no-incremental
+                        
+                        # Chạy test và thu thập coverage
+                        dotnet test PLSH-BE.sln --collect:"XPlat Code Coverage" --logger trx
+
+                        # Kết thúc quét SonarQube
+                        dotnet sonarscanner end /d:sonar.login=${SONAR_TOKEN}
+                    """
+                }
+                
+                # Chờ 30 giây để SonarQube xử lý kết quả
+                sleep 30
+                
+                # Tạo báo cáo HTML
+                def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                env.TIMESTAMP = timestamp
                 sh """
-                    dotnet tool install dotnet-sonarscanner --tool-path .sonar-tools
-                    export PATH=\$PATH:\$(pwd)/.sonar-tools
-
-                    .sonar-tools/dotnet-sonarscanner begin \\
-                        /k:"plsh-be" \\
-                        /d:sonar.host.url=${SONAR_SERVER} \\
-                        /d:sonar.login=${SONAR_TOKEN}
-
-                    dotnet build PLSH-BE.sln
-
-                    .sonar-tools/dotnet-sonarscanner end \\
-                        /d:sonar.login=${SONAR_TOKEN}
+                    curl -u ${SONAR_TOKEN}: "${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
+                    python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
                 """
+                archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
             }
         }
     }
