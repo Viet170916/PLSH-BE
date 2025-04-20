@@ -22,15 +22,7 @@ pipeline {
             }
         }
 
-        stage('Restore & Build') {
-            steps {
-                dir(env.PROJECT_PATH) {
-                    sh 'dotnet restore PLSH-BE.sln'
-                    sh 'dotnet build PLSH-BE.sln --configuration Release --no-restore'
-                }
-            }
-        }
-
+    
          
         stage('SonarQube Scan') {
     steps {
