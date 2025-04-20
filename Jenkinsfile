@@ -46,7 +46,7 @@ stage('SonarQube Scan') {
     steps {
         dir(env.PROJECT_PATH) {
             withSonarQubeEnv('Sonarqube server connection') {
-                sh """
+                sh '''
                     dotnet sonarscanner begin /k:"plsh-be" \
                         /d:sonar.host.url=$SONAR_SERVER \
                         /d:sonar.login=$GITLAB_TOKEN \
@@ -55,7 +55,7 @@ stage('SonarQube Scan') {
                     dotnet build PLSH-BE.sln --configuration Release
 
                     dotnet sonarscanner end /d:sonar.login=$GITLAB_TOKEN
-                """
+                '''
             }
         }
     }
