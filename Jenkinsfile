@@ -31,23 +31,30 @@ pipeline {
             }
         }
 
+         stages {
+        stage('Install Tools') {
+            steps {
+                sh 'dotnet tool install --global dotnet-sonarscanner'
+            }
+        }
+
         stage('SonarQube Scan') {
             steps {
                 script {
                     dir(env.PROJECT_PATH) {
                         withSonarQubeEnv('Sonarqube server connection') {
-                            sh """
+                            sh '''
                                 dotnet sonarscanner begin /k:"plsh-be" /d:sonar.host.url=$SONAR_SERVER /d:sonar.login=$GITLAB_TOKEN
                                 dotnet build PLSH-BE.sln --configuration Release
                                 dotnet sonarscanner end /d:sonar.login=$GITLAB_TOKEN
-                            """
+                            '''
                         }
 
                         def timestamp = new Date().format("yyyyMMdd_HHmmss")
                         env.TIMESTAMP = timestamp
 
                         sh """
-                            curl -u $GITLAB_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
+                            curl -u \$GITLAB_TOKEN: "\$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
                             python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
                         """
                         archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
