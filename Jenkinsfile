@@ -35,18 +35,25 @@ pipeline {
             script {
                 withSonarQubeEnv('Sonarqube server connection') {
                     sh """
-                        dotnet tool install --global dotnet-sonarscanner
-                        export PATH="\\$PATH:/root/.dotnet/tools"
-                        dotnet-sonarscanner begin \
+                        # Cài dotnet-sonarscanner vào thư mục cụ thể
+                        dotnet tool install dotnet-sonarscanner --tool-path .sonar-tools
+
+                        # Thiết lập đường dẫn để gọi tool
+                        export PATH="\\$PATH:$(pwd)/.sonar-tools"
+
+                        # Chạy SonarScanner
+                        .sonar-tools/dotnet-sonarscanner begin \
                             /k:"plsh-be" \
                             /d:sonar.host.url=$SONAR_SERVER \
                             /d:sonar.login=$SONAR_TOKEN
+
                         dotnet build PLSH-BE.sln
-                        dotnet-sonarscanner end /d:sonar.login=$SONAR_TOKEN
+
+                        .sonar-tools/dotnet-sonarscanner end /d:sonar.login=$SONAR_TOKEN
                     """
                 }
 
-                sleep 30
+                // Tạo báo cáo HTML từ SonarQube
                 def timestamp = new Date().format("yyyyMMdd_HHmmss")
                 env.TIMESTAMP = timestamp
 
@@ -60,6 +67,7 @@ pipeline {
         }
     }
 }
+
 
 
 
