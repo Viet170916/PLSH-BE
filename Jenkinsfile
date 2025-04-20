@@ -34,12 +34,12 @@ pipeline {
         dir('PLSH-BE') {
             script {
                 withSonarQubeEnv('Sonarqube server connection') {
-                    sh """
+                    sh '''
                         # Cài dotnet-sonarscanner vào thư mục cụ thể
                         dotnet tool install dotnet-sonarscanner --tool-path .sonar-tools
 
-                        # Thiết lập đường dẫn để gọi tool
-                        export PATH="\\$PATH:$(pwd)/.sonar-tools"
+                        # Thiết lập PATH trong bash script (không cần escape \$)
+                        export PATH="$PATH:$(pwd)/.sonar-tools"
 
                         # Chạy SonarScanner
                         .sonar-tools/dotnet-sonarscanner begin \
@@ -50,15 +50,14 @@ pipeline {
                         dotnet build PLSH-BE.sln
 
                         .sonar-tools/dotnet-sonarscanner end /d:sonar.login=$SONAR_TOKEN
-                    """
+                    '''
                 }
 
-                // Tạo báo cáo HTML từ SonarQube
                 def timestamp = new Date().format("yyyyMMdd_HHmmss")
                 env.TIMESTAMP = timestamp
 
                 sh """
-                    curl -u ${SONAR_TOKEN}: ${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED -o issues_${timestamp}.json
+                    curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
                     python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
                 """
 
@@ -67,6 +66,7 @@ pipeline {
         }
     }
 }
+
 
 
 
