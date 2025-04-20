@@ -6,7 +6,7 @@ pipeline {
         SONAR_SERVER = credentials('sonarqube-server-url')
         STAGING_SERVER = credentials('staging-server-url')
         SNYK_TOKEN = credentials('snyk-api-token')
-        GITLAB_TOKEN = credentials('g4_se1818net_token')
+        SONAR_TOKEN = credentials('g4_se1818net_token')
         PROJECT_PATH = '/var/lib/jenkins/workspace/Lab_iap491/G76_SEP490_SPR25_/PLSH-BE/PLSH-BE'
     }
 
