@@ -35,16 +35,16 @@ pipeline {
             script {
                 sh """
                     dotnet tool install dotnet-sonarscanner --tool-path .sonar-tools
-                    export PATH=\$PATH:$(pwd)/.sonar-tools
+                    export PATH=\$PATH:\$(pwd)/.sonar-tools
 
-                    .sonar-tools/dotnet-sonarscanner begin \
-                        /k:"plsh-be" \
-                        /d:sonar.host.url=${SONAR_SERVER} \
+                    .sonar-tools/dotnet-sonarscanner begin \\
+                        /k:"plsh-be" \\
+                        /d:sonar.host.url=${SONAR_SERVER} \\
                         /d:sonar.login=${SONAR_TOKEN}
 
                     dotnet build PLSH-BE.sln
 
-                    .sonar-tools/dotnet-sonarscanner end \
+                    .sonar-tools/dotnet-sonarscanner end \\
                         /d:sonar.login=${SONAR_TOKEN}
                 """
             }
