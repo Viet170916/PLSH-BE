@@ -31,7 +31,7 @@ pipeline {
             }
         }
 
-         stages {
+         
         stage('Install Tools') {
             steps {
                 sh 'dotnet tool install --global dotnet-sonarscanner'
