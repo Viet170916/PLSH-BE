@@ -32,43 +32,35 @@ pipeline {
         }
 
          
-        stage('Setup SonarScanner') {
+        stage('Install dotnet-sonarscanner') {
     steps {
+        sh 'dotnet tool install --global dotnet-sonarscanner'
         script {
-            sh '''
-                if [ ! -d "sonar-scanner" ]; then
-                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-                    unzip sonar-scanner-cli-*.zip
-                    rm sonar-scanner-cli-*.zip
-                    mv sonar-scanner-* sonar-scanner
-                fi
-            '''
-            env.PATH = "${env.WORKSPACE}/sonar-scanner/bin:${env.PATH}"
+            env.PATH = "${env.HOME}/.dotnet/tools:${env.PATH}"
         }
     }
 }
 
+
 stage('SonarQube Scan') {
     steps {
-        script {
-            dir(env.PROJECT_PATH) {
-                withSonarQubeEnv('Sonarqube server connection') {
-                    sh """
-                        # Sử dụng sonar-scanner thay vì dotnet-sonarscanner
-                        sonar-scanner \
-                            -Dsonar.projectKey=plsh-be \
-                            -Dsonar.host.url=$SONAR_SERVER \
-                            -Dsonar.login=$GITLAB_TOKEN \
-                            -Dsonar.sources=. \
-                            -Dsonar.cs.dotcover.reportsPaths="**/coverage.xml" \
-                            -Dsonar.exclusions="**/bin/**/*,**/obj/**/*,**/Test*/**/*"
-                    """
-                }
-                // Phần tạo báo cáo giữ nguyên
+        dir(env.PROJECT_PATH) {
+            withSonarQubeEnv('Sonarqube server connection') {
+                sh """
+                    dotnet sonarscanner begin /k:"plsh-be" \
+                        /d:sonar.host.url=$SONAR_SERVER \
+                        /d:sonar.login=$GITLAB_TOKEN \
+                        /d:sonar.exclusions="**/bin/**/*,**/obj/**/*,**/Test*/**/*"
+
+                    dotnet build PLSH-BE.sln --configuration Release
+
+                    dotnet sonarscanner end /d:sonar.login=$GITLAB_TOKEN
+                """
             }
         }
     }
 }
+
 
         stage('Snyk Scan') {
             steps {
