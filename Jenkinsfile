@@ -76,7 +76,7 @@ pipeline {
                             def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
                             def chat_id = "-1002608374616"
 
-                            // Gửi message
+                            // Gửi mess
                             sh """
                                 curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
                                 -d chat_id=${chat_id} \\
