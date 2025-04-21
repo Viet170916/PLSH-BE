@@ -1,27 +1,34 @@
-# Stage 1: Build ứng dụng
+# =============================
+# 1. Build stage
+# =============================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
 WORKDIR /app
 
-# Copy toàn bộ source code
-COPY . .
+# Copy solution and restore
+COPY *.sln ./
+COPY API/ ./API/
+COPY BU/ ./BU/
+COPY Common/ ./Common/
+COPY Data/ ./Data/
+COPY Model/ ./Model/
 
-# Restore, build và publish
-RUN dotnet restore PLSH-BE.sln
-RUN dotnet build PLSH-BE.sln -c Release --no-restore
-RUN dotnet publish API/API.csproj -c Release -o /app/publish --no-build
+RUN dotnet restore
 
-# Stage 2: Runtime
+# Build project (release mode)
+RUN dotnet publish -c Release -o /app/publish
+
+# =============================
+# 2. Runtime stage
+# =============================
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
 WORKDIR /app
 
-# Copy từ stage build
 COPY --from=build /app/publish .
 
-# Thiết lập biến môi trường nếu cần (tùy chọn)
-# ENV ASPNETCORE_ENVIRONMENT=Production
-
-# Port mặc định (bạn có thể đổi nếu app của bạn dùng port khác)
+# Expose port if needed (tuỳ theo app listen ở đâu)
 EXPOSE 5000
 
-# Lệnh chạy ứng dụng
+# Start app
 ENTRYPOINT ["dotnet", "API.dll"]
