@@ -94,7 +94,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dir(env.PROJECT_PATH) {
+                    dir('PLSH-BE') {
                         sh '''
                             docker build -t plsh-be -f Dockerfile .
                             docker tag plsh-be co0bridae/plsh-be:latest
@@ -107,7 +107,7 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 script {
-                    dir(env.PROJECT_PATH) {
+                    dir('PLSH-BE') {
                         sh '''
                             trivy image --timeout 10m --format json --output trivy-report.json --severity HIGH,CRITICAL plsh-be:latest
                             python3 convert_json.py trivy-report.json trivy-report.html
