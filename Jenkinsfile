@@ -23,49 +23,81 @@ pipeline {
 
     
          
-    /*    stage('SonarQube Scan') {
+        stage('SonarQube Scan') {
             steps {
                 script {
                     dir('PLSH-BE') {
                         withSonarQubeEnv('Sonarqube server connection') {
-                    sh '''
-                        export PATH="$PATH:$HOME/.dotnet/tools"
+                            sh '''
+                                export PATH="$PATH:$HOME/.dotnet/tools"
 
-                        # Bắt đầu phân tích SonarQube
-                        dotnet sonarscanner begin \
-                            /k:"plsh-be" \
-                            /d:sonar.host.url=$SONAR_HOST_URL \
-                            /d:sonar.login=$SONAR_AUTH_TOKEN
+                                # Bắt đầu phân tích SonarQube
+                                dotnet sonarscanner begin \
+                                    /k:"plsh-be" \
+                                    /d:sonar.host.url=$SONAR_HOST_URL \
+                                    /d:sonar.login=$SONAR_AUTH_TOKEN
 
-                        # Build solution
-                        dotnet build PLSH-BE.sln
+                                # Build solution
+                                dotnet build PLSH-BE.sln
 
-                        # Kết thúc phân tích
-                        dotnet sonarscanner end \
-                            /d:sonar.login=$SONAR_AUTH_TOKEN
-                    '''
-                }
+                                # Kết thúc phân tích
+                                dotnet sonarscanner end \
+                                    /d:sonar.login=$SONAR_AUTH_TOKEN
+                            '''
+                        }
 
-
-                        // Delay một chút để SonarQube xử lý kết quả
                         sleep 30
-
-                        // Bước 4: Tải issues và sinh báo cáo HTML
                         def timestamp = new Date().format("yyyyMMdd_HHmmss")
                         env.TIMESTAMP = timestamp
 
+                        // Tải issues và sinh HTML báo cáo
                         sh """
                             curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=BLOCKER,HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
                             -o issues_${timestamp}.json
                         """
 
                         sh "python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html"
-
                         archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
+
+                        // Kiểm tra BLOCKER và gửi Telegram nếu có
+                        def blockerIssues = []
+                        def sonarIssuesJson = readJSON file: "issues_${timestamp}.json"
+
+                        sonarIssuesJson.issues.each { issue ->
+                            if (issue.severity == "BLOCKER") {
+                                blockerIssues.add(issue)
+                            }
+                        }
+
+                        if (blockerIssues.size() > 0) {
+                            echo "❌ Phát hiện ${blockerIssues.size()} lỗi BLOCKER trong SonarQube!"
+
+                            def msg = URLEncoder.encode("🚨 CI Failed 🚨\\nDự án: PLSH-BE\\nBLOCKER issues: ${blockerIssues.size()}\\nXem chi tiết trong file đính kèm.", "UTF-8")
+                            def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                            def chat_id = "-1002608374616"
+
+                            // Gửi message
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                                -d chat_id=${chat_id} \\
+                                -d text="${msg}"
+                            """
+
+                            // Gửi report HTML
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                                -F chat_id=${chat_id} \\
+                                -F document=@sonarqube-report-${timestamp}.html
+                            """
+
+                            // Dừng pipeline
+                            error("⛔️ Dừng pipeline vì có BLOCKER issues trong SonarQube.")
+                        }
                     }
                 }
             }
         }
+
 
 
         stage('Snyk Scan') {
@@ -88,7 +120,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
 
         stage('Build Docker Image') {
