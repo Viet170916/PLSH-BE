@@ -55,7 +55,7 @@ pipeline {
                         env.TIMESTAMP = timestamp
 
                         sh """
-                            curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
+                            curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=BLOCKER,HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
                             -o issues_${timestamp}.json
                         """
 
@@ -70,19 +70,26 @@ pipeline {
 
         stage('Snyk Scan') {
             steps {
-                script {
-                    dir(env.PROJECT_PATH) {
-                        sh 'snyk config set api=${SNYK_TOKEN}'
-                        sh '''
-                            dotnet restore PLSH-BE.sln
-                            snyk test --severity-threshold=high --json-file-output=snyk-report.json . || true
-                            snyk-to-html -i snyk-report.json -o snyk-report.html || true
-                        '''
-                        archiveArtifacts artifacts: 'snyk-report.html', fingerprint: true
+                dir('PLSH-BE') {
+                    script {
+                        // Set Snyk Token
+                        sh 'snyk config set api=$SNYK_TOKEN'
+
+                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                        env.TIMESTAMP = timestamp
+
+                        // Snyk test và sinh báo cáo
+                        sh """
+                            snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
+                            [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
+                        """
+
+                        archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
                     }
                 }
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
