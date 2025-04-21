@@ -124,72 +124,82 @@ pipeline {
         }
 
 
-        stage('Push to Docker Hub') {
+        stage('Push BE Image to Docker Hub') {
             steps {
                 script {
                     sh '''
+                        # Đăng nhập Docker Hub
                         echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+
+                        # Tag và push image backend
+                        docker tag plsh-be co0bridae/plsh-be:latest
                         docker push co0bridae/plsh-be:latest
                     '''
                 }
             }
         }
 
-        stage('Deploy to Staging') {
+        stage('Deploy BE to Staging') {
             steps {
                 script {
-                    def deployScript = """
+                    def deploying = """
                         #!/bin/bash
-                        echo "Stopping existing container..."
-                        docker ps -q --filter "name=plsh-be" | xargs -r docker stop
-                        docker ps -a -q --filter "name=plsh-be" | xargs -r docker rm
 
-                        echo "Pulling latest image..."
+                        docker ps -q --filter "name=plsh-be" && docker stop plsh-be || true
+                        docker ps -a -q --filter "name=plsh-be" && docker rm plsh-be || true
+
                         docker pull co0bridae/plsh-be:latest
 
-                        echo "Starting new container..."
-                        docker run -d --name plsh-be -p 5000:5000 -e ASPNETCORE_ENVIRONMENT=Staging co0bridae/plsh-be:latest
+                        docker run -d \\
+                        --name plsh-be \\
+                        -p 5000:5000 \\
+                        -e ASPNETCORE_ENVIRONMENT=Staging \\
+                        co0bridae/plsh-be:latest
                     """
 
                     sshagent(['jenkins-ssh-key']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no ${env.STAGING_SERVER} 'echo "${deployScript}" > /tmp/deploy_plsh.sh && chmod +x /tmp/deploy_plsh.sh && /tmp/deploy_plsh.sh'
+                            ssh -o StrictHostKeyChecking=no root@192.168.230.101 'echo "${deploying}" > /root/deploy-be.sh && chmod +x /root/deploy-be.sh && /root/deploy-be.sh'
                         """
                     }
                 }
             }
         }
 
-        stage('ZAP Scan') {
+        stage('ZAP Scan BE') {
             steps {
                 script {
+                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
+
                     sh """
                         cd /opt/zaproxy
-                        ./zap.sh -daemon -port 8090 -host 0.0.0.0 -config api.disablekey=true -config api.addrs.addr.name=.* &
-
-                        READY=0
-                        while [ \$READY -eq 0 ]; do
-                            if curl -s "http://localhost:8090/JSON/core/view/version/" | grep "version"; then
-                                READY=1
-                            else
-                                echo "Waiting for ZAP to start..."
-                                sleep 5
-                            fi
-                        done
-
-                        curl -s "http://localhost:8090/JSON/spider/action/scan/?url=${env.STAGING_SERVER}&contextName=PLSH&recurse=true"
+                        ./zap.sh -daemon -port 8091 -host 0.0.0.0 \\
+                        -config api.disablekey=true \\
+                        -config api.addrs.addr.name=127.0.0.1 \\
+                        -config api.addrs.addr.regex=true &
                         sleep 30
 
-                        curl -s "http://localhost:8090/JSON/ascan/action/scan/?url=${env.STAGING_SERVER}&contextName=PLSH"
-                        sleep 120
+                        curl -s "http://127.0.0.1:8091/JSON/spider/action/scan/?url=http://192.168.230.101:5000"
+                        sleep 30
 
-                        curl -s "http://localhost:8090/OTHER/core/other/htmlreport/" -o "${env.PROJECT_PATH}/zap_report.html"
-                        curl "http://localhost:8090/JSON/core/action/shutdown/"
+                        curl -s "http://127.0.0.1:8091/JSON/ascan/action/scan/?url=http://192.168.230.101:5000"
+                        sleep 60
+
+                        curl -s "http://127.0.0.1:8091/OTHER/core/other/htmlreport/" -o "${WORKSPACE}/zap_report_be-${timestamp}.html"
+
+                        curl -s "http://127.0.0.1:8091/JSON/core/action/shutdown/"
                     """
-                    archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
+
+                    archiveArtifacts artifacts: "zap_report_be-${timestamp}.html", fingerprint: true
                 }
             }
         }
+
+
+        
+
+
+        
     }
 
     post {
