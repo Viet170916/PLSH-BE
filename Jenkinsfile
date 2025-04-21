@@ -28,23 +28,24 @@ pipeline {
                 script {
                     dir('PLSH-BE') {
                         withSonarQubeEnv('Sonarqube server connection') {
-                            // Bước 1: Begin analysis
-                            sh """
-                                dotnet sonarscanner begin \
+                        sh '''
+                            export PATH="$PATH:$HOME/.dotnet/tools"
+
+                            # Bắt đầu phân tích SonarQube
+                            dotnet sonarscanner begin \
                                 /k:"plsh-be" \
-                                /d:sonar.host.url=$SONAR_SERVER \
-                                /d:sonar.login=$SONAR_TOKEN
-                            """
+                                /d:sonar.host.url=$SONAR_HOST_URL \
+                                /d:sonar.login=$SONAR_AUTH_TOKEN
 
-                            // Bước 2: Build solution
-                            sh 'dotnet build PLSH-BE.sln'
+                            # Build solution
+                            dotnet build PLSH-BE.sln
 
-                            // Bước 3: End analysis
-                            sh """
-                                dotnet sonarscanner end \
-                                /d:sonar.login=$SONAR_TOKEN
-                            """
-                        }
+                            # Kết thúc phân tích
+                            dotnet sonarscanner end \
+                                /d:sonar.login=$SONAR_AUTH_TOKEN
+                        '''
+                    }
+
 
                         // Delay một chút để SonarQube xử lý kết quả
                         sleep 30
