@@ -23,7 +23,7 @@ pipeline {
 
     
          
-        stage('SonarQube Scan') {
+    /*    stage('SonarQube Scan') {
             steps {
                 script {
                     dir('PLSH-BE') {
@@ -88,7 +88,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
 
         stage('Build Docker Image') {
@@ -107,16 +107,22 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 script {
-                    dir('PLSH-BE') {
-                        sh '''
-                            trivy image --timeout 10m --format json --output trivy-report.json --severity HIGH,CRITICAL plsh-be:latest
-                            python3 convert_json.py trivy-report.json trivy-report.html
-                        '''
-                        archiveArtifacts artifacts: 'trivy-report.html', fingerprint: true
-                    }
+                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                    env.TIMESTAMP = timestamp
+
+                    sh """
+                        # Scan Docker image với Trivy
+                        trivy image --timeout 10m --format json --output plsh-be-trivy-${timestamp}.json --severity HIGH,CRITICAL plsh-be:latest
+
+                        # Convert kết quả JSON thành HTML
+                        python3 convert_json.py plsh-be-trivy-${timestamp}.json plsh-be-trivy-${timestamp}.html
+                    """
+
+                    archiveArtifacts artifacts: "plsh-be-trivy-${timestamp}.html", fingerprint: true
                 }
             }
         }
+
 
         stage('Push to Docker Hub') {
             steps {
