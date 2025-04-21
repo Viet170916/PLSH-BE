@@ -72,7 +72,7 @@ pipeline {
                         if (blockerIssues.size() > 0) {
                             echo "❌ Phát hiện ${blockerIssues.size()} lỗi BLOCKER trong SonarQube!"
 
-                            def msg = URLEncoder.encode("🚨 CI Failed 🚨\\nDự án: PLSH-BE\\nBLOCKER issues: ${blockerIssues.size()}\\nXem chi tiết trong file đính kèm.", "UTF-8")
+                            def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491 /G76_SEP490_SPR25_ /PLSH-BE Failed SonarQube đã phát hiện ${blockerIssues.size()} lỗi BLOCKER.Xem chi tiết trong file đính kèm.", "UTF-8")
                             def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
                             def chat_id = "-1002608374616"
 
