@@ -166,34 +166,6 @@ pipeline {
             }
         }
 
-        stage('ZAP Scan BE') {
-            steps {
-                script {
-                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
-
-                    sh """
-                        cd /opt/zaproxy
-                        ./zap.sh -daemon -port 8091 -host 0.0.0.0 \\
-                        -config api.disablekey=true \\
-                        -config api.addrs.addr.name=127.0.0.1 \\
-                        -config api.addrs.addr.regex=true &
-                        sleep 30
-
-                        curl -s "http://127.0.0.1:8091/JSON/spider/action/scan/?url=http://192.168.230.101:5000"
-                        sleep 30
-
-                        curl -s "http://127.0.0.1:8091/JSON/ascan/action/scan/?url=http://192.168.230.101:5000"
-                        sleep 60
-
-                        curl -s "http://127.0.0.1:8091/OTHER/core/other/htmlreport/" -o "${WORKSPACE}/zap_report_be-${timestamp}.html"
-
-                        curl -s "http://127.0.0.1:8091/JSON/core/action/shutdown/"
-                    """
-
-                    archiveArtifacts artifacts: "zap_report_be-${timestamp}.html", fingerprint: true
-                }
-            }
-        }
 
 
         
