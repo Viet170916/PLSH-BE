@@ -34,15 +34,15 @@ pipeline {
                             # Bắt đầu phân tích SonarQube
                             dotnet sonarscanner begin \
                                 /k:"plsh-be" \
-                                /d:sonar.host.url=$SONAR_HOST_URL \
-                                /d:sonar.login=$SONAR_AUTH_TOKEN
+                                /d:sonar.host.url=$SONAR_SERVER \
+                                /d:sonar.login=$SONAR_TOKEN
 
                             # Build solution
                             dotnet build PLSH-BE.sln
 
                             # Kết thúc phân tích
                             dotnet sonarscanner end \
-                                /d:sonar.login=$SONAR_AUTH_TOKEN
+                                /d:sonar.login=$SONAR_TOKEN
                         '''
                     }
 
