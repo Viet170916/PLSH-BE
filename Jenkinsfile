@@ -6,8 +6,7 @@ pipeline {
         SONAR_SERVER = credentials('sonarqube-server-url')
         STAGING_SERVER = credentials('staging-server-url')
         SNYK_TOKEN = credentials('snyk-api-token')
-        SONAR_TOKEN = credentials('g4_se1818net_token')
-        PROJECT_PATH = '/var/lib/jenkins/workspace/Lab_iap491/G76_SEP490_SPR25_/PLSH-BE/PLSH-BE'
+        SONAR_TOKEN = credentials('g67_se490_spr25')
     }
 
     stages {
@@ -29,36 +28,44 @@ pipeline {
         script {
             dir('PLSH-BE') {
                 withSonarQubeEnv('Sonarqube server connection') {
+                    // Bước 1: Begin analysis
                     sh """
-                        dotnet tool install --global dotnet-sonarscanner || true
-                        export PATH=\$PATH:\$HOME/.dotnet/tools
-                        
                         dotnet sonarscanner begin \
-                            /k:"plsh-be" \
-                            /d:sonar.sources=. \
-                            /d:sonar.host.url=${SONAR_SERVER} \
-                            /d:sonar.login=${SONAR_TOKEN}
+                        /k:"plsh-be" \
+                        /d:sonar.host.url=$SONAR_SERVER \
+                        /d:sonar.login=$SONAR_TOKEN
+                    """
 
-                        dotnet build PLSH-BE.sln
+                    // Bước 2: Build solution
+                    sh 'dotnet build PLSH-BE.sln'
 
-                        dotnet sonarscanner end /d:sonar.login=${SONAR_TOKEN}
+                    // Bước 3: End analysis
+                    sh """
+                        dotnet sonarscanner end \
+                        /d:sonar.login=$SONAR_TOKEN
                     """
                 }
+
+                // Delay một chút để SonarQube xử lý kết quả
                 sleep 30
 
+                // Bước 4: Tải issues và sinh báo cáo HTML
                 def timestamp = new Date().format("yyyyMMdd_HHmmss")
                 env.TIMESTAMP = timestamp
 
                 sh """
-                    curl -u ${SONAR_TOKEN}: "${SONAR_SERVER}/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" -o issues_${timestamp}.json
-                    python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html
+                    curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
+                    -o issues_${timestamp}.json
                 """
+
+                sh "python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html"
 
                 archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
             }
         }
     }
 }
+
 
         stage('Snyk Scan') {
             steps {
