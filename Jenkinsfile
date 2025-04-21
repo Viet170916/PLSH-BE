@@ -24,47 +24,47 @@ pipeline {
     
          
         stage('SonarQube Scan') {
-    steps {
-        script {
-            dir('PLSH-BE') {
-                withSonarQubeEnv('Sonarqube server connection') {
-                    // Bước 1: Begin analysis
-                    sh """
-                        dotnet sonarscanner begin \
-                        /k:"plsh-be" \
-                        /d:sonar.host.url=$SONAR_SERVER \
-                        /d:sonar.login=$SONAR_TOKEN
-                    """
+            steps {
+                script {
+                    dir('PLSH-BE') {
+                        withSonarQubeEnv('Sonarqube server connection') {
+                            // Bước 1: Begin analysis
+                            sh """
+                                dotnet sonarscanner begin \
+                                /k:"plsh-be" \
+                                /d:sonar.host.url=$SONAR_SERVER \
+                                /d:sonar.login=$SONAR_TOKEN
+                            """
 
-                    // Bước 2: Build solution
-                    sh 'dotnet build PLSH-BE.sln'
+                            // Bước 2: Build solution
+                            sh 'dotnet build PLSH-BE.sln'
 
-                    // Bước 3: End analysis
-                    sh """
-                        dotnet sonarscanner end \
-                        /d:sonar.login=$SONAR_TOKEN
-                    """
+                            // Bước 3: End analysis
+                            sh """
+                                dotnet sonarscanner end \
+                                /d:sonar.login=$SONAR_TOKEN
+                            """
+                        }
+
+                        // Delay một chút để SonarQube xử lý kết quả
+                        sleep 30
+
+                        // Bước 4: Tải issues và sinh báo cáo HTML
+                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                        env.TIMESTAMP = timestamp
+
+                        sh """
+                            curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
+                            -o issues_${timestamp}.json
+                        """
+
+                        sh "python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html"
+
+                        archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
+                    }
                 }
-
-                // Delay một chút để SonarQube xử lý kết quả
-                sleep 30
-
-                // Bước 4: Tải issues và sinh báo cáo HTML
-                def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                env.TIMESTAMP = timestamp
-
-                sh """
-                    curl -u $SONAR_TOKEN: "$SONAR_SERVER/api/issues/search?componentKeys=plsh-be&impactSeverities=HIGH,MEDIUM&statuses=OPEN,CONFIRMED" \
-                    -o issues_${timestamp}.json
-                """
-
-                sh "python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html"
-
-                archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
             }
         }
-    }
-}
 
 
         stage('Snyk Scan') {
