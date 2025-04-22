@@ -67,7 +67,7 @@ pipeline {
                         archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
 
                         
-                    /*    // Kiểm tra BLOCKER và gửi Telegram nếu có
+                        // Kiểm tra BLOCKER và gửi Telegram nếu có
                         def blockerIssues = []
                         def sonarIssuesJson = readJSON file: "issues_${timestamp}.json"
 
@@ -100,7 +100,7 @@ pipeline {
 
                             // Dừng pipeline
                             error("Dừng pipeline vì SonarQube phát hiện có BLOCKER issues.")
-                        }*/
+                        }
 
                     }
                 }
@@ -127,7 +127,7 @@ pipeline {
 
                         archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
 
-                    /*    // Đọc file JSON và lọc lỗi nghiêm trọng
+                        // Đọc file JSON và lọc lỗi nghiêm trọng
                         def snykData = readJSON file: "snyk.json"
                         def criticalIssues = 0
                         def highIssues = 0
@@ -170,7 +170,7 @@ pipeline {
                             error("Dừng pipeline vì Snyk phát hiện lỗi nghiêm trọng.")
                         } else {
                             echo "✅ Không có lỗi CRITICAL hoặc HIGH từ Snyk."
-                        }*/
+                        }
                     }
                 }
             }
