@@ -21,6 +21,13 @@ pipeline {
             }
         }
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+
     
          
     /*    stage('SonarQube Scan') {
@@ -206,17 +213,5 @@ pipeline {
 
 
         
-    }
-
-    post {
-        always {
-            cleanWs()
-        }
-        success {
-            slackSend(color: "good", message: "PLSH-BE Pipeline SUCCESSFUL: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
-        }
-        failure {
-            slackSend(color: "danger", message: "PLSH-BE Pipeline FAILED: ${env.JOB_NAME} ${env.BUILD_NUMBER}")
-        }
     }
 }
