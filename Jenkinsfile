@@ -104,22 +104,21 @@ pipeline {
             steps {
                 dir('PLSH-BE') {
                     script {
-                        // Set token
+                        // Set Snyk Token
                         sh 'snyk config set api=$SNYK_TOKEN'
 
                         def timestamp = new Date().format("yyyyMMdd_HHmmss")
                         env.TIMESTAMP = timestamp
 
-                        // Snyk scan và export báo cáo
+                        // Snyk test và sinh báo cáo
                         sh """
                             snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
                             [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
                         """
 
-                        // Archive report HTML
                         archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
 
-                        // Đọc file JSON và lọc lỗi
+                        // Kiểm tra BLOCKER và gửi Telegram nếu có
                         def snykReport = readJSON file: "snyk.json"
                         def criticalIssues = 0
                         def highIssues = 0
@@ -132,21 +131,21 @@ pipeline {
                             }
                         }
 
-                        if (criticalIssues > 0 || highIssues > 0) {
+                        if (blockerIssues.size() > 0) {
                             echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
 
                             def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
                             def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
                             def chat_id = "-1002608374616"
 
-                            // Gửi message
+                            // Gửi mess
                             sh """
                                 curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
                                 -d chat_id=${chat_id} \\
                                 -d text="${msg}"
                             """
 
-                            // Gửi file report
+                            // Gửi report HTML
                             sh """
                                 curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
                                 -F chat_id=${chat_id} \\
@@ -154,7 +153,7 @@ pipeline {
                             """
 
                             // Dừng pipeline
-                            error("Dừng pipeline vì Snyk phát hiện lỗi CRITICAL hoặc HIGH.")
+                            error("Dừng pipeline vì Snyk phát hiện có lỗi CRITICAL, HIGH.")
                         }
                     }
                 }
