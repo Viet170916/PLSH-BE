@@ -199,18 +199,69 @@ pipeline {
                     def timestamp = new Date().format("yyyyMMdd_HHmmss")
                     env.TIMESTAMP = timestamp
 
+                    // Trivy scan & convert HTML
                     sh """
-                        # Scan Docker image với Trivy
-                        trivy image --timeout 10m --format json --output plsh-be-trivy-${timestamp}.json --severity HIGH,CRITICAL plsh-be:latest
+                        trivy image --timeout 10m --format json --output plsh-be-trivy-${timestamp}.json plsh-be:latest
 
-                        # Convert kết quả JSON thành HTML
                         python3 convert_json.py plsh-be-trivy-${timestamp}.json plsh-be-trivy-${timestamp}.html
                     """
 
-                    archiveArtifacts artifacts: "plsh-be-trivy-${timestamp}.json", fingerprint: true
+                    archiveArtifacts artifacts: "plsh-be-trivy-${timestamp}.html", fingerprint: true
+
+                    // Đọc file JSON và lọc lỗi nghiêm trọng
+                    def trivyData = readJSON file: "plsh-be-trivy-${timestamp}.json"
+                    def criticalCount = 0
+                    def highCount = 0
+
+                    trivyData.Results.each { result ->
+                        // Phần vulnerabilities (các package lỗi)
+                        result.Vulnerabilities?.each { vuln ->
+                            if (vuln.Severity == "CRITICAL") {
+                                criticalCount++
+                            } else if (vuln.Severity == "HIGH") {
+                                highCount++
+                            }
+                        }
+
+                        // Phần secrets (như private key, service account key)
+                        result.Secrets?.each { secret ->
+                            if (secret.Severity == "CRITICAL") {
+                                criticalCount++
+                            } else if (secret.Severity == "HIGH") {
+                                highCount++
+                            }
+                        }
+                    }
+
+                    if (criticalCount > 0 || highCount > 0) {
+                        echo "Trivy phát hiện ${criticalCount} lỗi CRITICAL và ${highCount} lỗi HIGH!"
+
+                        def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Trivy phát hiện ${criticalCount} lỗi CRITICAL và ${highCount} lỗi HIGH. Xem chi tiết trong báo cáo đính kèm.", "UTF-8")
+                        def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                        def chat_id = "-1002608374616"
+
+                        // Gửi message Telegram
+                        sh """
+                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                            -d chat_id=${chat_id} \\
+                            -d text="${msg}"
+                        """
+
+                        // Gửi file báo cáo HTML
+                        sh """
+                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                            -F chat_id=${chat_id} \\
+                            -F document=@plsh-be-trivy-${timestamp}.html
+                        """
+
+                        error("Dừng pipeline vì Trivy phát hiện lỗi nghiêm trọng.")
+                    } else {
+                        echo "Trivy không phát hiện lỗi CRITICAL hoặc HIGH."
+                    }
                 }
             }
         }
+
 
 
         stage('Push BE Image to Docker Hub') {
