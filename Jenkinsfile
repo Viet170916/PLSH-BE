@@ -23,7 +23,7 @@ pipeline {
 
     
          
-        stage('SonarQube Scan') {
+    /*    stage('SonarQube Scan') {
             steps {
                 script {
                     dir('PLSH-BE') {
@@ -96,31 +96,68 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
 
 
-        stage('Snyk Scan') {
+        stage('Trivy Scan') {
             steps {
-                dir('PLSH-BE') {
-                    script {
-                        // Set Snyk Token
-                        sh 'snyk config set api=$SNYK_TOKEN'
+                script {
+                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                    env.TIMESTAMP = timestamp
 
-                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                        env.TIMESTAMP = timestamp
+                    // Scan và xuất báo cáo JSON + HTML
+                    sh """
+                        trivy image --format json -o trivy-result-${timestamp}.json co0bridae/plsh-fe-borrower:latest || true
+                        [ -f trivy-result-${timestamp}.json ] && trivy template -t html -i trivy-result-${timestamp}.json -o trivy-report-${timestamp}.html || true
+                    """
 
-                        // Snyk test và sinh báo cáo
+                    // Lưu lại báo cáo
+                    archiveArtifacts artifacts: "trivy-report-${timestamp}.html", fingerprint: true
+
+                    // Đọc JSON và lọc lỗi severity
+                    def trivyData = readJSON file: "trivy-result-${timestamp}.json"
+                    def criticalCount = 0
+                    def highCount = 0
+
+                    trivyData.Results.each { result ->
+                        result.Vulnerabilities?.each { vuln ->
+                            if (vuln.Severity == "CRITICAL") {
+                                criticalCount++
+                            } else if (vuln.Severity == "HIGH") {
+                                highCount++
+                            }
+                        }
+                    }
+
+                    if (criticalCount > 0 || highCount > 0) {
+                        echo "Trivy phát hiện ${criticalCount} CRITICAL và ${highCount} HIGH vulnerabilities!"
+
+                        def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Trivy phát hiện ${criticalCount} lỗi CRITICAL và ${highCount} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
+                        def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                        def chat_id = "-1002608374616"
+
+                        // Gửi thông báo
                         sh """
-                            snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
-                            [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
+                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                            -d chat_id=${chat_id} \\
+                            -d text="${msg}"
                         """
 
-                        archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
+                        // Gửi file HTML
+                        sh """
+                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                            -F chat_id=${chat_id} \\
+                            -F document=@trivy-report-${timestamp}.html
+                        """
+
+                        // Dừng pipeline
+                        error("Dừng pipeline vì Trivy phát hiện lỗi CRITICAL hoặc HIGH.")
                     }
                 }
             }
         }
+
 
 
         stage('Build Docker Image') {
