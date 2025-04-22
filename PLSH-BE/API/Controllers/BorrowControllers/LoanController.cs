@@ -44,6 +44,7 @@ public partial class LoanController(
     [FromQuery] int limit = 10
   )
   {
+    var trimedKeyword = keyword?.ToLower().Trim();
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
     var query = context.Loans
@@ -60,14 +61,14 @@ public partial class LoanController(
                        .AsQueryable();
     if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(l => l.AprovalStatus == approveStatus); }
 
-    if (!string.IsNullOrEmpty(keyword))
+    if (!string.IsNullOrEmpty(trimedKeyword))
     {
-      query = query.Where(l => l.Note.Contains(keyword)
-                               || string.Concat(l.Id).Contains(keyword)
-                               || string.Concat(l.BorrowerId).Contains(keyword)
-                               || l.Borrower.PhoneNumber.Contains(keyword)
-                               || l.Borrower.CardMemberNumber.Contains(keyword)
-                               || l.Borrower.FullName.Contains(keyword));
+      query = query.Where(l => l.Note.Contains(trimedKeyword)
+                               || string.Concat(l.Id).Contains(trimedKeyword)
+                               || string.Concat(l.BorrowerId).Contains(trimedKeyword)
+                               || l.Borrower.PhoneNumber.Contains(trimedKeyword)
+                               || l.Borrower.CardMemberNumber.Contains(trimedKeyword)
+                               || l.Borrower.FullName.Contains(trimedKeyword));
     }
 
     query = orderBy?.ToLower() switch
@@ -85,14 +86,14 @@ public partial class LoanController(
                       .ToListAsync();
     return Ok(new BaseResponse<List<LoanDto>>
     {
-      message = "Lấy danh sách đơn mượn thành công.",
-      status = "success",
-      data = mapper.Map<List<LoanDto>>(loans),
-      count = totalRecords,
-      page = page,
-      limit = limit,
-      currenPage = page,
-      pageCount = pageCount // Thêm số tổng số trang vào response
+      Message = "Lấy danh sách đơn mượn thành công.",
+      Status = "success",
+      Data = mapper.Map<List<LoanDto>>(loans),
+      Count = totalRecords,
+      Page = page,
+      Limit = limit,
+      CurrentPage = page,
+      PageCount = pageCount // Thêm số tổng số trang vào response
     });
   }
 
@@ -109,10 +110,11 @@ public partial class LoanController(
                             .Include(l => l.BookBorrowings)
                             .ThenInclude(l => l.BookImagesAfterBorrow)
                             .Include(l => l.Borrower)
-                            .Include(l => l.Librarian)
+                            .ThenInclude(b => b.Role)
+                            // .Include(l => l.Librarian)
                             .FirstOrDefaultAsync(l => l.Id == id);
-    if (loan == null) return NotFound(new BaseResponse<string> { message = "Loan not found", });
-    return Ok(new BaseResponse<LoanDto> { data = mapper.Map<LoanDto>(loan), });
+    if (loan == null) return NotFound(new BaseResponse<string> { Message = "Loan not found", });
+    return Ok(new BaseResponse<LoanDto> { Data = mapper.Map<LoanDto>(loan), });
   }
 
   [Authorize(Policy = "LibrarianPolicy")] [HttpPost("create")]
@@ -139,6 +141,7 @@ public partial class LoanController(
                                                  .ToList();
     });
     loan.LibrarianId = librarianId;
+    loan.AprovalStatus = "taken";
     context.Loans.Add(loan);
     await context.SaveChangesAsync();
     loan = await context.Loans
@@ -152,6 +155,6 @@ public partial class LoanController(
         .ForEach(bi => { bi.BookInstance.IsInBorrowing = true; });
     await context.SaveChangesAsync();
     var beforeResponse = mapper.Map<LoanDto>(loan);
-    return Ok(new BaseResponse<LoanDto> { data = beforeResponse });
+    return Ok(new BaseResponse<LoanDto> { Data = beforeResponse });
   }
 }

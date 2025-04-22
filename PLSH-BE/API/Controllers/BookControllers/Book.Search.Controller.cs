@@ -5,10 +5,12 @@ using API.DTO;
 using AutoMapper.QueryableExtensions;
 using BU.Models.DTO;
 using BU.Models.DTO.Book;
+using Common.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.book;
+using Quartz.Util;
 
 namespace API.Controllers.BookControllers;
 // [Authorize("LibrarianPolicy")]
@@ -28,20 +30,30 @@ public partial class BookController
 
   [HttpGet] public async Task<IActionResult> SearchBooks(
     [FromQuery] string? keyword,
-    [FromQuery] int? categoryId,
+    [FromQuery] List<string>? categories,
     [FromQuery] int? authorId,
+    [FromQuery] int? rating,
     [FromQuery] int page = 1,
     [FromQuery] int limit = 18,
     [FromQuery] string orderBy = "createdate",
     [FromQuery] bool descending = false
   )
   {
+    var trimedKeyword = keyword?.Trim().ToLower();
     limit = Math.Clamp(limit, 1, 40);
     var query = context.Books.AsQueryable();
-    if (!string.IsNullOrEmpty(keyword)) query = query.Where(b => b.Title != null && b.Title.Contains(keyword));
-    if (categoryId.HasValue) query = query.Where(b => b.CategoryId == categoryId);
+    if (!string.IsNullOrEmpty(trimedKeyword))
+      query = query.Where(b =>
+        (b.Title != null && b.Title.Contains(trimedKeyword)) ||
+        b.Authors.Any(a => a.FullName.Contains(trimedKeyword)));
+    if (categories.Where(c => !c.IsNullOrEmpty() && !c.IsNullOrWhiteSpace()).ToList() is { Count: > 0, })
+      query = query.Include(b => b.Category)
+                   .Where(b => string.Join(",", categories).Contains(b.Category.Name));
+    if (rating.HasValue)
+      query = query.Include(c => c.Reviews)
+                   .Where(b => b.Reviews.Average(r => r.Rating) >= rating - 0.5 &&
+                               b.Reviews.Average(r => r.Rating) < rating + 0.5);
     if (authorId.HasValue) query = query.Where(b => b.Authors != null && b.Authors.Any(a => a.Id == authorId));
-
     query = orderBy.ToLower() switch
     {
       "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
@@ -56,23 +68,24 @@ public partial class BookController
     var bookDtos = await booksQueryPaging.ToListAsync();
     var response = new BaseResponse<List<BookMinimalDto>>
     {
-      pageCount = (int)Math.Ceiling((double)totalRecords / limit),
-      currenPage = page,
-      count = totalRecords,
-      page = page,
-      data = bookDtos
+      PageCount = (int)Math.Ceiling((double)totalRecords / limit),
+      CurrentPage = page,
+      Count = totalRecords,
+      Page = page,
+      Data = bookDtos
     };
     return Ok(response);
   }
 
   [HttpGet("global/search")] public async Task<IActionResult> GetIsbn(string? isbn, string? keyword)
   {
-    if (string.IsNullOrWhiteSpace(isbn) && string.IsNullOrWhiteSpace(keyword))
+    var trimedKeyword = keyword?.Trim().ToLower();
+    if (string.IsNullOrWhiteSpace(isbn) && string.IsNullOrWhiteSpace(trimedKeyword))
     {
       return BadRequest("Bạn phải cung cấp isbn hoặc keyword để tìm kiếm.");
     }
 
-    var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : keyword!;
+    var query = !string.IsNullOrWhiteSpace(isbn) ? $"isbn:{isbn}" : trimedKeyword;
     var apiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
     var baseUrl = string.IsNullOrWhiteSpace(apiKey) ?
       $"https://www.googleapis.com/books/v1/volumes?q={Uri.EscapeDataString(query)}" :
@@ -177,13 +190,13 @@ public partial class BookController
     {
       return BadRequest(new BaseResponse<BookNewDto>
       {
-        message = "Có lỗi trong quá trình phân tích, vui lòng thử lại!", data = null!, status = "error"
+        Message = "Có lỗi trong quá trình phân tích, vui lòng thử lại!", Data = null!, Status = "error"
       });
     }
 
     return Ok(new BaseResponse<BookNewDto>
     {
-      message = "Lấy thông tin thành công", data = geminiResult, status = "success"
+      Message = "Lấy thông tin thành công", Data = geminiResult, Status = "success"
     });
   }
 }

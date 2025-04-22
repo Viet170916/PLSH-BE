@@ -31,6 +31,7 @@ namespace API.Controllers.BookControllers
     IMapper mapper,
     IBookInstanceService bookInstanceService,
     IGeminiService geminiService,
+    IEpubParserService epubParserService,
     GoogleCloudStorageHelper helper
 
   )

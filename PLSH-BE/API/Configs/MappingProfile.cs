@@ -6,6 +6,7 @@ using BU.Models.DTO.Loan;
 using BU.Models.DTO.Notification;
 using Model.Entity;
 using Model.Entity.book;
+using Model.Entity.Book.e_book;
 using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
 using Model.Entity.Notification;
@@ -19,6 +20,9 @@ public class MappingProfile : Profile
 {
   public MappingProfile()
   {
+    CreateMap<EBookChapter, EBookChapterDto.EBookChapterFulltDto>();
+    CreateMap<EBookChapter, EBookChapterDto.EBookChapterHtmlContentDto>();
+    CreateMap<EBookChapter, EBookChapterDto.EBookChapterPlainTextDto>();
     CreateMap<Book, BookMinimalDto>()
       .ForMember(dest => dest.Thumbnail,
         opt => opt.MapFrom(src =>
@@ -38,6 +42,8 @@ public class MappingProfile : Profile
           src.Thumbnail ??
           Converter.ToImageUrl(src.CoverImageResource != null ? src.CoverImageResource.LocalUrl : null)))
       .ForMember(dest => dest.IsbnNumber13, opt => opt.MapFrom(src => src.IsbNumber13))
+      .ForMember(dest => dest.HasEbook,
+        opt => opt.MapFrom(src => src.EBookChapters != null && src.EBookChapters.Count > 0))
       .ForMember(dest => dest.Rating,
         opt => opt.MapFrom(
           src => src.Reviews != null && src.Reviews.Count != 0 ? src.Reviews.Average(r => r.Rating) : 0))

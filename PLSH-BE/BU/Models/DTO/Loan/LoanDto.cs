@@ -9,9 +9,10 @@ public class LoanDto
   public int Id { get; set; }
   public string? Note { get; set; }
   public int BorrowerId { get; set; }
+  public bool? IsCart { get; set; }
   public AccountGDto? Borrower { get; set; }
   public int? LibrarianId { get; set; }
-  public AccountGDto? Librarian { get; set; }
+  // public AccountGDto? Librarian { get; set; }
   public DateTime BorrowingDate { get; set; }
   public DateTime? ReturnDate { get; set; }
   public string? AprovalStatus { get; set; }

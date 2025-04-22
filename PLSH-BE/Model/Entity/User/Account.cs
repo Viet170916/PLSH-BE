@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using Model.Entity.Authentication;
 
 namespace Model.Entity.User;
 
@@ -56,14 +58,20 @@ public class Account
   private static string GenerateUniqueId()
   {
     var random = new Random();
-    return random.NextInt64(100000000, 999999999).ToString(); // Sinh số ngẫu nhiên từ 9 chữ số
+    return random.NextInt64(100000000, 999999999).ToString();
   }
 
-  public int FailedLoginAttempts { get; set; } = 0; // Đếm số lần đăng nhập sai
-  public DateTime? LockoutEnd { get; set; } = null; // Thời gian khóa tài khoản (nếu có)
+  public int FailedLoginAttempts { get; set; } = 0;
+  public DateTime? LockoutEnd { get; set; } = null;
 
   [JsonIgnore]
   public Role Role { get; set; }
 
   public string? ClassRoom { get; set; }
+
+  [InverseProperty("Account")]
+  public ICollection<ResourceAccess> RequestedResources { get; set; } = new List<ResourceAccess>();
+
+  [InverseProperty("Librarian")]
+  public ICollection<ResourceAccess> ApprovedResources { get; set; } = new List<ResourceAccess>();
 }

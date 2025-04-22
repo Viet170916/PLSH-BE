@@ -32,12 +32,12 @@ public partial class AccountController(AppDbContext context, IEmailService email
                                .FirstOrDefaultAsync(m => m.Id == accountId);
     if (account == null)
     {
-      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+      return BadRequest(new BaseResponse<AccountGDto> { Message = "Account not found", Status = "error" });
     }
 
     return Ok(new BaseResponse<AccountGDto>
     {
-      message = "Account retrieved successfully", data = mapper.Map<AccountGDto>(account), status = "success"
+      Message = "Account retrieved successfully", Data = mapper.Map<AccountGDto>(account), Status = "success"
     });
   }
 
@@ -61,19 +61,19 @@ public partial class AccountController(AppDbContext context, IEmailService email
         var payload = await GoogleJsonWebSignature.ValidateAsync(GgToken);
         if (payload is null)
         {
-          return Unauthorized(new BaseResponse<string> { message = "Token Google không hợp lệ." });
+          return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
         }
 
         email = payload.Email;
         fullName = payload.Name;
       }
-      else { return BadRequest(new BaseResponse<string> { message = "No field required found is incorrect." }); }
+      else { return BadRequest(new BaseResponse<string> { Message = "No field required found is incorrect." }); }
 
     var user = await context.Accounts.FirstOrDefaultAsync(acc => acc.Email == email);
     return Ok(new BaseResponse<VerifiedResponse>
     {
-      message = "Request success",
-      data = new VerifiedResponse
+      Message = "Request success",
+      Data = new VerifiedResponse
       {
         IsVerified = user is not null && user.IsVerified,
         EmailExisted = user is not null,
@@ -88,7 +88,7 @@ public partial class AccountController(AppDbContext context, IEmailService email
     var account = await context.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
     if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
     {
-      return Unauthorized(new BaseResponse<string> { message = "Email hoặc mật khẩu không đúng." });
+      return Unauthorized(new BaseResponse<string> { Message = "Email hoặc mật khẩu không đúng." });
     }
 
     var token = string.Empty;
@@ -97,14 +97,14 @@ public partial class AccountController(AppDbContext context, IEmailService email
       token = GenerateJwtToken(account, "notVerifiedUser", TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        data = token, message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
+        Data = token, Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
       });
     }
 
     var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
     var tokenExpiration = TimeSpan.FromDays(7);
     token = GenerateJwtToken(account, role, tokenExpiration);
-    return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập thành công." });
+    return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập thành công." });
   }
 
   [HttpPost("login/google")] public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest_ request)
@@ -124,7 +124,7 @@ public partial class AccountController(AppDbContext context, IEmailService email
       {
         if (roleId is null)
         {
-          return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
+          return BadRequest(new BaseResponse<string> { Message = $"Không hỗ trợ người dùng: {request.Role}" });
         }
 
         account = new Account
@@ -146,11 +146,11 @@ public partial class AccountController(AppDbContext context, IEmailService email
       }
 
       var token = GenerateJwtToken(account, account?.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
-      return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập bằng Google thành công." });
+      return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
     {
-      return Unauthorized(new BaseResponse<string> { message = "Token Google không hợp lệ." });
+      return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
     }
   }
 

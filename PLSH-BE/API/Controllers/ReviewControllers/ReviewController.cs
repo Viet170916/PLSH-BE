@@ -59,23 +59,23 @@ public partial class ReviewController(
                                .ToListAsync();
     if (reviews == null || reviews.Count == 0)
     {
-      return NotFound(new BaseResponse<string> { message = "No reviews found for this book.", status = "error" });
+      return NotFound(new BaseResponse<string> { Message = "No reviews found for this book.", Status = "error" });
     }
 
     var reviewDtos = mapper.Map<List<ReviewDto>>(reviews, opt => { opt.Items["CurrentUserId"] = accountId; });
     return Ok(new
       ReviewResponse()
       {
-        message = "Reviews retrieved successfully.",
-        status = "success",
+        Message = "Reviews retrieved successfully.",
+        Status = "success",
         isAccountHasReviewForThisBook = await context.Reviews
                                                      .AnyAsync(
                                                        r => r.BookId == bookId && r.AccountSenderId == accountId),
-        data = reviewDtos,
-        page = page,
-        limit = limit,
-        pageCount = totalPage,
-        count = totalReviewCount
+        Data = reviewDtos,
+        Page = page,
+        Limit = limit,
+        PageCount = totalPage,
+        Count = totalReviewCount
       });
   }
 
@@ -83,7 +83,7 @@ public partial class ReviewController(
   {
     if (request.BookId is null)
     {
-      return BadRequest(new BaseResponse<string> { message = "Không tìm thấy sách, id trống", status = "error" });
+      return BadRequest(new BaseResponse<string> { Message = "Không tìm thấy sách, id trống", Status = "error" });
     }
 
     var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
@@ -91,7 +91,7 @@ public partial class ReviewController(
     {
       return BadRequest(new BaseResponse<string>
       {
-        message = "Nội dung đánh giá không được để trống.", status = "error"
+        Message = "Nội dung đánh giá không được để trống.", Status = "error"
       });
     }
 
@@ -156,7 +156,7 @@ public partial class ReviewController(
                     .SendAsync("ReceiveReview", reviewDto);
     return Ok(new BaseResponse<ReviewDto>
     {
-      message = "Gửi đánh giá thành công và đã thông báo đến thủ thư.", data = reviewDto, status = "success"
+      Message = "Gửi đánh giá thành công và đã thông báo đến thủ thư.", Data = reviewDto, Status = "success"
     });
   }
 }

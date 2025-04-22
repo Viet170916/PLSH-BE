@@ -67,16 +67,16 @@ public partial class AiController
       if (parsed?.data == null)
       {
         return BadRequest(
-          new BaseResponse<List<KeyValue>> { message = "Phản hồi từ ChatGPT không hợp lệ.", data = [], });
+          new BaseResponse<List<KeyValue>> { Message = "Phản hồi từ ChatGPT không hợp lệ.", Data = [], });
       }
 
-      return Ok(new BaseResponse<List<KeyValue>> { message = parsed.message, data = parsed.data });
+      return Ok(new BaseResponse<List<KeyValue>> { Message = parsed.message, Data = parsed.data });
     }
     catch (JsonException)
     {
       return BadRequest(new BaseResponse<List<KeyValue>>
       {
-        message = "Phản hồi từ ChatGPT không đúng định dạng JSON yêu cầu.", data = []
+        Message = "Phản hồi từ ChatGPT không đúng định dạng JSON yêu cầu.", Data = []
       });
     }
   }

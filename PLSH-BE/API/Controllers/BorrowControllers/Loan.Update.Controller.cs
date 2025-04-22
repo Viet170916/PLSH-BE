@@ -11,6 +11,7 @@ using System.Text.Json;
 using BU.Models.DTO;
 using BU.Models.DTO.Loan;
 using BU.Models.DTO.Notification;
+using Common.Enums;
 using EFCore.BulkExtensions;
 using Microsoft.AspNetCore.SignalR;
 using Model.Entity.Borrow;
@@ -40,13 +41,13 @@ public partial class LoanController
     {
       return NotFound(new BaseResponse<string>
       {
-        message = "Không tìm thấy thông tin mượn sách.", data = null, status = "error"
+        Message = "Không tìm thấy thông tin mượn sách.", Data = null, Status = "error"
       });
     }
 
     if (bookBorrowing.BorrowingStatus == "returned")
     {
-      return BadRequest(new BaseResponse<string> { message = "Cuốn này đã được trả", data = null, status = "error" });
+      return BadRequest(new BaseResponse<string> { Message = "Cuốn này đã được trả", Data = null, Status = "error" });
     }
 
     bookBorrowing.NoteAfterBorrow = request.NoteAfterBorrow;
@@ -87,7 +88,7 @@ public partial class LoanController
       link);
     return Ok(new BaseResponse<List<Resource>>
     {
-      message = "Cập nhật thông tin trả sách thành công.", data = uploadedResources, status = "success"
+      Message = "Cập nhật thông tin trả sách thành công.", Data = uploadedResources, Status = "success"
     });
   }
 
@@ -107,10 +108,10 @@ public partial class LoanController
     {
       return BadRequest(new BaseResponse<object?>
       {
-        message =
+        Message =
           "Trạng thái không hợp lệ. Chỉ chấp nhận: \"pending\", \"approved\", \"rejected\", \"cancel\", \"taken\", \"return-all\"",
-        status = "error",
-        data = null
+        Status = "error",
+        Data = null
       });
     }
 
@@ -123,7 +124,7 @@ public partial class LoanController
     {
       return NotFound(new BaseResponse<object?>
       {
-        message = "Không tìm thấy đơn mượn.", status = "error", data = null
+        Message = "Không tìm thấy đơn mượn.", Status = "error", Data = null
       });
     }
 
@@ -185,7 +186,7 @@ public partial class LoanController
       loan.Borrower.FullName, loan.Borrower.PhoneNumber, loan.Id, link);
     return Ok(new BaseResponse<LoanDto>
     {
-      message = "Cập nhật trạng thái thành công.", status = "success", data = mapper.Map<Loan, LoanDto>(loan),
+      Message = "Cập nhật trạng thái thành công.", Status = "success", Data = mapper.Map<Loan, LoanDto>(loan),
     });
   }
 
@@ -199,7 +200,7 @@ public partial class LoanController
     {
       return BadRequest(new BaseResponse<string>
       {
-        message = "ReturnDate là bắt buộc.", data = null, status = "error"
+        Message = "ReturnDate là bắt buộc.", Data = null, Status = "error"
       });
     }
 
@@ -211,7 +212,7 @@ public partial class LoanController
     {
       return NotFound(new BaseResponse<string>
       {
-        message = "Không tìm thấy thông tin mượn sách.", data = null, status = "error"
+        Message = "Không tìm thấy thông tin mượn sách.", Data = null, Status = "error"
       });
     }
 
@@ -219,7 +220,7 @@ public partial class LoanController
     {
       return BadRequest(new BaseResponse<string>
       {
-        message = "Không thể gia hạn. Cuốn sách đã được trả.", data = null, status = "error"
+        Message = "Không thể gia hạn. Cuốn sách đã được trả.", Data = null, Status = "error"
       });
     }
 
@@ -236,7 +237,7 @@ public partial class LoanController
     if (borrower == null)
       return Ok(new BaseResponse<BookBorrowingDto>
       {
-        message = "Gia hạn thành công.", data = resultDto, status = "success"
+        Message = "Gia hạn thành công.", Data = resultDto, Status = "success"
       });
     var notification = new Notification
     {
@@ -262,7 +263,7 @@ public partial class LoanController
       link);
     return Ok(new BaseResponse<BookBorrowingDto>
     {
-      message = "Gia hạn thành công.", data = resultDto, status = "success"
+      Message = "Gia hạn thành công.", Data = resultDto, Status = "success"
     });
   }
 
@@ -274,6 +275,106 @@ public partial class LoanController
     public DateTime ReturnDate { get; set; }
   }
 
+  [Authorize(Policy = "LibrarianPolicy")] [HttpDelete("lib/book-borrowing/{id}/delete")]
+  public async Task<IActionResult> LibDeleteBookBorrowing(int id)
+  {
+    var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+    if (accountIdClaim == null || !int.TryParse(accountIdClaim.Value, out var userId))
+    {
+      return Unauthorized(new BaseResponse<string>
+      {
+        Status = "fail", Message = "Không xác thực hoặc token không hợp lệ."
+      });
+    }
+
+    var bookBorrowing = await context.BookBorrowings
+                                     .Include(bb => bb.Loan)
+                                     .FirstOrDefaultAsync(bb => bb.Id == id);
+    if (bookBorrowing == null)
+    {
+      return NotFound(new BaseResponse<string> { Status = "fail", Message = "Không tìm thấy thông tin mượn sách." });
+    }
+
+    var isLibrarian = User.IsInRole("librarian");
+    // var isBorrower = bookBorrowing.Loan?.BorrowerId == userId;
+    // if (!isBorrower && !isLibrarian) { return Forbid(); }
+    if (bookBorrowing.Loan == null || bookBorrowing.Loan.IsCart)
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        Status = "fail", Message = "Thủ thư không thể xoá vì thông tin mượn sách đang nằm trong giỏ người dùng."
+      });
+    }
+
+    if (bookBorrowing.Loan.AprovalStatus != "pending" && bookBorrowing.Loan.AprovalStatus != "approved")
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        Status = "fail",
+        Message = "Chỉ có thể xoá khi trạng thái là \"Đang chờ duyệt\" hoặc \"Đã được duyệt nhưng chưa lấy sách\"."
+      });
+    }
+
+    var borrowerId = bookBorrowing.Loan.BorrowerId;
+    context.BookBorrowings.Remove(bookBorrowing);
+    await context.SaveChangesAsync();
+    if (isLibrarian && borrowerId != null)
+    {
+      await notificationService.SendNotificationToUserAsync(borrowerId, new NotificationDto
+      {
+        AccountId = borrowerId,
+        Title = "Sách đã bị xoá khỏi lượt mượn",
+        Content = $"Một cuốn sách trong lượt mượn của bạn đã bị huỷ bởi thủ thư.",
+        ReferenceId = bookBorrowing.LoanId,
+        Reference = "Loan",
+        Date = DateTime.UtcNow,
+      });
+    }
+
+    return Ok(new BaseResponse<string> { Status = "success", Message = "Xoá thông tin mượn sách thành công." });
+  }
+
+  public class AddBookBorrowingRequest
+  {
+    public int LoanId { get; set; }
+    public int BookId { get; set; }
+  }
+
+  [Authorize(Policy = "LibrarianPolicy")] [HttpPost("book-borrowing/add")]
+  public async Task<IActionResult> AddBookBorrowing([FromBody] AddBookBorrowingRequest request)
+  {
+    var loan = await context.Loans
+                            .Include(l => l.BookBorrowings)
+                            .FirstOrDefaultAsync(l => l.Id == request.LoanId);
+    if (loan == null)
+    {
+      return NotFound(new BaseResponse<string> { Status = "fail", Message = "Không tìm thấy lượt mượn." });
+    }
+
+    if (loan.AprovalStatus != "pending" && loan.AprovalStatus != "approved")
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        Status = "fail",
+        Message =
+          "Chỉ có thể thêm sách vào lượt mượn có trạng thái \"Đang chờ duyệt\" hoặc \"Đã được duyệt nhưng chưa lấy sách\"."
+      });
+    }
+
+    if (loan.BookBorrowings.Any(bb => bb.BookInstanceId == request.BookId))
+    {
+      return BadRequest(new BaseResponse<string> { Status = "fail", Message = "Sách đã tồn tại trong lượt mượn." });
+    }
+
+    var bookBorrowing = new BookBorrowing
+    {
+      LoanId = loan.Id, BookInstanceId = request.BookId, BorrowingStatus = "on-loan", CreatedAt = DateTime.UtcNow,
+    };
+    context.BookBorrowings.Add(bookBorrowing);
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<string> { Status = "success", Message = "Thêm sách vào lượt mượn thành công." });
+  }
+
   [Authorize(Policy = "LibrarianPolicy")] [HttpPut("update/{id}")]
   public async Task<IActionResult> UpdateLoan(int id, [FromBody] LoanDto loanDto)
   {
@@ -283,6 +384,120 @@ public partial class LoanController
     mapper.Map(loanDto, existingLoan);
     await context.SaveChangesAsync();
     return NoContent();
+  }
+
+  [Authorize(Policy = "LibrarianPolicy")] [HttpPut("book-borrowing/update/single")]
+  public async Task<IActionResult> UpdateBorrowingDate([FromForm] UpdateBookBorrowingForm dto)
+  {
+    var borrowing = await context.BookBorrowings
+                                 .Include(b => b.Loan)
+                                 .FirstOrDefaultAsync(b => b.Id == dto.BookBorrowingId);
+    if (borrowing == null) return NotFound(new BaseResponse<string> { Message = "Không tìm thấy bản ghi." });
+    if (borrowing.Loan?.AprovalStatus != "pending" && borrowing.Loan?.AprovalStatus != "approved")
+    {
+      return BadRequest(new BaseResponse<string>
+      {
+        Status = "fail", Message = "Không thể chỉnh sửa sách đã được mượn"
+      });
+    }
+
+    var now = DateTime.UtcNow;
+    if (dto.BorrowedDate < now.AddMinutes(-30))
+      return BadRequest(new BaseResponse<string> { Message = "Ngày mượn không được cách hiện tại quá 30 phút." });
+    if (dto.ReturnDate <= dto.BorrowedDate.AddMinutes(30))
+      return BadRequest(new BaseResponse<string> { Message = "Ngày trả phải lớn hơn ngày mượn ít nhất 30 phút." });
+    borrowing.BorrowDate = dto.BorrowedDate;
+    borrowing.ReturnDates = [dto.ReturnDate];
+    borrowing.NoteBeforeBorrow = dto.NoteBeforeBorrow;
+    if (dto.ImagesBeforeBorrow != null && dto.ImagesBeforeBorrow.Count != 0)
+    {
+      var folderPath = $"{StaticFolder.DIRPath_BORROWING_BEFORE}/{borrowing.Id}";
+      var resources = new List<Resource>();
+      foreach (var formFile in dto.ImagesBeforeBorrow.Where(formFile => formFile.Length > 0))
+      {
+        await using var stream = formFile.OpenReadStream();
+        var uploadedPath = await googleCloudStorageHelper.UploadFileAsync(stream,
+          formFile.FileName,
+          folderPath,
+          formFile.ContentType);
+        resources.Add(new Resource
+        {
+          LocalUrl = uploadedPath,
+          Type = "image",
+          FileType = formFile.ContentType,
+          Name = formFile.Name,
+          SizeByte = formFile.Length,
+        });
+      }
+
+      if (resources.Count != 0) { borrowing.BookImagesBeforeBorrow = resources; }
+    }
+
+    context.BookBorrowings.Update(borrowing);
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<string> { Message = "Cập nhật thành công." });
+  }
+
+  [Authorize(Policy = "LibrarianPolicy")] [HttpPut("book-borrowing/update/all")]
+  public async Task<IActionResult> BulkUpdateBorrowingDate([FromBody] BulkUpdateBookBorrowingDto dto)
+  {
+    var now = DateTime.UtcNow;
+    foreach (var b in dto.BookBorrowings)
+    {
+      if (b.BorrowedDate < now.AddMinutes(-30))
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = $"Ngày mượn của bản ghi {b.BookBorrowingId} không hợp lệ."
+        });
+      if (b.ReturnDate <= b.BorrowedDate.AddMinutes(30))
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = $"Ngày trả của bản ghi {b.BookBorrowingId} không hợp lệ."
+        });
+    }
+
+    var loan = await context.Loans.FindAsync(dto.LoanId);
+    if (loan?.AprovalStatus != "pending" && loan?.AprovalStatus != "approved")
+    {
+      return BadRequest(
+        new BaseResponse<string> { Status = "fail", Message = "Không thể chỉnh sửa sách đã được mượn", });
+    }
+
+    var ids = dto.BookBorrowings.Select(x => x.BookBorrowingId).ToList();
+    var borrowings = await context.BookBorrowings
+                                  .Where(b => ids.Contains(b.Id) && b.LoanId == dto.LoanId)
+                                  .ToListAsync();
+    foreach (var b in borrowings)
+    {
+      var updated = dto.BookBorrowings.First(x => x.BookBorrowingId == b.Id);
+      b.BorrowDate = updated.BorrowedDate;
+      b.ReturnDates = [updated.ReturnDate,];
+    }
+
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<string> { Message = "Cập nhật tất cả bản ghi thành công." });
+  }
+
+  public class UpdateBookBorrowingDateDto
+  {
+    public int BookBorrowingId { get; set; }
+    public DateTime BorrowedDate { get; set; }
+    public DateTime ReturnDate { get; set; }
+  }
+
+  public class UpdateBookBorrowingForm
+  {
+    public int BookBorrowingId { get; set; }
+    public DateTime BorrowedDate { get; set; }
+    public DateTime ReturnDate { get; set; }
+    public List<IFormFile>? ImagesBeforeBorrow { get; set; }
+    public string? NoteBeforeBorrow { get; set; }
+  }
+
+  public class BulkUpdateBookBorrowingDto
+  {
+    public int LoanId { get; set; }
+    public List<UpdateBookBorrowingDateDto> BookBorrowings { get; set; } = new();
   }
 
   [HttpDelete("delete/{id}")] public async Task<IActionResult> DeleteLoan(int id)

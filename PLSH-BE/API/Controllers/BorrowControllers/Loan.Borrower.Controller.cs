@@ -25,7 +25,7 @@ public partial class LoanController
     {
       return Unauthorized(new BaseResponse<string>
       {
-        status = "fail", message = "Không xác thực: Token không hợp lệ."
+        Status = "fail", Message = "Không xác thực: Token không hợp lệ."
       });
     }
 
@@ -35,9 +35,9 @@ public partial class LoanController
     {
       return BadRequest(new BaseResponse<object?>
       {
-        message = "Trạng thái không hợp lệ. Chỉ chấp nhận: pending, approved, rejected.",
-        status = "error",
-        data = null,
+        Message = "Trạng thái không hợp lệ. Chỉ chấp nhận: pending, approved, rejected.",
+        Status = "error",
+        Data = null,
       });
     }
 
@@ -46,7 +46,7 @@ public partial class LoanController
     {
       return NotFound(new BaseResponse<object?>
       {
-        message = "Không tìm thấy đơn mượn.", status = "error", data = null
+        Message = "Không tìm thấy đơn mượn.", Status = "error", Data = null
       });
     }
 
@@ -89,7 +89,7 @@ public partial class LoanController
 
     return Ok(new BaseResponse<LoanDto>
     {
-      message = "Cập nhật trạng thái thành công.", status = "success", data = mapper.Map<Loan, LoanDto>(loan),
+      Message = "Cập nhật trạng thái thành công.", Status = "success", Data = mapper.Map<Loan, LoanDto>(loan),
     });
   }
 
@@ -101,7 +101,7 @@ public partial class LoanController
     {
       return Unauthorized(new BaseResponse<string>
       {
-        status = "fail", message = "Không xác thực: Token không hợp lệ."
+        Status = "fail", Message = "Không xác thực: Token không hợp lệ."
       });
     }
 
@@ -117,8 +117,8 @@ public partial class LoanController
                             .Include(l => l.Borrower)
                             .Include(l => l.Librarian)
                             .FirstOrDefaultAsync(l => l.Id == id && l.BorrowerId == userId);
-    if (loan == null) return NotFound(new BaseResponse<string> { message = "Không tìm thấy lượt mượn", });
-    return Ok(new BaseResponse<LoanDto> { data = mapper.Map<LoanDto>(loan), });
+    if (loan == null) return NotFound(new BaseResponse<string> { Message = "Không tìm thấy lượt mượn", });
+    return Ok(new BaseResponse<LoanDto> { Data = mapper.Map<LoanDto>(loan), });
   }
 
   [Authorize(Policy = "BorrowerPolicy")] [HttpGet("personal")]
@@ -135,7 +135,7 @@ public partial class LoanController
     {
       return Unauthorized(new BaseResponse<string>
       {
-        status = "fail", message = "Không xác thực: Token không hợp lệ."
+        Status = "fail", Message = "Không xác thực: Token không hợp lệ."
       });
     }
 
@@ -180,14 +180,14 @@ public partial class LoanController
                       .ToListAsync();
     return Ok(new BaseResponse<List<LoanDto>>
     {
-      message = "Lấy danh sách đơn mượn thành công.",
-      status = "success",
-      data = mapper.Map<List<LoanDto>>(loans),
-      count = totalRecords,
-      page = page,
-      limit = limit,
-      currenPage = page,
-      pageCount = pageCount // Thêm số tổng số trang vào response
+      Message = "Lấy danh sách đơn mượn thành công.",
+      Status = "success",
+      Data = mapper.Map<List<LoanDto>>(loans),
+      Count = totalRecords,
+      Page = page,
+      Limit = limit,
+      CurrentPage = page,
+      PageCount = pageCount // Thêm số tổng số trang vào response
     });
   }
 
@@ -202,7 +202,7 @@ public partial class LoanController
     {
       return Unauthorized(new BaseResponse<string>
       {
-        message = "Không xác thực: Token không hợp lệ.", status = "fail", data = null
+        Message = "Không xác thực: Token không hợp lệ.", Status = "fail", Data = null
       });
     }
 
@@ -214,7 +214,7 @@ public partial class LoanController
     {
       return NotFound(new BaseResponse<string>
       {
-        message = "Không tìm thấy thông tin mượn sách.", status = "error", data = null
+        Message = "Không tìm thấy thông tin mượn sách.", Status = "error", Data = null
       });
     }
 
@@ -222,7 +222,7 @@ public partial class LoanController
     {
       return BadRequest(new BaseResponse<string>
       {
-        message = "Không thể yêu cầu gia hạn. Cuốn sách đã được trả.", status = "error", data = null
+        Message = "Không thể yêu cầu gia hạn. Cuốn sách đã được trả.", Status = "error", Data = null
       });
     }
 
@@ -256,7 +256,7 @@ public partial class LoanController
 
     return Ok(new BaseResponse<string>
     {
-      message = "Đã gửi yêu cầu gia hạn tới thư viện.", status = "success", data = null
+      Message = "Đã gửi yêu cầu gia hạn tới thư viện.", Status = "success", Data = null
     });
   }
 }

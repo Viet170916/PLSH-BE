@@ -207,7 +207,7 @@ namespace API.Controllers
         //    [FromQuery] string? search,
         //    [FromQuery] string? author,
         //    [FromQuery] int? publishYear,
-        //    [FromQuery] string? category,
+        //    [FromQuery] string? categories,
         //    [FromQuery] int page = 1,
         //    [FromQuery] int pageSize = 10)
         //{
@@ -232,9 +232,9 @@ namespace API.Controllers
           
 
         //    // Lọc theo thể loại
-        //    if (!string.IsNullOrEmpty(category))
+        //    if (!string.IsNullOrEmpty(categories))
         //    {
-        //        query = query.Where(b => b.Category.Name == category);
+        //        query = query.Where(b => b.Category.Name == categories);
         //    }
 
         //    // Tổng số sách sau khi lọc

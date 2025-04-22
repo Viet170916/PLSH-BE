@@ -20,7 +20,7 @@ public partial class AiController(IChatGptService chatGptService, IGeminiService
     try
     {
       var response = await geminiService.GetFromGeminiPromptAsync(request.Message);
-      return Ok(new BaseResponse<string> { data = response, message = "Generate thành công", });
+      return Ok(new BaseResponse<string> { Data = response, Message = "Generate thành công", });
     }
     catch (Exception ex) { return StatusCode(500, $"Internal server error: {ex.Message}"); }
   }

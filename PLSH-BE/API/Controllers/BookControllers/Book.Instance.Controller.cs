@@ -19,25 +19,25 @@ public partial class BookController
     var query = context.BookInstances
                        .Include(i => i.Book)
                        .ThenInclude(b => b.CoverImageResource)
-                       .Include(b=>b.RowShelf)
-                       .ThenInclude(r=>r.Shelf)
+                       .Include(b => b.RowShelf)
+                       .ThenInclude(r => r.Shelf)
                        .Where(bi => bi.DeletedAt == null && bi.IsInBorrowing == false);
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {
-      query = query.Where(bi => bi.Book.IsbNumber10.Contains(isbnOrBookCode) ||
-                                bi.Book.IsbNumber13.Contains(isbnOrBookCode) ||
-                                bi.Book.OtherIdentifier.Contains(isbnOrBookCode) ||
-                                bi.Code.Contains(isbnOrBookCode) ||
-                                isbnOrBookCode.Contains(bi.Book.IsbNumber10) ||
-                                isbnOrBookCode.Contains(bi.Book.IsbNumber13) ||
-                                isbnOrBookCode.Contains(bi.Book.OtherIdentifier) ||
-                                isbnOrBookCode.Contains(bi.Code));
+      query = query.Where(bi =>
+          (bi.Book.IsbNumber10 ?? "").Contains(isbnOrBookCode) ||
+          (bi.Book.IsbNumber13 ?? "").Contains(isbnOrBookCode) ||
+          (bi.Book.OtherIdentifier ?? "").Contains(isbnOrBookCode) ||
+          (bi.Code ?? "").Contains(isbnOrBookCode) ||
+          (bi.Book.Title ?? "").Contains(isbnOrBookCode)
+        // (bi.Book.Category != null && bi.Book.Category.Name != null && bi.Book.Category.Name.Contains(isbnOrBookCode))
+      );
     }
     else { query = query.Where(bi => bi.BookId == bookId); }
 
     var bookInstances = await query.ToListAsync();
     var response = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(bookInstances);
-    return Ok(new BaseResponse<List<LibraryRoomDto.BookInstanceDto>> { count = bookInstances.Count, data = response });
+    return Ok(new BaseResponse<List<LibraryRoomDto.BookInstanceDto>> { Count = bookInstances.Count, Data = response });
   }
 
   [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)

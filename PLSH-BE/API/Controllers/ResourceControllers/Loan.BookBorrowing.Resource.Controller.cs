@@ -33,7 +33,7 @@ public partial class ResourceController
 
     if (beforeBorrowImageRequest.beforeBorrowImages.Count != beforeBorrowImageRequest.pathsToFile.Count)
     {
-      return BadRequest(new BaseResponse<string> { message = "beforeBorrowImages and pathsToFile are not the same.", });
+      return BadRequest(new BaseResponse<string> { Message = "beforeBorrowImages and pathsToFile are not the same.", });
     }
 
     try
@@ -46,12 +46,12 @@ public partial class ResourceController
             , beforeBorrowImageRequest.beforeBorrowImages[fileIndex].ContentType);
       }
     }
-    catch { return BadRequest(new BaseResponse<string> { message = "Upload before borrow images failed.", }); }
+    catch { return BadRequest(new BaseResponse<string> { Message = "Upload before borrow images failed.", }); }
 
     return Ok(new BaseResponse<List<string>>()
     {
-      message = "Images uploaded successfully",
-      data = beforeBorrowImageRequest.pathsToFile.Select(Converter.ToImageUrl).ToList(),
+      Message = "Images uploaded successfully",
+      Data = beforeBorrowImageRequest.pathsToFile.Select(Converter.ToImageUrl).ToList(),
     });
   }
 }

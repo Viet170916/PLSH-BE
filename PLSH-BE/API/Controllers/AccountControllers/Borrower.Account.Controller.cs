@@ -17,7 +17,7 @@ public partial class AccountController
     var account = await context.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
     if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
     {
-      return Unauthorized(new BaseResponse<string> { message = "Email hoặc mật khẩu không đúng." });
+      return Unauthorized(new BaseResponse<string> { Message = "Email hoặc mật khẩu không đúng." });
     }
 
     var token = string.Empty;
@@ -26,14 +26,14 @@ public partial class AccountController
       token = GenerateJwtToken(account, "notVerifiedUser", TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        data = token, message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
+        Data = token, Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
       });
     }
 
     var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
     var tokenExpiration = TimeSpan.FromDays(7);
     token = GenerateJwtToken(account, role, tokenExpiration);
-    return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập thành công." });
+    return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập thành công." });
   }
 
   public class ChangePasswordRequest
@@ -48,25 +48,25 @@ public partial class AccountController
   {
     if (string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.ReEnterPassword))
     {
-      return BadRequest(new BaseResponse<string> { message = "Mật khẩu không được để trống." });
+      return BadRequest(new BaseResponse<string> { Message = "Mật khẩu không được để trống." });
     }
 
     if (request.Password != request.ReEnterPassword)
     {
-      return BadRequest(new BaseResponse<string> { message = "Mật khẩu xác nhận không khớp." });
+      return BadRequest(new BaseResponse<string> { Message = "Mật khẩu xác nhận không khớp." });
     }
 
     var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "");
     var account = await context.Accounts
                                .Include(a => a.Role)
                                .FirstOrDefaultAsync(a => a.Id == userId);
-    if (account == null) { return NotFound(new BaseResponse<string> { message = "Không tìm thấy người dùng." }); }
+    if (account == null) { return NotFound(new BaseResponse<string> { Message = "Không tìm thấy người dùng." }); }
 
     if (!account.IsVerified)
     {
       if (request.Password != request.ReEnterPassword)
       {
-        return BadRequest(new BaseResponse<string> { message = "Mật khẩu và mật khẩu nhập lại không khớp." });
+        return BadRequest(new BaseResponse<string> { Message = "Mật khẩu và mật khẩu nhập lại không khớp." });
       }
 
       account.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -76,22 +76,22 @@ public partial class AccountController
       var token = GenerateJwtToken(account, account.Role.Name, TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        data = token, message = "Mật khẩu đã được thay đổi thành công và tài khoản đã được xác minh."
+        Data = token, Message = "Mật khẩu đã được thay đổi thành công và tài khoản đã được xác minh."
       });
     }
     else
     {
       if (request.OldPassword == null || request.Password == null || request.ReEnterPassword == null)
       {
-        return BadRequest(new BaseResponse<string> { message = "Vui lòng nhập đầy đủ thông tin." });
+        return BadRequest(new BaseResponse<string> { Message = "Vui lòng nhập đầy đủ thông tin." });
       }
 
       var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.OldPassword, account.Password);
-      if (!isPasswordValid) { return Unauthorized(new BaseResponse<string> { message = "Mật khẩu cũ không đúng." }); }
+      if (!isPasswordValid) { return Unauthorized(new BaseResponse<string> { Message = "Mật khẩu cũ không đúng." }); }
 
       if (request.Password != request.ReEnterPassword)
       {
-        return BadRequest(new BaseResponse<string> { message = "Mật khẩu và mật khẩu nhập lại không khớp." });
+        return BadRequest(new BaseResponse<string> { Message = "Mật khẩu và mật khẩu nhập lại không khớp." });
       }
 
       account.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -100,7 +100,7 @@ public partial class AccountController
       var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
       var tokenExpiration = TimeSpan.FromDays(7);
       var token = GenerateJwtToken(account, role, tokenExpiration);
-      return Ok(new BaseResponse<string> { data = token, message = "Mật khẩu đã được thay đổi thành công." });
+      return Ok(new BaseResponse<string> { Data = token, Message = "Mật khẩu đã được thay đổi thành công." });
     }
   }
 
@@ -122,7 +122,7 @@ public partial class AccountController
       {
         if (roleId is null)
         {
-          return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
+          return BadRequest(new BaseResponse<string> { Message = $"Không hỗ trợ người dùng: {request.Role}" });
         }
 
         account = new Account
@@ -144,11 +144,11 @@ public partial class AccountController
       }
 
       var token = GenerateJwtToken(account, account?.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
-      return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập bằng Google thành công." });
+      return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
     {
-      return Unauthorized(new BaseResponse<string> { message = "Token Google không hợp lệ." });
+      return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
     }
   }
 }

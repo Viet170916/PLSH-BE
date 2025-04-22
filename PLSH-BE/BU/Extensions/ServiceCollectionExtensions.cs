@@ -21,6 +21,7 @@ namespace BU.Extensions
       services.AddTransient<IGeminiService, GeminiService>();
       services.AddTransient<IGgServices, GgServices>();
       services.AddTransient<IChatGptService, ChatGptService>();
+      services.AddTransient<IEpubParserService, EpubParserService>();
     }
   }
 }

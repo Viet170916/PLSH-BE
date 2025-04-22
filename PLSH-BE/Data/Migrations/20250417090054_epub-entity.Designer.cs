@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250417090054_epub-entity")]
+    partial class epubentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,48 +51,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Albums");
-                });
-
-            modelBuilder.Entity("Model.Entity.Authentication.ResourceAccess", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AccessDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AprroveStatus")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("BookType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("ExpireDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("LibrarianId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("LibrarianId");
-
-                    b.ToTable("ResourceAccesses");
                 });
 
             modelBuilder.Entity("Model.Entity.Book.e_book.EBookChapter", b =>
@@ -1519,31 +1480,6 @@ namespace Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Model.Entity.Authentication.ResourceAccess", b =>
-                {
-                    b.HasOne("Model.Entity.User.Account", "Account")
-                        .WithMany("RequestedResources")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.book.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.User.Account", "Librarian")
-                        .WithMany("ApprovedResources")
-                        .HasForeignKey("LibrarianId");
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Book");
-
-                    b.Navigation("Librarian");
-                });
-
             modelBuilder.Entity("Model.Entity.Book.e_book.EBookChapter", b =>
                 {
                     b.HasOne("Model.Entity.book.Book", "Book")
@@ -1795,13 +1731,6 @@ namespace Data.Migrations
             modelBuilder.Entity("Model.Entity.LibraryRoom.Shelf", b =>
                 {
                     b.Navigation("RowShelves");
-                });
-
-            modelBuilder.Entity("Model.Entity.User.Account", b =>
-                {
-                    b.Navigation("ApprovedResources");
-
-                    b.Navigation("RequestedResources");
                 });
 
             modelBuilder.Entity("Model.Entity.User.Role", b =>

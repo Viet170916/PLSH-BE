@@ -9,20 +9,19 @@ using Microsoft.EntityFrameworkCore;
 using Model.Entity.book;
 
 namespace API.Controllers.CategoryControllers;
-[Authorize("LibrarianPolicy")]
 
 [Route("api/v1/category")]
 [ApiController]
 public class CategoryController(AppDbContext context, IMapper mapper) : ControllerBase
 {
-  [HttpGet] public async Task<IActionResult> GetCategories()
+  [Authorize] [HttpGet] public async Task<IActionResult> GetCategories()
   {
     var categories = await context.Categories.ToListAsync();
     return Ok(categories);
   }
 
-  // 📌 2️⃣ Thêm mới Category
-  [HttpPost] public async Task<IActionResult> CreateCategory([FromBody] Category category)
+  [Authorize("LibrarianPolicy")] [HttpPost]
+  public async Task<IActionResult> CreateCategory([FromBody] Category category)
   {
     if (category == null || string.IsNullOrWhiteSpace(category.Name))
       return BadRequest("Tên Category không được để trống.");
@@ -35,8 +34,8 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, category);
   }
 
-  // 📌 3️⃣ Sửa Category
-  [HttpPut("{id}")] public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category updatedCategory)
+  [Authorize("LibrarianPolicy")] [HttpPut("{id}")]
+  public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category updatedCategory)
   {
     var category = await context.Categories.FindAsync(id);
     if (category == null) return NotFound("Category không tồn tại.");
@@ -48,8 +47,8 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     return Ok(category);
   }
 
-  // 📌 4️⃣ Xóa Category
-  [HttpDelete("{id}")] public async Task<IActionResult> DeleteCategory(int id)
+  [Authorize("LibrarianPolicy")] [HttpDelete("{id}")]
+  public async Task<IActionResult> DeleteCategory(int id)
   {
     var category = await context.Categories.FindAsync(id);
     if (category == null) return NotFound("Category không tồn tại.");
@@ -58,7 +57,8 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     return NoContent();
   }
 
-  [HttpGet("check-duplicate")] public async Task<IActionResult> CheckDuplicateCategory([FromQuery] string name)
+  [Authorize("LibrarianPolicy")] [HttpGet("check-duplicate")]
+  public async Task<IActionResult> CheckDuplicateCategory([FromQuery] string name)
   {
     if (string.IsNullOrWhiteSpace(name)) return BadRequest("Tên Category không hợp lệ.");
     var categories = await context.Categories.ToListAsync();
