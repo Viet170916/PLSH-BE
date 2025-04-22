@@ -90,6 +90,44 @@ pipeline {
                         """
 
                         archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
+
+                        // Kiểm tra lỗi và gửi Telegram nếu có
+                        def snykReport = readJSON file: "snyk.json"
+                        def criticalIssues = 0
+                        def highIssues = 0
+
+                        snykReport.vulnerabilities.each { vuln ->
+                            if (vuln.severity == "critical") {
+                                criticalIssues++
+                            } else if (vuln.severity == "high") {
+                                highIssues++
+                            }
+                        }
+
+                        if (blockerIssues.size() > 0) {
+                            echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
+
+                            def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
+                            def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                            def chat_id = "-1002608374616"
+
+                            // Gửi mess
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                                -d chat_id=${chat_id} \\
+                                -d text="${msg}"
+                            """
+
+                            // Gửi report HTML
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                                -F chat_id=${chat_id} \\
+                                -F document=@snyk-report-${timestamp}.html
+                            """
+
+                            // Dừng pipeline
+                            error("Dừng pipeline vì Snyk phát hiện có lỗi CRITICAL, HIGH.")
+                        }
                     }
                 }
             }
