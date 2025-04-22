@@ -100,63 +100,67 @@ pipeline {
 
 
 
-        stage('Trivy Scan') {
+        stage('Snyk Scan') {
             steps {
-                script {
-                    def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                    env.TIMESTAMP = timestamp
+                dir('PLSH-BE') {
+                    script {
+                        // Set token
+                        sh 'snyk config set api=$SNYK_TOKEN'
 
-                    // Scan và xuất báo cáo JSON + HTML
-                    sh """
-                        trivy image --format json -o trivy-result-${timestamp}.json co0bridae/plsh-fe-borrower:latest || true
-                        [ -f trivy-result-${timestamp}.json ] && trivy template -t html -i trivy-result-${timestamp}.json -o trivy-report-${timestamp}.html || true
-                    """
+                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                        env.TIMESTAMP = timestamp
 
-                    // Lưu lại báo cáo
-                    archiveArtifacts artifacts: "trivy-report-${timestamp}.html", fingerprint: true
+                        // Snyk scan và export báo cáo
+                        sh """
+                            snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
+                            [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
+                        """
 
-                    // Đọc JSON và lọc lỗi severity
-                    def trivyData = readJSON file: "trivy-result-${timestamp}.json"
-                    def criticalCount = 0
-                    def highCount = 0
+                        // Archive report HTML
+                        archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
 
-                    trivyData.Results.each { result ->
-                        result.Vulnerabilities?.each { vuln ->
-                            if (vuln.Severity == "CRITICAL") {
-                                criticalCount++
-                            } else if (vuln.Severity == "HIGH") {
-                                highCount++
+                        // Đọc file JSON và lọc lỗi
+                        def snykReport = readJSON file: "snyk.json"
+                        def criticalIssues = 0
+                        def highIssues = 0
+
+                        snykReport.vulnerabilities.each { vuln ->
+                            if (vuln.severity == "critical") {
+                                criticalIssues++
+                            } else if (vuln.severity == "high") {
+                                highIssues++
                             }
                         }
-                    }
 
-                    if (criticalCount > 0 || highCount > 0) {
-                        echo "Trivy phát hiện ${criticalCount} CRITICAL và ${highCount} HIGH vulnerabilities!"
+                        if (criticalIssues > 0 || highIssues > 0) {
+                            echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
 
-                        def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Trivy phát hiện ${criticalCount} lỗi CRITICAL và ${highCount} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
-                        def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
-                        def chat_id = "-1002608374616"
+                            def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
+                            def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                            def chat_id = "-1002608374616"
 
-                        // Gửi thông báo
-                        sh """
-                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
-                            -d chat_id=${chat_id} \\
-                            -d text="${msg}"
-                        """
+                            // Gửi message
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                                -d chat_id=${chat_id} \\
+                                -d text="${msg}"
+                            """
 
-                        // Gửi file HTML
-                        sh """
-                            curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
-                            -F chat_id=${chat_id} \\
-                            -F document=@trivy-report-${timestamp}.html
-                        """
+                            // Gửi file report
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                                -F chat_id=${chat_id} \\
+                                -F document=@snyk-report-${timestamp}.html
+                            """
 
-                        // Dừng pipeline
-                        error("Dừng pipeline vì Trivy phát hiện lỗi CRITICAL hoặc HIGH.")
+                            // Dừng pipeline
+                            error("Dừng pipeline vì Snyk phát hiện lỗi CRITICAL hoặc HIGH.")
+                        }
                     }
                 }
             }
         }
+
 
 
 
