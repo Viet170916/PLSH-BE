@@ -104,7 +104,7 @@ pipeline {
                             }
                         }
 
-                        if (blockerIssues.size() > 0) {
+                        if (criticalIssues > 0 || highIssues > 0) {
                             echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
 
                             def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
