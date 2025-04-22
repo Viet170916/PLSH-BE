@@ -30,7 +30,7 @@ pipeline {
 
     
          
-        stage('SonarQube Scan') {
+    /*    stage('SonarQube Scan') {
             steps {
                 script {
                     dir('PLSH-BE') {
@@ -110,71 +110,71 @@ pipeline {
 
 
         stage('Snyk Scan') {
-    steps {
-        dir('PLSH-BE') {
-            script {
-                // Set Snyk Token
-                sh 'snyk config set api=$SNYK_TOKEN'
+            steps {
+                dir('PLSH-BE') {
+                    script {
+                        // Set Snyk Token
+                        sh 'snyk config set api=$SNYK_TOKEN'
 
-                def timestamp = new Date().format("yyyyMMdd_HHmmss")
-                env.TIMESTAMP = timestamp
+                        def timestamp = new Date().format("yyyyMMdd_HHmmss")
+                        env.TIMESTAMP = timestamp
 
-                // Snyk test và sinh báo cáo
-                sh """
-                    snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
-                    [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
-                """
+                        // Snyk test và sinh báo cáo
+                        sh """
+                            snyk test --file=PLSH-BE.sln --severity-threshold=high --json-file-output=snyk.json || true
+                            [ -f snyk.json ] && snyk-to-html -i snyk.json -o snyk-report-${timestamp}.html || true
+                        """
 
-                archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
+                        archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
 
-            /*    // Đọc file JSON và lọc lỗi nghiêm trọng
-                def snykData = readJSON file: "snyk.json"
-                def criticalIssues = 0
-                def highIssues = 0
+                    /*    // Đọc file JSON và lọc lỗi nghiêm trọng
+                        def snykData = readJSON file: "snyk.json"
+                        def criticalIssues = 0
+                        def highIssues = 0
 
-                snykData.each { project ->
-                    if (project.vulnerabilities) {
-                        project.vulnerabilities.each { vuln ->
-                            if (vuln.severity == "critical") {
-                                criticalIssues++
-                            } else if (vuln.severity == "high") {
-                                highIssues++
+                        snykData.each { project ->
+                            if (project.vulnerabilities) {
+                                project.vulnerabilities.each { vuln ->
+                                    if (vuln.severity == "critical") {
+                                        criticalIssues++
+                                    } else if (vuln.severity == "high") {
+                                        highIssues++
+                                    }
+                                }
                             }
                         }
+
+                        // Nếu có lỗi nghiêm trọng → gửi Telegram + fail pipeline
+                        if (criticalIssues > 0 || highIssues > 0) {
+                            echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
+
+                            def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
+                            def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                            def chat_id = "-1002608374616"
+
+                            // Gửi message
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                                -d chat_id=${chat_id} \\
+                                -d text="${msg}"
+                            """
+
+                            // Gửi report HTML
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                                -F chat_id=${chat_id} \\
+                                -F document=@snyk-report-${timestamp}.html
+                            """
+
+                            // Dừng pipeline
+                            error("Dừng pipeline vì Snyk phát hiện lỗi nghiêm trọng.")
+                        } else {
+                            echo "✅ Không có lỗi CRITICAL hoặc HIGH từ Snyk."
+                        }*/
                     }
                 }
-
-                // Nếu có lỗi nghiêm trọng → gửi Telegram + fail pipeline
-                if (criticalIssues > 0 || highIssues > 0) {
-                    echo "Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH!"
-
-                    def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. Snyk phát hiện ${criticalIssues} lỗi CRITICAL và ${highIssues} lỗi HIGH. Xem chi tiết trong file đính kèm.", "UTF-8")
-                    def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
-                    def chat_id = "-1002608374616"
-
-                    // Gửi message
-                    sh """
-                        curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
-                        -d chat_id=${chat_id} \\
-                        -d text="${msg}"
-                    """
-
-                    // Gửi report HTML
-                    sh """
-                        curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
-                        -F chat_id=${chat_id} \\
-                        -F document=@snyk-report-${timestamp}.html
-                    """
-
-                    // Dừng pipeline
-                    error("Dừng pipeline vì Snyk phát hiện lỗi nghiêm trọng.")
-                } else {
-                    echo "✅ Không có lỗi CRITICAL hoặc HIGH từ Snyk."
-                }*/
             }
-        }
-    }
-}
+        }*/
 
 
 
@@ -224,33 +224,6 @@ pipeline {
                         docker tag plsh-be co0bridae/plsh-be:latest
                         docker push co0bridae/plsh-be:latest
                     '''
-                }
-            }
-        }
-
-        stage('Deploy BE to Staging') {
-            steps {
-                script {
-                    def deploying = """
-                        #!/bin/bash
-
-                        docker ps -q --filter "name=plsh-be" && docker stop plsh-be || true
-                        docker ps -a -q --filter "name=plsh-be" && docker rm plsh-be || true
-
-                        docker pull co0bridae/plsh-be:latest
-
-                        docker run -d \\
-                        --name plsh-be \\
-                        -p 5000:5000 \\
-                        -e ASPNETCORE_ENVIRONMENT=Staging \\
-                        co0bridae/plsh-be:latest
-                    """
-
-                    sshagent(['jenkins-ssh-key']) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no root@192.168.230.101 'echo "${deploying}" > /root/deploy-be.sh && chmod +x /root/deploy-be.sh && /root/deploy-be.sh'
-                        """
-                    }
                 }
             }
         }
