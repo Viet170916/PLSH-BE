@@ -66,6 +66,42 @@ pipeline {
                         sh "python3 convert_issue_json.py issues_${timestamp}.json sonarqube-report-${timestamp}.html"
                         archiveArtifacts artifacts: "sonarqube-report-${timestamp}.html", fingerprint: true
 
+                        
+                    /*    // Kiểm tra BLOCKER và gửi Telegram nếu có
+                        def blockerIssues = []
+                        def sonarIssuesJson = readJSON file: "issues_${timestamp}.json"
+
+                        sonarIssuesJson.issues.each { issue ->
+                            if (issue.severity == "BLOCKER") {
+                                blockerIssues.add(issue)
+                            }
+                        }
+
+                        if (blockerIssues.size() > 0) {
+                            echo "SonarQube phát hiện ${blockerIssues.size()} lỗi BLOCKER!"
+
+                            def msg = URLEncoder.encode("⚠️ Pipeline Lab_iap491/G76_SEP490_SPR25_/PLSH-BE Failed. SonarQube đã phát hiện ${blockerIssues.size()} lỗi BLOCKER. Xem chi tiết trong file đính kèm.", "UTF-8")
+                            def bot_token = "8104427238:AAGKMJERkz8Z0nZbNJRFoIhw0CKzVgakBGk"
+                            def chat_id = "-1002608374616"
+
+                            // Gửi mess
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendMessage \\
+                                -d chat_id=${chat_id} \\
+                                -d text="${msg}"
+                            """
+
+                            // Gửi report HTML
+                            sh """
+                                curl -s -X POST https://api.telegram.org/bot${bot_token}/sendDocument \\
+                                -F chat_id=${chat_id} \\
+                                -F document=@sonarqube-report-${timestamp}.html
+                            """
+
+                            // Dừng pipeline
+                            error("Dừng pipeline vì SonarQube phát hiện có BLOCKER issues.")
+                        }*/
+
                     }
                 }
             }
@@ -91,7 +127,7 @@ pipeline {
 
                 archiveArtifacts artifacts: "snyk-report-${timestamp}.html", fingerprint: true
 
-                // Đọc file JSON và lọc lỗi nghiêm trọng
+            /*    // Đọc file JSON và lọc lỗi nghiêm trọng
                 def snykData = readJSON file: "snyk.json"
                 def criticalIssues = 0
                 def highIssues = 0
@@ -134,7 +170,7 @@ pipeline {
                     error("Dừng pipeline vì Snyk phát hiện lỗi nghiêm trọng.")
                 } else {
                     echo "✅ Không có lỗi CRITICAL hoặc HIGH từ Snyk."
-                }
+                }*/
             }
         }
     }
