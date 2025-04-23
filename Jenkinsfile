@@ -30,7 +30,7 @@ pipeline {
 
     
          
-    /*    stage('SonarQube Scan') {
+        stage('SonarQube Scan') {
             steps {
                 script {
                     dir('PLSH-BE') {
@@ -174,8 +174,7 @@ pipeline {
                     }
                 }
             }
-        }*/
-
+        }
 
 
 
