@@ -19,7 +19,6 @@ public class Loan
   public bool IsCart { get; set; } = false;
   public string? AprovalStatus { get; set; }
 
-  // public int ExtensionCount { get; set; } = 0;
   public ICollection<BookBorrowing> BookBorrowings { get; set; } = new List<BookBorrowing>();
 
   [ForeignKey("BorrowerId")]

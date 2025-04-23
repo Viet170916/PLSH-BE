@@ -13,28 +13,19 @@ public class BookBorrowing
   public int? TransactionId { get; set; }
 
   public int BookInstanceId { get; set; }
-  // public int? ConfirmationLibrarianId { get; set; }
-  //
-  // [ForeignKey("ConfirmationLibrarianId")]
-  // public Librarian? ConfirmationLibrarian { get; set; }
 
   [ForeignKey("BookInstanceId")]
   public BookInstance BookInstance { get; set; }
 
-  public ICollection<Resource> BookImagesBeforeBorrow { get; set; } = new List<Resource>();
-  public ICollection<Resource> BookImagesAfterBorrow { get; set; } = new List<Resource>();
+  [InverseProperty("BookBorrowingBefore")]
+    public ICollection<Resource> BookImagesBeforeBorrow { get; set; } = new List<Resource>();
+
+    [InverseProperty("BookBorrowingAfter")]
+    public ICollection<Resource> BookImagesAfterBorrow { get; set; } = new List<Resource>();
   public string? NoteBeforeBorrow { get; set; }
   public string? NoteAfterBorrow { get; set; }
 
-  // public int BookDetailId { get; set; }
-
-  // [MaxLength(255)]
-  // public string? BookConditionUrl { get; set; }
   public int LoanId { get; set; }
-  // public int? PageCount { get; set; }
-
-  // [MaxLength(255)]
-  // public string? BookConditionDescription { get; set; }
   public string BorrowingStatus { get; set; } = "undefined";
   public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
   public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

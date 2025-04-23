@@ -1,0 +1,27 @@
+﻿{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=127.0.0.1;Port=3306;Database=BookHiveDB;User=root;Password=12345678;AllowZeroDateTime=True;"
+  },
+  "SendGrid": {
+    "ApiKey": "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",
+    "SenderEmail": "danbshe161941@fpt.edu.vn",
+    "SenderName": "BUISYDAN"
+  },
+  "EmailSettings": {
+    "SmtpServer": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "SmtpUsername": "buisydan310702@gmail.com",
+    "SmtpPassword": "lrwg bduh kqdu vdgi",
+    "FromEmail": "buisydan310702@gmail.com",
+    "FromName": "Dan"
+  },
+  "GenAI": {
+    "ApiKey": "AIzaSyAHcIVuLdQBxrbf1pa-rQVcqBmFPY7j25E",
+    "ApiUrl": "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=AIzaSyAHcIVuLdQBxrbf1pa-rQVcqBmFPY7j25E"
+  },
+  "Redis": {
+    "ConnectionString": "localhost:6379",
+    "OTPExpirationMinutes": 5
+  }
+}
+

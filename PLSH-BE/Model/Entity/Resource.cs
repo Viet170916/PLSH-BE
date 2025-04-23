@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Model.Entity.Borrow;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Model.Entity
 {
@@ -19,5 +21,17 @@ namespace Model.Entity
 
     [MaxLength(255)]
     public string? LocalUrl { get; set; }
-  }
+
+        // Quan hệ 1: ảnh trước mượn
+       public int? BookBorrowingBeforeId { get; set; }
+
+    [ForeignKey("BookBorrowingBeforeId")]
+    public BookBorrowing? BookBorrowingBefore { get; set; }
+
+    // Quan hệ 2: ảnh sau mượn
+    public int? BookBorrowingAfterId { get; set; }
+
+    [ForeignKey("BookBorrowingAfterId")]
+    public BookBorrowing? BookBorrowingAfter { get; set; }
+    }
 }
