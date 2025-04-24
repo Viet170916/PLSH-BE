@@ -62,8 +62,8 @@ public class Account
   public int FailedLoginAttempts { get; set; } = 0; // Đếm số lần đăng nhập sai
   public DateTime? LockoutEnd { get; set; } = null; // Thời gian khóa tài khoản (nếu có)
 
-  [JsonIgnore]
   public Role Role { get; set; }
+  [JsonIgnore]
 
   public string? ClassRoom { get; set; }
 }

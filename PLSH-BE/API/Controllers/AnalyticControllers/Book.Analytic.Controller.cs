@@ -95,39 +95,35 @@ public partial class AnalyticBookController(AppDbContext context) : Controller
     [HttpGet("book")]
     public async Task<IActionResult> GetBookAnalytics()
     {
-        var book = await context.Books
-            .Include(b => b.BookInstances)!
-                .ThenInclude(i => i.RowShelf)
-                .ThenInclude(i => i.Shelf)
+        var allBooks = await context.Books
             .Include(b => b.BookInstances)
-                .ThenInclude(i => i.BookBorrowings)
-                .ThenInclude(bookBorrowing => bookBorrowing.Loan)
-            .FirstOrDefaultAsync();
-        if (book == null)
-        {
-            return NotFound(new { Message = "Không tìm thấy sách" });
-        }
-        var bookInstances = book.BookInstances?
-            .ToList();
-        var totalBookCount = bookInstances?.Count ?? 0;
-        var damageBookCount = bookInstances?.Count(bi => bi.DeletedAt.HasValue) ?? 0;
-        var borrowCount = bookInstances?.Count(bi => bi.IsInBorrowing) ?? 0;
+            .ToListAsync();
+
+        var totalBookCount = allBooks.Count;
+
+        var damageBookCount = allBooks
+            .SelectMany(b => b.BookInstances ?? new List<BookInstance>())
+            .Count(bi => bi.DeletedAt != null);
+
+        var borrowCount = allBooks
+            .SelectMany(b => b.BookInstances ?? new List<BookInstance>())
+            .Count(bi => bi.IsInBorrowing);
+
         var normalBookCount = totalBookCount - damageBookCount - borrowCount;
-        // ✅ Sách mới thêm trong vòng 3 ngày trở lại đây
+
         var threeDaysAgo = DateTime.UtcNow.Date.AddDays(-3);
-        var newBookCount = bookInstances.Count(bi => bi.CreatedAt.Date >= threeDaysAgo);
-        var report = new
-        {
-            bookQuantityAnalyticsData = new
-            {
-                normalBookCount = normalBookCount,
-                newBookCount = newBookCount,
-                damageBookCount = damageBookCount,
-                totalBookCount = totalBookCount
-            }
-        };
-        return Ok(report);
+        var newBookCount = allBooks
+            .Count(b => b.CreateDate.HasValue && b.CreateDate.Value.Date >= threeDaysAgo);
+
+        return Ok(new
+        {           
+         normalBookCount,
+         newBookCount,
+         damageBookCount,
+         totalBookCount            
+        });
     }
+
     [HttpGet("loansortbycategory")]
     public async Task<IActionResult> GetLoanSortByCategoryAnalytics()
     {
