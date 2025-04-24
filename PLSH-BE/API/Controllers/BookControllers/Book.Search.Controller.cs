@@ -39,21 +39,49 @@ public partial class BookController
     [FromQuery] bool descending = false
   )
   {
-    var trimedKeyword = keyword?.Trim().ToLower();
+    var trimmedKeyword = keyword?.Trim().ToLower();
     limit = Math.Clamp(limit, 1, 40);
-    var query = context.Books.AsQueryable();
-    if (!string.IsNullOrEmpty(trimedKeyword))
+    var query = context.Books
+                       .AsNoTracking()
+                       .Include(b => b.Category)
+                       .Include(b => b.Reviews)
+                       .Include(b => b.Authors)
+                       .AsQueryable();
+    if (!string.IsNullOrWhiteSpace(trimmedKeyword))
+    {
       query = query.Where(b =>
-        (b.Title != null && b.Title.Contains(trimedKeyword)) ||
-        b.Authors.Any(a => a.FullName.Contains(trimedKeyword)));
-    if (categories.Where(c => !c.IsNullOrEmpty() && !c.IsNullOrWhiteSpace()).ToList() is { Count: > 0, })
-      query = query.Include(b => b.Category)
-                   .Where(b => string.Join(",", categories).Contains(b.Category.Name));
+        (b.Title != null && b.Title.ToLower().Contains(trimmedKeyword)) ||
+        b.Authors.Any(a => a.FullName.ToLower().Contains(trimmedKeyword)));
+    }
+
+    if (categories?.Any(c => !string.IsNullOrWhiteSpace(c)) == true)
+    {
+      var cleanedCategories = categories
+                              .Where(c => !string.IsNullOrWhiteSpace(c))
+                              .Select(c => c.Trim())
+                              .ToList();
+      query = query.Where(b => cleanedCategories.Contains(b.Category.Name));
+    }
+
     if (rating.HasValue)
-      query = query.Include(c => c.Reviews)
-                   .Where(b => b.Reviews.Average(r => r.Rating) >= rating - 0.5 &&
-                               b.Reviews.Average(r => r.Rating) < rating + 0.5);
-    if (authorId.HasValue) query = query.Where(b => b.Authors != null && b.Authors.Any(a => a.Id == authorId));
+    {
+      var lower = rating.Value - 0.5;
+      var upper = rating.Value + 0.5;
+      query = query.Where(b =>
+        b.Reviews.Any() &&
+        b.Reviews.Average(r => r.Rating) >= lower &&
+        b.Reviews.Average(r => r.Rating) < upper);
+    }
+
+    if (authorId.HasValue)
+    {
+      var bookIds = await context.Books
+                                 .Where(b => b.Authors.Any(a => a.Id == authorId.Value))
+                                 .Select(b => b.Id)
+                                 .ToListAsync();
+      query = query.Where(b => bookIds.Contains(b.Id));
+    }
+
     query = orderBy.ToLower() switch
     {
       "title" => descending ? query.OrderByDescending(b => b.Title) : query.OrderBy(b => b.Title),
@@ -61,18 +89,18 @@ public partial class BookController
       _ => query.OrderByDescending(b => b.CreateDate),
     };
     var totalRecords = await query.CountAsync();
-    var booksQueryPaging = query
-                           .Skip((page - 1) * limit)
-                           .Take(limit)
-                           .ProjectTo<BookMinimalDto>(mapper.ConfigurationProvider);
-    var bookDtos = await booksQueryPaging.ToListAsync();
+    var books = await query
+                      .Skip((page - 1) * limit)
+                      .Take(limit)
+                      .ProjectTo<BookMinimalDto>(mapper.ConfigurationProvider)
+                      .ToListAsync();
     var response = new BaseResponse<List<BookMinimalDto>>
     {
       PageCount = (int)Math.Ceiling((double)totalRecords / limit),
       CurrentPage = page,
       Count = totalRecords,
       Page = page,
-      Data = bookDtos
+      Data = books
     };
     return Ok(response);
   }

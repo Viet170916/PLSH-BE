@@ -38,6 +38,7 @@ public partial class LoanController(
   [Authorize(Policy = "LibrarianPolicy")] [HttpGet]
   public async Task<IActionResult> GetLoans(
     [FromQuery] string? keyword,
+    [FromQuery] int? userId,
     [FromQuery] string? approveStatus,
     [FromQuery] string? orderBy,
     [FromQuery] int page = 1,
@@ -59,16 +60,18 @@ public partial class LoanController(
                        .Include(l => l.Borrower)
                        .Include(l => l.Librarian)
                        .AsQueryable();
+    if (userId is not null) { query = query.Where(l => l.BorrowerId == userId); }
+
     if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(l => l.AprovalStatus == approveStatus); }
 
     if (!string.IsNullOrEmpty(trimedKeyword))
     {
-      query = query.Where(l => l.Note.Contains(trimedKeyword)
+      query = query.Where(l => (l.Note != null && l.Note.Contains(trimedKeyword))
                                || string.Concat(l.Id).Contains(trimedKeyword)
                                || string.Concat(l.BorrowerId).Contains(trimedKeyword)
-                               || l.Borrower.PhoneNumber.Contains(trimedKeyword)
+                               || (l.Borrower.PhoneNumber != null && l.Borrower.PhoneNumber.Contains(trimedKeyword))
                                || l.Borrower.CardMemberNumber.Contains(trimedKeyword)
-                               || l.Borrower.FullName.Contains(trimedKeyword));
+                               || (l.Borrower.FullName != null && l.Borrower.FullName.Contains(trimedKeyword)));
     }
 
     query = orderBy?.ToLower() switch

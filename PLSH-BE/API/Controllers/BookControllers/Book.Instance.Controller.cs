@@ -13,7 +13,9 @@ public partial class BookController
 {
   [HttpGet("book-instances")] public async Task<IActionResult> GetBookInstancesByBookIdOrIsbn(
     [FromQuery] int? bookId,
-    [FromQuery] string? isbnOrBookCode = null
+    [FromQuery] string? isbnOrBookCode = null,
+    [FromQuery] int page = 1,
+    [FromQuery] int limit = 10
   )
   {
     var query = context.BookInstances
@@ -25,19 +27,27 @@ public partial class BookController
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {
       query = query.Where(bi =>
-          (bi.Book.IsbNumber10 ?? "").Contains(isbnOrBookCode) ||
-          (bi.Book.IsbNumber13 ?? "").Contains(isbnOrBookCode) ||
-          (bi.Book.OtherIdentifier ?? "").Contains(isbnOrBookCode) ||
-          (bi.Code ?? "").Contains(isbnOrBookCode) ||
-          (bi.Book.Title ?? "").Contains(isbnOrBookCode)
-        // (bi.Book.Category != null && bi.Book.Category.Name != null && bi.Book.Category.Name.Contains(isbnOrBookCode))
-      );
+        (bi.Book.IsbNumber10 ?? "").Contains(isbnOrBookCode) ||
+        (bi.Book.IsbNumber13 ?? "").Contains(isbnOrBookCode) ||
+        (bi.Book.OtherIdentifier ?? "").Contains(isbnOrBookCode) ||
+        (bi.Code ?? "").Contains(isbnOrBookCode) ||
+        (bi.Book.Title ?? "").Contains(isbnOrBookCode));
     }
-    else { query = query.Where(bi => bi.BookId == bookId); }
+    else
+      if (bookId is not null) { query = query.Where(bi => bi.BookId == bookId); }
 
-    var bookInstances = await query.ToListAsync();
+    var totalCount = await query.CountAsync();
+    var pageCount = (int)Math.Ceiling((double)totalCount / limit);
+    var bookInstances = await query
+                              .OrderByDescending(bi => bi.CreatedAt)
+                              .Skip((page - 1) * limit)
+                              .Take(limit)
+                              .ToListAsync();
     var response = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(bookInstances);
-    return Ok(new BaseResponse<List<LibraryRoomDto.BookInstanceDto>> { Count = bookInstances.Count, Data = response });
+    return Ok(new BaseResponse<List<LibraryRoomDto.BookInstanceDto>>
+    {
+      Count = totalCount, Page = page, PageCount = pageCount, Data = response
+    });
   }
 
   [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)
