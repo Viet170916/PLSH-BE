@@ -9,56 +9,65 @@ namespace Model.Entity.Borrow;
 
 public class BookBorrowing
 {
-  public int Id { get; set; }
-  public int? TransactionId { get; set; }
+    public int Id { get; set; }
+    public int? TransactionId { get; set; }
 
-  public int BookInstanceId { get; set; }
+    public int BookInstanceId { get; set; }
+    // public int? ConfirmationLibrarianId { get; set; }
+    //
+    // [ForeignKey("ConfirmationLibrarianId")]
+    // public Librarian? ConfirmationLibrarian { get; set; }
 
-  [ForeignKey("BookInstanceId")]
-  public BookInstance BookInstance { get; set; }
+    [ForeignKey("BookInstanceId")]
+    public BookInstance BookInstance { get; set; }
 
-  [InverseProperty("BookBorrowingBefore")]
     public ICollection<Resource> BookImagesBeforeBorrow { get; set; } = new List<Resource>();
-
-    [InverseProperty("BookBorrowingAfter")]
     public ICollection<Resource> BookImagesAfterBorrow { get; set; } = new List<Resource>();
-  public string? NoteBeforeBorrow { get; set; }
-  public string? NoteAfterBorrow { get; set; }
+    public string? NoteBeforeBorrow { get; set; }
+    public string? NoteAfterBorrow { get; set; }
 
-  public int LoanId { get; set; }
-  public string BorrowingStatus { get; set; } = "undefined";
-  public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
-  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    // public int BookDetailId { get; set; }
 
-  [Column(TypeName = "text")]
-  public string ReturnDatesJson { get; set; } = "[]";
+    // [MaxLength(255)]
+    // public string? BookConditionUrl { get; set; }
+    public int LoanId { get; set; }
+    // public int? PageCount { get; set; }
 
-  [Column(TypeName = "text")]
-  public string ExtendDatesJson { get; set; } = "[]";
+    // [MaxLength(255)]
+    // public string? BookConditionDescription { get; set; }
+    public string BorrowingStatus { get; set; } = "undefined";
+    public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-  [NotMapped]
-  public List<DateTime> ReturnDates
-  {
-    get => JsonSerializer.Deserialize<List<DateTime>>(ReturnDatesJson) ?? [];
-    set => ReturnDatesJson = JsonSerializer.Serialize(value);
-  }
+    [Column(TypeName = "text")]
+    public string ReturnDatesJson { get; set; } = "[]";
 
-  [NotMapped]
-  public List<DateTime> ExtendDates
-  {
-    get => JsonSerializer.Deserialize<List<DateTime>>(ExtendDatesJson) ?? [];
-    set => ExtendDatesJson = JsonSerializer.Serialize(value);
-  }
+    [Column(TypeName = "text")]
+    public string ExtendDatesJson { get; set; } = "[]";
 
-//Thông tin phạt
-  public bool IsFined { get; set; } = false;
-  public FineType? FineType { get; set; } = null;
+    [NotMapped]
+    public List<DateTime> ReturnDates
+    {
+        get => JsonSerializer.Deserialize<List<DateTime>>(ReturnDatesJson) ?? [];
+        set => ReturnDatesJson = JsonSerializer.Serialize(value);
+    }
 
-  [MaxLength(500)]
-  public string? Note { get; set; }
+    [NotMapped]
+    public List<DateTime> ExtendDates
+    {
+        get => JsonSerializer.Deserialize<List<DateTime>>(ExtendDatesJson) ?? [];
+        set => ExtendDatesJson = JsonSerializer.Serialize(value);
+    }
 
-  [ForeignKey("LoanId")]
-  public virtual Loan? Loan { get; set; }
+    //Thông tin phạt
+    public bool IsFined { get; set; } = false;
+    public FineType? FineType { get; set; } = null;
 
-  public DateTime? ActualReturnDate { get; set; }
+    [MaxLength(500)]
+    public string? Note { get; set; }
+
+    [ForeignKey("LoanId")]
+    public virtual Loan? Loan { get; set; }
+
+    public DateTime? ActualReturnDate { get; set; }
 }

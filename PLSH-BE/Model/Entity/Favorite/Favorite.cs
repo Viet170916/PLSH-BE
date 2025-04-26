@@ -8,7 +8,7 @@ namespace Model.Entity
   public class Favorite
   {
     public int Id { get; set; }
-    public int AccountId { get; set; }
+    public int BorrowerId { get; set; }
     public int BookId { get; set; }
     public DateTime AddedDate { get; set; } = DateTime.UtcNow;
 

@@ -22,16 +22,16 @@ namespace Model.Entity
     [MaxLength(255)]
     public string? LocalUrl { get; set; }
 
-        // Quan hệ 1: ảnh trước mượn
-       public int? BookBorrowingBeforeId { get; set; }
+    //    // Quan hệ 1: ảnh trước mượn
+    //   public int? BookBorrowingBeforeId { get; set; }
 
-    [ForeignKey("BookBorrowingBeforeId")]
-    public BookBorrowing? BookBorrowingBefore { get; set; }
+    //[ForeignKey("BookBorrowingBeforeId")]
+    //public BookBorrowing? BookBorrowingBefore { get; set; }
 
-    // Quan hệ 2: ảnh sau mượn
-    public int? BookBorrowingAfterId { get; set; }
+    //// Quan hệ 2: ảnh sau mượn
+    //public int? BookBorrowingAfterId { get; set; }
 
-    [ForeignKey("BookBorrowingAfterId")]
-    public BookBorrowing? BookBorrowingAfter { get; set; }
+    //[ForeignKey("BookBorrowingAfterId")]
+    //public BookBorrowing? BookBorrowingAfter { get; set; }
     }
 }
