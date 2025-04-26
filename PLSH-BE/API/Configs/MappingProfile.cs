@@ -65,6 +65,7 @@ public class MappingProfile : Profile
     CreateMap<BookInstance, LibraryRoomDto.BookInstanceDto>()
       .ForMember(dest => dest.BookId, opt => opt.MapFrom(src => src.BookId))
       .ForMember(dest => dest.RowShelfId, opt => opt.MapFrom(src => src.RowShelfId))
+      .ForMember(dest => dest.ShelfId, opt => opt.MapFrom(src => src.RowShelf.ShelfId))
       .ForMember(dest => dest.BookName, opt => opt.MapFrom(src => src.Book.Title))
       .ForMember(dest => dest.BookVersion, opt => opt.MapFrom(src => src.Book.Version))
       .ForMember(dest => dest.BookThumbnail,
@@ -76,7 +77,7 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.BookCategory, opt => opt.MapFrom(src => src.Book.Category!.Name))
       .ForMember(dest => dest.ShelfPosition,
         opt => opt.MapFrom(src => src.RowShelfId != null ?
-          $"Kệ x-{src.RowShelf.Shelf.X}_y-{src.RowShelf.Shelf.Y}, Hàng {src.RowShelf.Name}, Ngăn {src.Position}" :
+          $"{src.RowShelf.Shelf.Name ?? $"Kệ [x-{src.RowShelf.Shelf.X},y-{src.RowShelf.Shelf.Y}]"},{src.RowShelf.Name ?? "chưa đặt tên hàng"}, Ngăn {src.Position}" :
           "Chưa có trên kệ"))
       .ReverseMap();
     CreateMap<RowShelf, LibraryRoomDto.RowShelfDto>()
@@ -85,14 +86,17 @@ public class MappingProfile : Profile
       .ReverseMap();
     CreateMap<Shelf, LibraryRoomDto.ShelfDto>()
       .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
+      .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name ?? $"Kệ [{src.X},{src.Y}]"))
       .ReverseMap();
     CreateMap<LibraryRoom, LibraryRoomDto>()
       .ReverseMap();
     CreateMap<Account, AccountGDto>()
       .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
       .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+      .ForMember(dest => dest.ClassName, opt => opt.MapFrom(src => src.ClassRoom))
       .ReverseMap()
-      .ForMember(des => des.Role, opt => opt.Ignore());
+      .ForMember(des => des.Role, opt => opt.Ignore())
+      .ForMember(des => des.ClassRoom, opt => opt.MapFrom(src => src.ClassRoom ?? src.ClassName));
     CreateMap<Loan, LoanDto>()
       .ForMember(dest => dest.BookCount, opt => opt.MapFrom(src => src.BookBorrowings.Count))
       .ReverseMap();
@@ -107,6 +111,37 @@ public class MappingProfile : Profile
             "overdue" :
             src.BorrowingStatus))
       .ForMember(dest => dest.overdueDays,
+        opt => opt.MapFrom(src => DateTimeConverter.CalculateOverdueDays(src.BorrowDate, src.ReturnDates,
+          src.ExtendDates, src.ActualReturnDate ?? DateTime.UtcNow)))
+      .ReverseMap();
+    CreateMap<BookBorrowing, BookBorrowingDetailDto>()
+      .ForMember(dest => dest.BorrowerAvatar,
+        opt => opt.MapFrom(src => src.Loan.Borrower.AvatarUrl))
+      .ForMember(dest => dest.BorrowerEmail,
+        opt => opt.MapFrom(src => src.Loan.Borrower.Email))
+      .ForMember(dest => dest.BorrowerPhone,
+        opt => opt.MapFrom(src => src.Loan.Borrower.PhoneNumber))
+      .ForMember(dest => dest.BorrowerClass,
+        opt => opt.MapFrom(src => src.Loan.Borrower.ClassRoom))
+      .ForMember(dest => dest.BorrowerFullName,
+        opt => opt.MapFrom(src => src.Loan.Borrower.FullName))
+      .ForMember(dest => dest.BorrowerRole,
+        opt => opt.MapFrom(src => src.Loan.Borrower.Role.Name))
+      .ForMember(dest => dest.BorrowerId,
+        opt => opt.MapFrom(src => src.Loan.BorrowerId))
+      .ForPath(dest => dest.BookInstance.RowShelfId,
+        opt => opt.Ignore())
+      //
+      .ForMember(dest => dest.BookImageUrlsBeforeBorrow,
+        opt => opt.MapFrom(src => src.BookImagesBeforeBorrow.Select(img => Converter.ToImageUrl(img.LocalUrl))))
+      .ForMember(dest => dest.BookImageUrlsAfterBorrow,
+        opt => opt.MapFrom(src => src.BookImagesAfterBorrow.Select(img => Converter.ToImageUrl(img.LocalUrl))))
+      .ForMember(dest => dest.BorrowingStatus,
+        opt => opt.MapFrom(src =>
+          (src.BorrowingStatus != "returned" && src.ReturnDates.Count > 0 && src.ReturnDates.Max() < DateTime.UtcNow) ?
+            "overdue" :
+            src.BorrowingStatus))
+      .ForMember(dest => dest.OverdueDays,
         opt => opt.MapFrom(src => DateTimeConverter.CalculateOverdueDays(src.BorrowDate, src.ReturnDates,
           src.ExtendDates, src.ActualReturnDate ?? DateTime.UtcNow)))
       .ReverseMap();

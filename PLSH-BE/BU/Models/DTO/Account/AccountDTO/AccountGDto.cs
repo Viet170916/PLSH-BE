@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 
 namespace BU.Models.DTO.Account.AccountDTO;
@@ -9,12 +10,15 @@ public class AccountGDto
   public string? Email { get; set; }
   public string? PhoneNumber { get; set; }
   public string? AvatarUrl { get; set; }
+  public string? ClassName { get; set; }
   public string Role { get; set; } = "";
   public bool IsVerified { get; set; }
   public bool? Gender { get; set; }
   public DateTime? Birthdate { get; set; }
   public string? Address { get; set; }
+
   public string? IdentityCardNumber { get; set; }
+
   // public int? RoleId { get; set; }
   public string Status { get; set; } = "";
   public DateTime CreatedAt { get; set; }
@@ -25,4 +29,5 @@ public class AccountGDto
   public DateTime? CardMemberExpiredDate { get; set; }
   public int? FailedLoginAttempts { get; set; }
   public DateTime? LockoutEnd { get; set; }
+  public string? ClassRoom { get; set; }
 }

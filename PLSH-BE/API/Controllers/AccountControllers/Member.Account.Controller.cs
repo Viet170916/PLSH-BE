@@ -14,6 +14,53 @@ namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
+  [Authorize("LibrarianPolicy")] [HttpGet("member/{id}/validate")]
+  public async Task<ActionResult<BaseResponse<string>>> ValidateAccount(int id)
+  {
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Id == id);
+    if (account == null)
+    {
+      return NotFound(new BaseResponse<string>
+      {
+        Message = "Không tìm thấy tài khoản", Data = "invalid", Status = "error"
+      });
+    }
+
+    var errorMessages = new List<string>();
+    if (account.CardMemberExpiredDate < DateTime.UtcNow)
+    {
+      return Ok(new BaseResponse<string> { Message = "Thẻ đã hết hạn", Data = "expired", Status = "error" });
+    }
+
+    if (string.IsNullOrWhiteSpace(account.FullName)) errorMessages.Add("Thiếu họ tên");
+    if (string.IsNullOrWhiteSpace(account.PhoneNumber)) errorMessages.Add("Thiếu số điện thoại");
+    if (string.IsNullOrWhiteSpace(account.Email)) errorMessages.Add("Thiếu email");
+    if (!account.IsVerified) errorMessages.Add("Tài khoản chưa được xác minh");
+    if (account.CardMemberStatus == 0) errorMessages.Add("Thẻ không ở trạng thái hợp lệ");
+    if (account.Role.Name != "student" && account.Role.Name != "teacher") errorMessages.Add("Vai trò không hợp lệ");
+    switch (account.Role.Name)
+    {
+      case "student":
+        if (string.IsNullOrWhiteSpace(account.ClassRoom)) errorMessages.Add("Sinh viên phải có thông tin lớp học");
+        break;
+      case "teacher":
+        if (string.IsNullOrWhiteSpace(account.IdentityCardNumber)) errorMessages.Add("Giảng viên phải có số căn cước công dân");
+        break;
+    }
+
+    if (errorMessages.Count != 0)
+    {
+      return Ok(new BaseResponse<string>
+      {
+        Message = "Thông tin không hợp lệ: " + string.Join("; ", errorMessages), Data = "invalid", Status = "error"
+      });
+    }
+
+    return Ok(new BaseResponse<string> { Message = "Tài khoản hợp lệ", Data = "valid", Status = "success" });
+  }
+
   [Authorize("LibrarianPolicy")] [HttpPost("member/create")]
   public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest account)
   {
@@ -77,11 +124,10 @@ public partial class AccountController
 
     var query = context.Accounts.Include(a => a.Role)
                        .AsQueryable();
-    if (!(roleToken == "librarian" || roleToken == "admin")) { return Forbid(); }
+    if (roleToken is not ("librarian" or "admin")) { return Forbid(); }
 
     if (roleToken == "librarian") { query = query.Where(a => a.Role.Name == "student" || a.Role.Name == "teacher"); }
 
-    // Áp dụng bộ lọc
     if (!string.IsNullOrEmpty(trimedKeyword))
     {
       query = query.Where(a =>

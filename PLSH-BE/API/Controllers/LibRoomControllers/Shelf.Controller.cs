@@ -22,6 +22,7 @@ public partial class LibraryRoomController
                              .Include(s => s.RowShelves)
                              .ThenInclude(rs => rs.BookInstances)
                              .Where(r => r.Type == "SHELF_LARGE" || r.Type == "SHELF_SMALL")
+                             .OrderBy(r => r.Name)
                              .ToListAsync();
       var result = mapper.Map<List<LibraryRoomDto.ShelfDto>>(shelves);
       foreach (var rowShelfDtose in result.Select(r => r.RowShelves))
@@ -37,6 +38,18 @@ public partial class LibraryRoomController
                            .ToListAsync();
     return Ok(shelves);
   }
+
+  [Authorize("LibrarianPolicy")] [HttpGet("shelves/selection")]
+  public async Task<ActionResult<List<LibraryRoomDto.ShelfDto>>> GetShelvesSelection([FromQuery] bool? minimum)
+  {
+    var shelves = await context.Shelves
+                               .Where(r => r.Type == "SHELF_LARGE" || r.Type == "SHELF_SMALL")
+                               .Select(sh => new LibraryRoomDto.ShelfDto { Id = sh.Id,
+                                 Name = sh.Name??$"Kệ[{sh.X},{sh.Y}]", })
+                               .ToListAsync();
+    return Ok(new BaseResponse<List<LibraryRoomDto.ShelfDto>> { Data = shelves, });
+  }
+
   [Authorize("LibrarianPolicy")] [HttpGet("items")]
   public async Task<ActionResult<List<LibraryRoomDto.ShelfDto>>> GetItems([FromQuery] bool? minimum)
   {

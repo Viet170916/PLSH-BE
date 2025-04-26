@@ -11,6 +11,24 @@ namespace API.Controllers.BookControllers;
 
 public partial class BookController
 {
+  public class UpdatePositionDto
+  {
+    public int? Position { get; set; }
+    public int? RowShelfId { get; set; }
+  }
+
+  [HttpPut("book-instances/{id}/update-position")]
+  public async Task<IActionResult> UpdatePositionAndRowShelf(int id, [FromBody] UpdatePositionDto dto)
+  {
+    var bookInstance = await context.BookInstances.FindAsync(id);
+    if (bookInstance == null) { return NotFound(new BaseResponse<object?> { Message = "BookInstance not found.", }); }
+
+    bookInstance.Position = dto.Position;
+    bookInstance.RowShelfId = dto.RowShelfId;
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<object> { Message = "BookInstance updated successfully.", });
+  }
+
   [HttpGet("book-instances")] public async Task<IActionResult> GetBookInstancesByBookIdOrIsbn(
     [FromQuery] int? bookId,
     [FromQuery] string? isbnOrBookCode = null,
@@ -23,7 +41,7 @@ public partial class BookController
                        .ThenInclude(b => b.CoverImageResource)
                        .Include(b => b.RowShelf)
                        .ThenInclude(r => r.Shelf)
-                       .Where(bi => bi.DeletedAt == null && bi.IsInBorrowing == false);
+                       .Where(bi => bi.DeletedAt == null);
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {
       query = query.Where(bi =>
@@ -50,7 +68,22 @@ public partial class BookController
     });
   }
 
-  [HttpDelete("book-instance/{id}")] public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)
+  [HttpGet("book-instances/{id}")] public async Task<IActionResult> GetBookInstanceById([FromRoute] int id)
+  {
+    var bookInstance = await context.BookInstances
+                                    .Include(i => i.Book)
+                                    .ThenInclude(b => b.CoverImageResource)
+                                    .Include(b => b.RowShelf)
+                                    .ThenInclude(r => r.Shelf)
+                                    .FirstOrDefaultAsync(bi => bi.DeletedAt == null && bi.Id == id);
+    if (bookInstance == null) { return NotFound(new BaseResponse<string> { Message = "BookInstance not found.", }); }
+
+    var response = mapper.Map<LibraryRoomDto.BookInstanceDto>(bookInstance);
+    return Ok(new BaseResponse<LibraryRoomDto.BookInstanceDto> { Data = response, });
+  }
+
+  [Authorize("LibrarianPolicy")] [HttpDelete("book-instance/{id}")]
+  public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)
   {
     var bookInstance = await context.BookInstances.FindAsync(id);
     if (bookInstance == null) { return NotFound(new { message = "Book instance not found", }); }
@@ -61,5 +94,22 @@ public partial class BookController
     bookInstance.BookId = null;
     await context.SaveChangesAsync();
     return Ok(new { message = "Book instance deleted successfully" });
+  }
+
+  public class AddInstanceRequest
+  {
+    public int Quantity { get; set; } = 1;
+  }
+
+  [Authorize("LibrarianPolicy")] [HttpPost("{id}/instance/add")]
+  public async Task<IActionResult> AddBookInstance([FromRoute] int id, [FromBody] AddInstanceRequest? request)
+  {
+    var book = await context.Books.FindAsync(id);
+    if (book == null) { return NotFound(new BaseResponse<string?> { Message = "Không tìm thấy sách", }); }
+
+    await bookInstanceService.AddBookInstances(id, request?.Quantity ?? 1);
+    book.UpdateDate = DateTime.UtcNow;
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<string?> { Message = $"Thêm thành công ${request?.Quantity ?? 1} cuốn sách", });
   }
 }

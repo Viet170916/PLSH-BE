@@ -82,4 +82,43 @@ public partial class LibraryRoomController
     var hasBooks = await context.BookInstances.AnyAsync(b => b.RowShelfId == rowShelfId);
     return Ok(new { rowShelfId, hasBooks });
   }
+
+  [HttpGet("shelf/rows/selection")]
+  public async Task<IActionResult> GetRowShelvesWithEmptyPositions(
+    [FromQuery] string? name,
+    [FromQuery] long? shelfId)
+  {
+    var query = context.RowShelves.AsQueryable();
+
+    if (!string.IsNullOrEmpty(name))
+    {
+      query = query.Where(r => r.Name != null && r.Name.Contains(name));
+    }
+
+    if (shelfId.HasValue)
+    {
+      query = query.Where(r => r.ShelfId == shelfId.Value);
+    }
+
+    var rowShelves = await query
+                           .Select(r => new
+                           {
+                             r.Id,
+                             Name =r.Name??$"Chưa được đặt tên",
+                             r.ShelfId,
+                             r.MaxCol,
+                             EmptyPositions = r.BookInstances != null
+                               ? Enumerable.Range(0, r.MaxCol)
+                                           .Except(r.BookInstances.Select(bi => bi.Position ?? -1))
+                                           .ToList()
+                               : Enumerable.Range(0, r.MaxCol).ToList(),
+                           })
+                           .ToListAsync();
+
+    return Ok(new BaseResponse<object>
+    {
+      Data = rowShelves,
+    });
+  }
+
 }

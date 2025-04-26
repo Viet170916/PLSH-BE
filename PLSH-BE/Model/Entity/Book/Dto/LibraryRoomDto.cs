@@ -15,6 +15,7 @@ public class LibraryRoomDto
     public string? BookCategory { get; set; }
     public int? BookId { get; set; }
     public int? Position { get; set; }
+    public int? ShelfId { get; set; }
     public string? ShelfPosition { get; set; }
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -23,6 +24,7 @@ public class LibraryRoomDto
   public class RowShelfDto
   {
     public long Id { get; set; }
+    public long? ShelfId { get; set; }
     public string? Name { get; set; }
     public string? Description { get; set; }
     public int? Position { get; set; }
