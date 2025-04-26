@@ -1,6 +1,6 @@
 stages:
   - test
-  - trigger_jenkins
+  # - trigger_jenkins
   - build
   - deploy
  
@@ -9,13 +9,13 @@ variables:
   DOTNET_VERSION: 8.0
   
 
-trigger_jenkins_job:
-  stage: trigger_jenkins
-  tags:
-    - jenkins-runner
-  script:
-    - echo "Triggering Jenkins pipeline..."
-    - curl -X POST "http://admin:1185d90d52dbdf516a3a0d5ac9ae4abf22@192.168.230.99:8080/job/Lab_iap491/job/G76_SEP490_SPR25_/job/PLSH-BE/buildWithParameters?GIT_BRANCH=$CI_COMMIT_REF_NAME"
+# trigger_jenkins_job:
+#   stage: trigger_jenkins
+#   tags:
+#     - jenkins-runner
+#   script:
+#     - echo "Triggering Jenkins pipeline..."
+#     - curl -X POST "http://admin:1185d90d52dbdf516a3a0d5ac9ae4abf22@192.168.230.99:8080/job/Lab_iap491/job/G76_SEP490_SPR25_/job/PLSH-BE/buildWithParameters?GIT_BRANCH=$CI_COMMIT_REF_NAME"
 
 build_fe_borrower_project:
   stage: build
