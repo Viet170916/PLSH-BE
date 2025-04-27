@@ -262,4 +262,95 @@ public partial class LoanController
       Status = "success", Message = "Gửi yêu cầu mượn sách thành công.", Data = loanDto,
     });
   }
+
+  public class AddInstanceToCartRequestDto
+  {
+    public int BookInstanceId { get; set; }
+  }
+
+  [Authorize("BorrowerPolicy")] [HttpPost("add-instance-to-cart")]
+  public async Task<IActionResult> AddInstanceToCart([FromBody] AddInstanceToCartRequestDto request)
+  {
+    try
+    {
+      if (!(User.IsInRole("student") || User.IsInRole("teacher")))
+      {
+        return Unauthorized(new BaseResponse<string>
+        {
+          Message = "Chỉ sinh viên và giáo viên mới được mượn sách.", Status = "unsuccessful"
+        });
+      }
+
+      var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+      var account = await context.Accounts.FindAsync(accountId);
+      if (account is not { IsVerified: true, })
+      {
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = "Tài khoản chưa được xác thực.", Status = "unsuccessful"
+        });
+      }
+
+      if (account.Status == "restricted")
+      {
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = "Tài khoản bị hạn chế quyền mượn sách.", Status = "unsuccessful"
+        });
+      }
+
+      var bookInstance = await context.BookInstances
+                                      .Include(i => i.Book)
+                                      .FirstOrDefaultAsync(i => i.Id == request.BookInstanceId);
+      if (bookInstance == null)
+      {
+        return NotFound(new BaseResponse<string> { Message = "Không tìm thấy sách.", Status = "unsuccessful" });
+      }
+
+      if (bookInstance.IsInBorrowing)
+      {
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = $"Sách '{bookInstance.Book.Title}' đang được mượn.", Status = "unsuccessful"
+        });
+      }
+
+      var loan = await context.Loans
+                              .Include(l => l.BookBorrowings)
+                              .ThenInclude(bb => bb.BookInstance)
+                              .FirstOrDefaultAsync(l => l.BorrowerId == accountId && l.IsCart);
+      if (loan == null)
+      {
+        loan = new Loan { BorrowerId = accountId, IsCart = true };
+        context.Loans.Add(loan);
+        await context.SaveChangesAsync();
+      }
+
+      if (loan.BookBorrowings.Any(bb => bb.BookInstanceId == bookInstance.Id))
+      {
+        return BadRequest(new BaseResponse<string>
+        {
+          Message = "Sách đã có trong giỏ mượn.", Status = "unsuccessful"
+        });
+      }
+
+      loan.BookBorrowings.Add(new BookBorrowing
+      {
+        BookInstanceId = bookInstance.Id, BorrowingStatus = "on-loan", BorrowDate = DateTime.UtcNow
+      });
+      await context.SaveChangesAsync();
+      return Ok(new BaseResponse<string>
+      {
+        Message = "Đã thêm sách vào giỏ mượn thành công.", Status = "success"
+      });
+    }
+    catch (Exception ex)
+    {
+      return StatusCode(500,
+        new BaseResponse<string>
+        {
+          Message = $"Thêm sách vào giỏ mượn thất bại: {ex.Message}", Status = "unsuccessful"
+        });
+    }
+  }
 }

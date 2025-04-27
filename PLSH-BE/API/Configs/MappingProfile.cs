@@ -50,11 +50,11 @@ public class MappingProfile : Profile
       .ForMember(dest => dest.IsbnNumber10, opt => opt.MapFrom(src => src.IsbNumber10))
       .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
       .ForMember(dest => dest.Authors, opt => opt.MapFrom(src => src.Authors))
-      .ForMember(dest => dest.Quantity,
-        opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count : 0))
+      // .ForMember(dest => dest.Quantity,
+      //   opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count : 0))
       .ForMember(dest => dest.PublishDate, opt => opt.MapFrom(src => src.PublishDate))
-      .ForMember(dest => dest.AvailableBookCount,
-        opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count(b => !b.IsInBorrowing) : 0))
+      // .ForMember(dest => dest.AvailableBookCount,
+      //   opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count(b => !b.IsInBorrowing) : 0))
       .ReverseMap()
       .ForMember(dest => dest.IsbNumber10, opt => opt.MapFrom(src => src.IsbnNumber13))
       .ForMember(dest => dest.IsbNumber10, opt => opt.MapFrom(src => src.IsbnNumber10));
@@ -86,7 +86,8 @@ public class MappingProfile : Profile
       .ReverseMap();
     CreateMap<Shelf, LibraryRoomDto.ShelfDto>()
       .ForMember(dest => dest.RowShelves, opt => opt.MapFrom(src => src.RowShelves))
-      .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name ?? $"Kệ [{src.X},{src.Y}]"))
+      .ForMember(dest => dest.Name,
+        opt => opt.MapFrom(src => src.Type.Contains("SHELF") ? src.Name ?? $"Kệ [{src.X},{src.Y}]" : src.Name ?? null))
       .ReverseMap();
     CreateMap<LibraryRoom, LibraryRoomDto>()
       .ReverseMap();

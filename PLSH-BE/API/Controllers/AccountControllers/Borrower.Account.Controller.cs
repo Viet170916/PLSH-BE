@@ -12,12 +12,21 @@ namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
-  [HttpPost("b-login")] public async Task<IActionResult> BorrowerLogin([FromBody] LoginRequest request)
+  [HttpPost("b-login")]
+  public async Task<IActionResult> BorrowerLogin([FromBody] LoginRequest request)
   {
-    var account = await context.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Email == request.Email);
     if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
     {
       return Unauthorized(new BaseResponse<string> { Message = "Email hoặc mật khẩu không đúng." });
+    }
+
+    if (account.Role == null ||
+        (account.Role.Name != "student" && account.Role.Name != "teacher"))
+    {
+      return Unauthorized(new BaseResponse<string> { Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập." });
     }
 
     var token = string.Empty;
@@ -26,13 +35,13 @@ public partial class AccountController
       token = GenerateJwtToken(account, "notVerifiedUser", TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        Data = token, Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
+        Data = token,
+        Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
       });
     }
 
-    var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
     var tokenExpiration = TimeSpan.FromDays(7);
-    token = GenerateJwtToken(account, role, tokenExpiration);
+    token = GenerateJwtToken(account, account.Role.Name, tokenExpiration);
     return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập thành công." });
   }
 
@@ -105,50 +114,72 @@ public partial class AccountController
   }
 
   [HttpPost("b-login/google")]
-  public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
-  {
+public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
+{
     try
     {
-      var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
-      var email = payload.Email;
-      var fullName = payload.Name;
-      var googleUserId = payload.Subject;
-      var avatarUrl = payload.Picture;
-      var account = await context.Accounts
-                                 .Include(ac => ac.Role)
-                                 .FirstOrDefaultAsync(a => a.Email == email);
-      var roleId = context.Roles.FirstOrDefault(r => r.Name == request.Role)?.Id;
-      if (account == null)
-      {
-        if (roleId is null)
+        var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
+        var email = payload.Email;
+        var fullName = payload.Name;
+        var googleUserId = payload.Subject;
+        var avatarUrl = payload.Picture;
+
+        var account = await context.Accounts
+                                   .Include(ac => ac.Role)
+                                   .FirstOrDefaultAsync(a => a.Email == email);
+
+        if (account != null)
         {
-          return BadRequest(new BaseResponse<string> { Message = $"Không hỗ trợ người dùng: {request.Role}" });
+            // Tài khoản đã tồn tại, kiểm tra role
+            if (account.Role == null ||
+                (account.Role.Name != "student" && account.Role.Name != "teacher"))
+            {
+                return Unauthorized(new BaseResponse<string> { Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập." });
+            }
+        }
+        else
+        {
+            // Tài khoản chưa có, phải chọn role là student hoặc teacher
+            if (request.Role != "student" && request.Role != "teacher")
+            {
+                return BadRequest(new BaseResponse<string> { Message = "Chỉ hỗ trợ vai trò học sinh hoặc giáo viên." });
+            }
+
+            var roleId = await context.Roles
+                                      .Where(r => r.Name == request.Role)
+                                      .Select(r => r.Id)
+                                      .FirstOrDefaultAsync();
+
+            if (roleId == 0)
+            {
+                return BadRequest(new BaseResponse<string> { Message = $"Không tìm thấy vai trò {request.Role} trong hệ thống." });
+            }
+
+            account = new Account
+            {
+                FullName = request.FullName ?? fullName,
+                Email = email,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
+                GoogleUserId = googleUserId,
+                ClassRoom = request.ClassRoom,
+                IdentityCardNumber = request.IdentityCardNumber,
+                RoleId = roleId,
+                IsVerified = true,
+                AvatarUrl = avatarUrl,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Accounts.Add(account);
+            await context.SaveChangesAsync();
         }
 
-        account = new Account
-        {
-          FullName = request.FullName ?? fullName,
-          Email = email,
-          PhoneNumber = request.PhoneNumber,
-          Address = request.Address,
-          GoogleUserId = googleUserId,
-          ClassRoom = request.ClassRoom,
-          IdentityCardNumber = request.IdentityCardNumber,
-          RoleId = (int)roleId,
-          IsVerified = true,
-          AvatarUrl = avatarUrl,
-          CreatedAt = DateTime.UtcNow
-        };
-        context.Accounts.Add(account);
-        await context.SaveChangesAsync();
-      }
-
-      var token = GenerateJwtToken(account, account?.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
-      return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
+        var token = GenerateJwtToken(account, account.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
+        return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
     {
-      return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
+        return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
     }
-  }
+}
+
 }

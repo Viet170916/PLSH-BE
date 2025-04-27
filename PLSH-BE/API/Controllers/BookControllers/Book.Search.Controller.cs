@@ -23,9 +23,15 @@ public partial class BookController
                             .Where(b => b.Id == id)
                             .ProjectTo<BookNewDto>(mapper.ConfigurationProvider)
                             .FirstOrDefaultAsync(b => b.Id == id);
-    var bookDto = mapper.Map<BookNewDto>(book);
-    if (bookDto == null) return NotFound();
-    return Ok(bookDto);
+    if (book is not null)
+    {
+      book.AvailableBookCount = context.BookInstances.Count(i => i.BookId == book.Id && !i.IsInBorrowing);
+      book.Quantity = context.BookInstances.Count(i => i.BookId == book.Id);
+    }
+
+    // var bookDto = mapper.Map<BookNewDto>(book);
+    if (book == null) return NotFound();
+    return Ok(book);
   }
 
   [HttpGet] public async Task<IActionResult> SearchBooks(

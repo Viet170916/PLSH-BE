@@ -152,7 +152,7 @@ public partial class LoanController
                        // .ThenInclude(l=>l.BookImagesAfterBorrow)
                        .Include(l => l.Borrower)
                        .Include(l => l.Librarian)
-                       .Where(l => l.BorrowerId == userId)
+                       .Where(l => l.BorrowerId == userId && !l.IsCart)
                        .AsQueryable();
     if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(l => l.AprovalStatus == approveStatus); }
 
