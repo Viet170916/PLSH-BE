@@ -53,7 +53,7 @@ public class MappingProfile : Profile
       // .ForMember(dest => dest.Quantity,
       //   opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count : 0))
       .ForMember(dest => dest.PublishDate, opt => opt.MapFrom(src => src.PublishDate))
-      .ForMember(dest => dest.PublishDate, opt => opt.MapFrom(src => src.PublishDate))
+      .ForMember(dest => dest.BookInstances, opt => opt.Ignore())
       // .ForMember(dest => dest.AvailableBookCount,
       //   opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count(b => !b.IsInBorrowing) : 0))
       .ReverseMap()
