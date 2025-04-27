@@ -17,22 +17,40 @@ namespace API.Controllers.BookControllers;
 
 public partial class BookController
 {
-  [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
+  [HttpGet("{id}")]
+  public async Task<IActionResult> GetBookById(int id)
   {
     var book = await context.Books
                             .Where(b => b.Id == id)
                             .ProjectTo<BookNewDto>(mapper.ConfigurationProvider)
-                            .FirstOrDefaultAsync(b => b.Id == id);
-    if (book is not null)
+                            .FirstOrDefaultAsync();
+
+    if (book == null) return NotFound();
+
+    var counts = await context.BookInstances
+                              .Where(i => i.BookId == id)
+                              .GroupBy(i => i.BookId)
+                              .Select(g => new
+                              {
+                                Quantity = g.Count(),
+                                AvailableBookCount = g.Count(i => !i.IsInBorrowing)
+                              })
+                              .FirstOrDefaultAsync();
+
+    if (counts != null)
     {
-      book.AvailableBookCount = context.BookInstances.Count(i => i.BookId == book.Id && !i.IsInBorrowing);
-      book.Quantity = context.BookInstances.Count(i => i.BookId == book.Id);
+      book.Quantity = counts.Quantity;
+      book.AvailableBookCount = counts.AvailableBookCount;
+    }
+    else
+    {
+      book.Quantity = 0;
+      book.AvailableBookCount = 0;
     }
 
-    // var bookDto = mapper.Map<BookNewDto>(book);
-    if (book == null) return NotFound();
     return Ok(book);
   }
+
 
   [HttpGet] public async Task<IActionResult> SearchBooks(
     [FromQuery] string? keyword,
