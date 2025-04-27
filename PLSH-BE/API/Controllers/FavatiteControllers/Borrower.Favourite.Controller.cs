@@ -17,42 +17,36 @@ using BU.Models.DTO.Notification;
 
 namespace API.Controllers.FavatiteControllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/favorite")]
     [ApiController]
     //[Authorize]
-    public class BorrowerFavoriteController : ControllerBase
+    public class BorrowerFavoriteController(
+        AppDbContext context,
+        ILogger<BorrowerFavoriteController> logger,
+        INotificationService notificationService
+    )
+        : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly ILogger<BorrowerFavoriteController> _logger;
-        private readonly INotificationService _notificationService;
-
-        public BorrowerFavoriteController(AppDbContext context, ILogger<BorrowerFavoriteController> logger, INotificationService notificationService)
-        {
-            _context = context;
-            _logger = logger;
-            _notificationService = notificationService;
-        }
-
         [HttpPost("toggle")]
         public async Task<IActionResult> ToggleFavorite(int bookId, string note = null)
         {
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                int userId = int.Parse(userIdClaim);
+                var userId = int.Parse(userIdClaim);
                 if (userId == 0)
                 {
-                    _logger.LogWarning("Unauthorized access attempt on ToggleFavorite.");
+                    logger.LogWarning("Unauthorized access attempt on ToggleFavorite");
                     return Unauthorized("User not authenticated.");
                 }
 
-                var book = await _context.Books.FindAsync(bookId);
+                var book = await context.Books.FindAsync(bookId);
                 if (book == null)
                 {
                     return NotFound("Book not found");
                 }
 
-                var favorite = await _context.Favorites
+                var favorite = await context.Favorites
                     .FirstOrDefaultAsync(f => f.BorrowerId == userId && f.BookId == bookId);
 
                 if (favorite == null)
@@ -63,12 +57,11 @@ namespace API.Controllers.FavatiteControllers
                         BookId = bookId,
                         Status = FavoriteStatus.Favorite,
                         AddedDate = DateTime.UtcNow,
-                        Note = note
+                        Note = note,
                     };
-                    _context.Favorites.Add(favorite);
+                    context.Favorites.Add(favorite);
 
-                    // Gửi thông báo khi tạo mới favorite
-                    await _notificationService.SendNotificationToUserAsync(
+                    await notificationService.SendNotificationToUserAsync(
                         userId,
                         new NotificationDto
                         {
@@ -87,15 +80,13 @@ namespace API.Controllers.FavatiteControllers
                         : FavoriteStatus.Favorite;
                     favorite.AddedDate = DateTime.UtcNow;
                     favorite.Note = note ?? favorite.Note;
-
-                    // Gửi thông báo khi thay đổi trạng thái
                     if (previousStatus != favorite.Status)
                     {
                         var action = favorite.Status == FavoriteStatus.Favorite
                             ? "thêm vào"
                             : "bỏ khỏi";
 
-                        await _notificationService.SendNotificationToUserAsync(
+                        await notificationService.SendNotificationToUserAsync(
                             userId,
                             new NotificationDto
                             {
@@ -108,12 +99,12 @@ namespace API.Controllers.FavatiteControllers
                     }
                 }
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return Ok(new { isFavorite = favorite.Status == FavoriteStatus.Favorite });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while toggling favorite for BookId: {BookId}", bookId);
+                logger.LogError(ex, "Error occurred while toggling favorite for BookId: {BookId}", bookId);
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
@@ -127,13 +118,13 @@ namespace API.Controllers.FavatiteControllers
                 int userId = int.Parse(userIdClaim);
                 if (userId == 0)
                 {
-                    _logger.LogWarning("Unauthorized access attempt on GetFavorites.");
+                    logger.LogWarning("Unauthorized access attempt on GetFavorites.");
                     return Unauthorized("User not authenticated.");
                 }
 
-                var favorites = await _context.Favorites
+                var favorites = await context.Favorites
                     .Where(f => f.BorrowerId == userId && f.Status == FavoriteStatus.Favorite)
-                    .Join(_context.Books,
+                    .Join(context.Books,
                           f => f.BookId,
                           b => b.Id,
                           (f, b) => new
@@ -151,38 +142,31 @@ namespace API.Controllers.FavatiteControllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while getting favorites");
+                logger.LogError(ex, "Error occurred while getting favorites");
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
 
-        // Check Favorite Status
         [HttpGet("check/{bookId}")]
         public async Task<IActionResult> CheckFavoriteStatus(int bookId)
         {
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                int userId = int.Parse(userIdClaim);
+                var userId = int.Parse(userIdClaim);
                 if (userId == 0)
                 {
-                    _logger.LogWarning("Unauthorized access attempt on CheckFavoriteStatus.");
+                    logger.LogWarning("Unauthorized access attempt on CheckFavoriteStatus");
                     return Unauthorized("User not authenticated.");
                 }
 
-                var favorite = await _context.Favorites
+                var favorite = await context.Favorites
                     .FirstOrDefaultAsync(f => f.BorrowerId == userId && f.BookId == bookId);
-
-                if (favorite == null || favorite.Status != FavoriteStatus.Favorite)
-                {
-                    return Ok(new { isFavorite = false });
-                }
-
-                return Ok(new { isFavorite = true });
+                return Ok(favorite is not { Status: FavoriteStatus.Favorite } ? new { isFavorite = false, } : new { isFavorite = true, });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while checking favorite status for BookId: {BookId}", bookId);
+                logger.LogError(ex, "Error occurred while checking favorite status for BookId: {BookId}", bookId);
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
@@ -193,20 +177,20 @@ namespace API.Controllers.FavatiteControllers
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                int userId = int.Parse(userIdClaim);
+                var userId = int.Parse(userIdClaim);
                 if (userId == 0)
                 {
-                    _logger.LogWarning("Unauthorized access attempt on DeleteFavorite.");
+                    logger.LogWarning("Unauthorized access attempt on DeleteFavorite");
                     return Unauthorized("User not authenticated.");
                 }
 
-                var book = await _context.Books.FindAsync(bookId);
+                var book = await context.Books.FindAsync(bookId);
                 if (book == null)
                 {
                     return NotFound("Book not found");
                 }
 
-                var favorite = await _context.Favorites
+                var favorite = await context.Favorites
                     .FirstOrDefaultAsync(f => f.BorrowerId == userId && f.BookId == bookId);
 
                 if (favorite == null)
@@ -214,10 +198,9 @@ namespace API.Controllers.FavatiteControllers
                     return NotFound("Favorite not found");
                 }
 
-                _context.Favorites.Remove(favorite);
+                context.Favorites.Remove(favorite);
 
-                // Gửi thông báo khi xóa favorite
-                await _notificationService.SendNotificationToUserAsync(
+                await notificationService.SendNotificationToUserAsync(
                     userId,
                     new NotificationDto
                     {
@@ -228,12 +211,12 @@ namespace API.Controllers.FavatiteControllers
                         ReferenceData = new { BookId = bookId, BookTitle = book.Title }
                     });
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return Ok(new { message = "Favorite removed successfully" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while deleting favorite for BookId: {BookId}", bookId);
+                logger.LogError(ex, "Error occurred while deleting favorite for BookId: {BookId}", bookId);
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }

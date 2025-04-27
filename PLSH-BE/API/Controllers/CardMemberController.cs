@@ -13,7 +13,6 @@ namespace API.Controllers
   public class CardMemberController(AppDbContext context, ILogger<ManageAccountController> logger)
     : ControllerBase
   {
-    //Tạo thẻ thành viên
     [HttpPost("CreateCardMember")] public async Task<IActionResult> CreateCardMember([FromBody] int accountId)
     {
       try
@@ -24,7 +23,7 @@ namespace API.Controllers
         if (account.CardMemberNumber != null) { return BadRequest("Tài khoản đã có thẻ thành viên"); }
 
         account.CardMemberStatus = 1;
-        account.CardMemberExpiredDate = DateTime.Now.AddYears(1); //Thẻ thành viên add 1 năm
+        account.CardMemberExpiredDate = DateTime.Now.AddYears(1);
         account.UpdatedAt = DateTime.Now;
         context.Accounts.Update(account);
         await context.SaveChangesAsync();
@@ -38,7 +37,6 @@ namespace API.Controllers
       }
     }
 
-    //Gửi Request làm lại thẻ thành viên
     [HttpPost("RequestNewCard")] public async Task<IActionResult> RequestNewCard([FromBody] int accountId)
     {
       try
@@ -117,7 +115,6 @@ namespace API.Controllers
       }
     }
 
-    //Gia hạn thẻ thành viên
     [HttpPost("RenewCardMember")] public async Task<IActionResult> RenewCardMember([FromBody] int accountId)
     {
       try

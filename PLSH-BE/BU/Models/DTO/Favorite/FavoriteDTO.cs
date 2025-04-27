@@ -8,22 +8,22 @@ namespace BU.Models.DTO.Favorite
     public sealed class FavoriteDTO
     {
         [Key]
-        public int Id { get; set; } // ID của bản ghi yêu thích
+        public int Id { get; set; }
 
         [Required]
-        public int BorrowerId { get; set; } // ID của người dùng thích sách này
+        public int BorrowerId { get; set; }
 
         [Required]
-        public int BookId { get; set; } // ID của sách được thích
+        public int BookId { get; set; }
 
         [Required]
-        public DateTime AddedDate { get; set; } = DateTime.UtcNow; // Ngày thêm vào danh sách yêu thích
+        public DateTime AddedDate { get; set; } = DateTime.UtcNow;
 
         [StringLength(500, ErrorMessage = "Ghi chú không được vượt quá 500 ký tự.")]
-        public string? Note { get; set; } // Ghi chú của người dùng về cuốn sách
+        public string? Note { get; set; }
 
         [Required]
-        public FavoriteStatus Status { get; set; } = FavoriteStatus.WantToRead; // Trạng thái yêu thích
+        public FavoriteStatus Status { get; set; } = FavoriteStatus.WantToRead;
 
         // Navigation properties (nullable)
         //[ForeignKey("BorrowerId")]

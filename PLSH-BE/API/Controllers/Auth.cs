@@ -198,7 +198,6 @@ public class AuthController(
       user.LockoutEnd = null;
       await accountService.UpdateUserAsync(user);
 
-      // Tạo token và trả về kết quả
       var accessToken = GenerateJwt(user);
       var refreshToken = GenerateRefreshToken();
 
@@ -281,7 +280,6 @@ public class AuthController(
     });
   }
 
-  //Refresh Token
 
   [AllowAnonymous] [HttpPost("refresh-token")]
   public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDTO request)
@@ -290,7 +288,6 @@ public class AuthController(
     {
       logger.LogInformation($">>>>>>>Request: /api/v1/auth/refresh-token...............");
 
-      // Find the user by refresh token
       var user = await accountService.GetUserByRefreshTokenAsync(request.RefreshToken);
       if (user == null || user.RefreshTokenExpiry < DateTime.UtcNow)
       {
