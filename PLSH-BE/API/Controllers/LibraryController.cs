@@ -35,7 +35,7 @@
 //             }
 //
 //             // Tạo đối tượng Category từ DTO
-//             var category = new Category
+//             var categories = new Category
 //             {
 //                 Name = categoryDto.Name,
 //                 Description = categoryDto.Description,
@@ -44,11 +44,11 @@
 //             };
 //
 //             // Thêm vào DB
-//             context.Categories.Add(category);
+//             context.Categories.Add(categories);
 //             await context.SaveChangesAsync();
 //
 //             // Trả về kết quả thành công
-//             return Ok(new { message = "Category created successfully", categoryId = category.Id });
+//             return Ok(new { message = "Category created successfully", categoryId = categories.Id });
 //         }
 //
 //
@@ -62,8 +62,8 @@
 //             }
 //
 //             // Kiểm tra danh mục có tồn tại không
-//             var category = await context.Categories.FindAsync(bookDto.CategoryId);
-//             if (category == null)
+//             var categories = await context.Categories.FindAsync(bookDto.CategoryId);
+//             if (categories == null)
 //             {
 //                 return NotFound(new { message = "Category not found." });
 //             }
@@ -426,8 +426,8 @@
 //                 // Cập nhật danh mục sách nếu có thay đổi
 //                 if (bookDTO.CategoryId != 0 && bookDTO.CategoryId != existingBook.CategoryId)
 //                 {
-//                     var category = await context.Categories.FirstOrDefaultAsync(c => c.Id == bookDTO.CategoryId);
-//                     if (category == null)
+//                     var categories = await context.Categories.FirstOrDefaultAsync(c => c.Id == bookDTO.CategoryId);
+//                     if (categories == null)
 //                     {
 //                         return BadRequest(new ErrorResponse
 //                         {
@@ -439,7 +439,7 @@
 //                         });
 //                     }
 //                     existingBook.CategoryId = bookDTO.CategoryId;
-//                     //existingBook.Category = category;
+//                     //existingBook.Category = categories;
 //                 }
 //
 //                 context.Books.Update(existingBook);
@@ -643,8 +643,8 @@
 //
 //
 //
-//         //Phân loại sách theo category
-//         [HttpGet("books-by-category")]
+//         //Phân loại sách theo categories
+//         [HttpGet("books-by-categories")]
 //         public async Task<IActionResult> GetBooksByCategory(
 //             [FromQuery] int? categoryId,
 //             [FromQuery] int pageNumber = 1,
@@ -770,11 +770,11 @@
 //                 }
 //
 //                 var responseString = await response.Content.ReadAsStringAsync();
-//                 // Giả sử phản hồi từ GENAI có định dạng: { "category": "Fiction" }
+//                 // Giả sử phản hồi từ GENAI có định dạng: { "categories": "Fiction" }
 //                 dynamic result = JsonConvert.DeserializeObject(responseString);
-//                 string predictedCategory = result?.category ?? "Không xác định";
+//                 string predictedCategory = result?.categories ?? "Không xác định";
 //
-//                 // 4. Cập nhật lại category cho sách (tùy chọn)
+//                 // 4. Cập nhật lại categories cho sách (tùy chọn)
 //                // Book.Category = predictedCategory;
 //                 Book.UpdateDate = DateTime.Now;
 //                 context.Books.Update(Book);

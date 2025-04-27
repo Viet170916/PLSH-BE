@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Model.Entity.User;
 using System.Linq.Dynamic.Core;
+using System.Security.Claims;
 using API.DTO;
 using BU.Models.DTO;
 using BU.Models.DTO.Account.AccountDTO;
@@ -13,6 +14,53 @@ namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
+  [Authorize("LibrarianPolicy")] [HttpGet("member/{id}/validate")]
+  public async Task<ActionResult<BaseResponse<string>>> ValidateAccount(int id)
+  {
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Id == id);
+    if (account == null)
+    {
+      return NotFound(new BaseResponse<string>
+      {
+        Message = "Không tìm thấy tài khoản", Data = "invalid", Status = "error"
+      });
+    }
+
+    var errorMessages = new List<string>();
+    if (account.CardMemberExpiredDate < DateTime.UtcNow)
+    {
+      return Ok(new BaseResponse<string> { Message = "Thẻ đã hết hạn", Data = "expired", Status = "error" });
+    }
+
+    if (string.IsNullOrWhiteSpace(account.FullName)) errorMessages.Add("Thiếu họ tên");
+    if (string.IsNullOrWhiteSpace(account.PhoneNumber)) errorMessages.Add("Thiếu số điện thoại");
+    if (string.IsNullOrWhiteSpace(account.Email)) errorMessages.Add("Thiếu email");
+    if (!account.IsVerified) errorMessages.Add("Tài khoản chưa được xác minh");
+    if (account.CardMemberStatus == 0) errorMessages.Add("Thẻ không ở trạng thái hợp lệ");
+    if (account.Role.Name != "student" && account.Role.Name != "teacher") errorMessages.Add("Vai trò không hợp lệ");
+    switch (account.Role.Name)
+    {
+      case "student":
+        if (string.IsNullOrWhiteSpace(account.ClassRoom)) errorMessages.Add("Sinh viên phải có thông tin lớp học");
+        break;
+      case "teacher":
+        if (string.IsNullOrWhiteSpace(account.IdentityCardNumber)) errorMessages.Add("Giảng viên phải có số căn cước công dân");
+        break;
+    }
+
+    if (errorMessages.Count != 0)
+    {
+      return Ok(new BaseResponse<string>
+      {
+        Message = "Thông tin không hợp lệ: " + string.Join("; ", errorMessages), Data = "invalid", Status = "error"
+      });
+    }
+
+    return Ok(new BaseResponse<string> { Message = "Tài khoản hợp lệ", Data = "valid", Status = "success" });
+  }
+
   [Authorize("LibrarianPolicy")] [HttpPost("member/create")]
   public async Task<IActionResult> CreateAccount([FromBody] CreateAccountRequest account)
   {
@@ -61,6 +109,10 @@ public partial class AccountController
     [FromQuery] string? approveStatus = null
   )
   {
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+    var roleToken = (await context.Accounts.Include(a => a.Role).FirstOrDefaultAsync(a => a.Id == accountId))?.Role
+      .Name;
+    var trimedKeyword = keyword?.ToLower().Trim();
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
     if (limit > 100) limit = 100;
@@ -70,12 +122,21 @@ public partial class AccountController
       return BadRequest(new { Message = $"orderBy phải là một trong: {string.Join(", ", allowedOrderFields)}" });
     }
 
-    var query = context.Accounts.Include(a => a.Role).AsQueryable();
+    var query = context.Accounts.Include(a => a.Role)
+                       .AsQueryable();
+    if (roleToken is not ("librarian" or "admin")) { return Forbid(); }
 
-    // Áp dụng bộ lọc
-    if (!string.IsNullOrEmpty(keyword))
+    if (roleToken == "librarian") { query = query.Where(a => a.Role.Name == "student" || a.Role.Name == "teacher"); }
+
+    if (!string.IsNullOrEmpty(trimedKeyword))
     {
-      query = query.Where(a => a.FullName.Contains(keyword) || a.Email.Contains(keyword));
+      query = query.Where(a =>
+        (a.FullName != null && a.FullName.Contains(trimedKeyword))
+        || (a.Email != null && a.Email.Contains(trimedKeyword))
+        || a.IdentityCardNumber == trimedKeyword
+        || a.CardMemberNumber.Contains(trimedKeyword)
+        || (a.PhoneNumber != null &&
+            a.PhoneNumber.Contains(trimedKeyword)));
     }
 
     if (!string.IsNullOrEmpty(role)) { query = query.Where(a => a.Role.Name == role); }
@@ -106,7 +167,7 @@ public partial class AccountController
     var account = await context.Accounts.FindAsync(updateDto.Id);
     if (account == null)
     {
-      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+      return BadRequest(new BaseResponse<AccountGDto> { Message = "Account not found", Status = "error" });
     }
 
     var roleId = context.Roles.FirstOrDefault(r => r.Name == updateDto.Role)?.Id;
@@ -120,7 +181,7 @@ public partial class AccountController
       var existingAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Email == updateDto.Email);
       if (existingAccount != null)
       {
-        return BadRequest(new BaseResponse<AccountGDto> { message = "Email is already in use", status = "error" });
+        return BadRequest(new BaseResponse<AccountGDto> { Message = "Email is already in use", Status = "error" });
       }
 
       var generatedPassword = GenerateRandomPassword();
@@ -137,7 +198,7 @@ public partial class AccountController
     await context.SaveChangesAsync();
     return Ok(new BaseResponse<AccountGDto>
     {
-      message = "Account updated successfully", data = mapper.Map<AccountGDto>(account), status = "success",
+      Message = "Account updated successfully", Data = mapper.Map<AccountGDto>(account), Status = "success",
     });
   }
 
@@ -149,12 +210,12 @@ public partial class AccountController
                                .FirstOrDefaultAsync(m => m.Id == accountId);
     if (account == null)
     {
-      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+      return BadRequest(new BaseResponse<AccountGDto> { Message = "Account not found", Status = "error" });
     }
 
     return Ok(new BaseResponse<AccountGDto>
     {
-      message = "Account retrieved successfully", data = mapper.Map<AccountGDto>(account), status = "success"
+      Message = "Account retrieved successfully", Data = mapper.Map<AccountGDto>(account), Status = "success"
     });
   }
 

@@ -320,7 +320,7 @@
 //        public IActionResult FilterBooks(
 //            [FromQuery] string author = null,
 //            [FromQuery] DateTime? publishDate = null,
-//            [FromQuery] string category = null,
+//            [FromQuery] string categories = null,
 //            [FromQuery] string language = null)
 //        {
 //            try
@@ -337,9 +337,9 @@
 //                    query = query.Where(b => b.PublishDate == publishDate.Value);
 //                }
 
-//                if (!string.IsNullOrEmpty(category))
+//                if (!string.IsNullOrEmpty(categories))
 //                {
-//                    query = query.Where(b => b.Category.Contains(category, StringComparison.OrdinalIgnoreCase));
+//                    query = query.Where(b => b.Category.Contains(categories, StringComparison.OrdinalIgnoreCase));
 //                }
 
 //                if (!string.IsNullOrEmpty(language))
@@ -384,19 +384,19 @@
 
 //        // Search Book by Category
 //        [HttpGet("searchByCategory")]
-//        public IActionResult SearchBookByCategory([FromQuery] string category)
+//        public IActionResult SearchBookByCategory([FromQuery] string categories)
 //        {
 //            try
 //            {
 //                var books = _context.Books
-//                    .Where(b => b.Category.Contains(category, StringComparison.OrdinalIgnoreCase))
+//                    .Where(b => b.Category.Contains(categories, StringComparison.OrdinalIgnoreCase))
 //                    .ToList();
 
 //                if (!books.Any())
 //                {
 //                    return NotFound(new OkResponse
 //                    {
-//                        Message = "No books found in the given category",
+//                        Message = "No books found in the given categories",
 //                        StatusCode = HttpStatus.NOT_FOUND,
 //                        Status = HttpStatus.NOT_FOUND.ToString(),
 //                        Data = null
@@ -405,7 +405,7 @@
 
 //                return Ok(new OkResponse
 //                {
-//                    Message = "Books retrieved successfully by category",
+//                    Message = "Books retrieved successfully by categories",
 //                    StatusCode = HttpStatus.OK,
 //                    Status = HttpStatus.OK.ToString(),
 //                    Data = books
@@ -413,10 +413,10 @@
 //            }
 //            catch (Exception ex)
 //            {
-//                _logger.LogError(ex, "An error occurred while searching for books by category.");
+//                _logger.LogError(ex, "An error occurred while searching for books by categories.");
 //                return StatusCode((int)HttpStatus.INTERNAL_ERROR, new OkResponse
 //                {
-//                    Message = "An error occurred while searching for books by category",
+//                    Message = "An error occurred while searching for books by categories",
 //                    StatusCode = HttpStatus.INTERNAL_ERROR,
 //                    Status = HttpStatus.INTERNAL_ERROR.ToString(),
 //                    StackTrace = ex.StackTrace,

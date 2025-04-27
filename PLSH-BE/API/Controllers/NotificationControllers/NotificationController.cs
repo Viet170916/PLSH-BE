@@ -35,7 +35,7 @@ public partial class NotificationController(AppDbContext context, IMapper mapper
     {
       return Unauthorized(new BaseResponse<object>
       {
-        message = "Không thể xác thực người dùng.", status = "error", data = null
+        Message = "Không thể xác thực người dùng.", Status = "error", Data = null
       });
     }
 

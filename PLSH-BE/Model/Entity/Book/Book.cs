@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Common.Enums;
 using Model.Entity.book.Dto;
+using Model.Entity.Book.e_book;
 
 namespace Model.Entity.book;
 
@@ -99,4 +100,5 @@ public class Book
   public ICollection<BookInstance>? BookInstances { get; set; } = new List<BookInstance>();
 
   public ICollection<Review>? Reviews { get; set; } = new List<Review>();
+  public ICollection<EBookChapter>? EBookChapters { get; set; } = new List<EBookChapter>();
 }

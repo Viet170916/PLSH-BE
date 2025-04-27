@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250417090054_epub-entity")]
+    partial class epubentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,48 +51,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Albums");
-                });
-
-            modelBuilder.Entity("Model.Entity.Authentication.ResourceAccess", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("AccessDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AprroveStatus")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("BookType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("ExpireDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("LibrarianId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("BookId");
-
-                    b.HasIndex("LibrarianId");
-
-                    b.ToTable("ResourceAccesses");
                 });
 
             modelBuilder.Entity("Model.Entity.Book.e_book.EBookChapter", b =>
@@ -360,13 +321,13 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("AddedDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BorrowerId")
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
@@ -477,9 +438,6 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("Angle")
-                        .HasColumnType("int");
-
                     b.Property<string>("Column")
                         .HasColumnType("longtext");
 
@@ -492,35 +450,13 @@ namespace Data.Migrations
                     b.Property<int>("RoomId")
                         .HasColumnType("int");
 
-                    b.Property<int>("RootX")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RootY")
-                        .HasColumnType("int");
-
                     b.Property<string>("Row")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("X")
                         .HasColumnType("int");
 
-                    b.Property<int?>("X1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("X2")
-                        .HasColumnType("int");
-
                     b.Property<int>("Y")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Y1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Y2")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -685,10 +621,10 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BookBorrowingAfterId")
+                    b.Property<int?>("BookBorrowingId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BookBorrowingBeforeId")
+                    b.Property<int?>("BookBorrowingId1")
                         .HasColumnType("int");
 
                     b.Property<string>("FileType")
@@ -713,44 +649,11 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookBorrowingAfterId");
+                    b.HasIndex("BookBorrowingId");
 
-                    b.HasIndex("BookBorrowingBeforeId");
+                    b.HasIndex("BookBorrowingId1");
 
                     b.ToTable("Resources");
-                });
-
-            modelBuilder.Entity("Model.Entity.ShareLink", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("EnablePlatform")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ShareUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ShortenUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ShareLinks");
                 });
 
             modelBuilder.Entity("Model.Entity.ShortBookInfo", b =>
@@ -1577,31 +1480,6 @@ namespace Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Model.Entity.Authentication.ResourceAccess", b =>
-                {
-                    b.HasOne("Model.Entity.User.Account", "Account")
-                        .WithMany("RequestedResources")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.book.Book", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.User.Account", "Librarian")
-                        .WithMany("ApprovedResources")
-                        .HasForeignKey("LibrarianId");
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Book");
-
-                    b.Navigation("Librarian");
-                });
-
             modelBuilder.Entity("Model.Entity.Book.e_book.EBookChapter", b =>
                 {
                     b.HasOne("Model.Entity.book.Book", "Book")
@@ -1684,17 +1562,13 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Model.Entity.Resource", b =>
                 {
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowingAfter")
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
                         .WithMany("BookImagesAfterBorrow")
-                        .HasForeignKey("BookBorrowingAfterId");
+                        .HasForeignKey("BookBorrowingId");
 
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowingBefore")
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
                         .WithMany("BookImagesBeforeBorrow")
-                        .HasForeignKey("BookBorrowingBeforeId");
-
-                    b.Navigation("BookBorrowingAfter");
-
-                    b.Navigation("BookBorrowingBefore");
+                        .HasForeignKey("BookBorrowingId1");
                 });
 
             modelBuilder.Entity("Model.Entity.User.Account", b =>
@@ -1857,13 +1731,6 @@ namespace Data.Migrations
             modelBuilder.Entity("Model.Entity.LibraryRoom.Shelf", b =>
                 {
                     b.Navigation("RowShelves");
-                });
-
-            modelBuilder.Entity("Model.Entity.User.Account", b =>
-                {
-                    b.Navigation("ApprovedResources");
-
-                    b.Navigation("RequestedResources");
                 });
 
             modelBuilder.Entity("Model.Entity.User.Role", b =>

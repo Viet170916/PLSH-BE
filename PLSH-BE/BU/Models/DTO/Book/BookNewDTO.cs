@@ -9,6 +9,7 @@ namespace BU.Models.DTO.Book;
 
 public class BookNewDto
 {
+  public bool HasEbook { get; set; } = false;
   public int? Id { get; set; }
   public int? AvailableBookCount { get; set; }
   public required string Title { get; set; }
@@ -36,7 +37,9 @@ public class BookNewDto
   public int? AudioResourceId { get; set; }
   public IList<BookInstance> BookInstances { get; set; } = new List<BookInstance>();
   public int Quantity { get; set; } = 0;
+
   public CategoryDto? Category { get; set; }
+
   // public CategoryDto? NewCategory { get; set; }
   public IFormFile? CoverImage { get; set; }
   public IFormFile? ContentPdf { get; set; }
@@ -52,7 +55,6 @@ public class BookNewDto
 public class BookMinimalDto
 {
   public int? Id { get; set; }
-
   public required string Title { get; set; }
   public string? Thumbnail { get; set; }
   public int? CategoryId { get; set; }

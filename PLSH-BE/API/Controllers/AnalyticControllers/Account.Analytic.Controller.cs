@@ -23,7 +23,7 @@ public partial class AnalyticAccountController(AppDbContext context) : Controlle
                              .ToListAsync();
     if (!loans.Any())
     {
-      return NotFound(new BaseResponse<string> { message = "No loan records found for this account.", data = null });
+      return NotFound(new BaseResponse<string> { Message = "No loan records found for this account.", Data = null });
     }
 
     var uniqueBookIds = new HashSet<int>();
@@ -79,8 +79,8 @@ public partial class AnalyticAccountController(AppDbContext context) : Controlle
 
     var response = new BaseResponse<AccountAnalyticsDto>
     {
-      message = "Success",
-      data = new AccountAnalyticsDto
+      Message = "Success",
+      Data = new AccountAnalyticsDto
       {
         TotalUniqueBooksRead = uniqueBookIds.Count,
         TotalReborrowedBooks = duplicateBookCounts.Values.Sum(v => v.Count),

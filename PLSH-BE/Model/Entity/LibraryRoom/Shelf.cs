@@ -19,7 +19,14 @@ namespace Model.Entity.LibraryRoom
     public string? Row { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
-
+    public string Type { get; set; }
+    public int? X1 { get; set; }
+    public int? X2 { get; set; }
+    public int? Y1 { get; set; }
+    public int? Y2 { get; set; }
+    public int Angle { get; set; }
+    public int RootX { get; set; }
+    public int RootY { get; set; }
     public ICollection<RowShelf> RowShelves { get; set; } = [];
   }
 }

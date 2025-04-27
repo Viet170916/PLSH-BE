@@ -27,6 +27,20 @@ public class BookInstanceService(AppDbContext context) : IBookInstanceService
       }
     }
   }
+  public async Task AddBookInstances(int? bookId, int requiredQuantity)
+  {
+    if (bookId is not null)
+    {
+      if (requiredQuantity > 0)
+      {
+        var newInstances = Enumerable.Range(0, requiredQuantity)
+                                     .Select(_ => new BookInstance { BookId = (int)bookId, Code = GenerateCode(), })
+                                     .ToList();
+        context.BookInstances.AddRange(newInstances);
+        await context.SaveChangesAsync();
+      }
+    }
+  }
 
   private static string GenerateCode() { return new Random().Next(1000000000, int.MaxValue).ToString(); }
 }

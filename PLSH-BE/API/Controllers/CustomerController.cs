@@ -153,7 +153,7 @@
 //   public async Task<IActionResult> AdvancedSearch(
 //     [FromQuery] string? title,
 //     [FromQuery] string? author,
-//     [FromQuery] string? category,
+//     [FromQuery] string? categories,
 //     [FromQuery] string? language,
 //     [FromQuery] int? year
 //   )
@@ -165,12 +165,12 @@
 //
 //       //if (!string.IsNullOrWhiteSpace(author))
 //       //    query = query.Where(b => b.Author.Contains(author));
-//       if (!string.IsNullOrWhiteSpace(category))
+//       if (!string.IsNullOrWhiteSpace(categories))
 //         query = query.Join(_context.Categories,
 //                        Book => Book.CategoryId,
 //                        cat => cat.Id,
 //                        (Book, cat) => new { Book, cat })
-//                      .Where(bc => bc.cat.Name.Contains(category))
+//                      .Where(bc => bc.cat.Name.Contains(categories))
 //                      .Select(bc => bc.Book);
 //       if (!string.IsNullOrWhiteSpace(language)) query = query.Where(b => b.Language.Contains(language));
 //       if (year.HasValue) query = query.Where(b => b.PublishDate.HasValue && b.PublishDate.Value.Year == year.Value);
@@ -461,7 +461,7 @@
 //         {
 //           Status = HttpStatus.NOT_FOUND.GetDescription(),
 //           StatusCode = HttpStatus.NOT_FOUND,
-//           Message = "No books found in this category.",
+//           Message = "No books found in this categories.",
 //         });
 //       }
 //
@@ -469,7 +469,7 @@
 //       {
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
-//         Message = "Books by category retrieved successfully.",
+//         Message = "Books by categories retrieved successfully.",
 //         Data = books
 //       });
 //     }
@@ -486,8 +486,8 @@
 //   {
 //     try
 //     {
-//       var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name == categoryName);
-//       if (category == null)
+//       var categories = await _context.Categories.FirstOrDefaultAsync(c => c.Name == categoryName);
+//       if (categories == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -517,7 +517,7 @@
 //         {
 //           Status = HttpStatus.NOT_FOUND.GetDescription(),
 //           StatusCode = HttpStatus.NOT_FOUND,
-//           Message = "No books found in this category.",
+//           Message = "No books found in this categories.",
 //         });
 //       }
 //
@@ -525,7 +525,7 @@
 //       {
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
-//         Message = "Books by category retrieved successfully.",
+//         Message = "Books by categories retrieved successfully.",
 //         Data = books
 //       });
 //     }
@@ -542,8 +542,8 @@
 //   {
 //     try
 //     {
-//       var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
-//       if (category == null)
+//       var categories = await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
+//       if (categories == null)
 //       {
 //         return Ok(new ErrorResponse
 //         {
@@ -573,7 +573,7 @@
 //         {
 //           Status = HttpStatus.NOT_FOUND.GetDescription(),
 //           StatusCode = HttpStatus.NOT_FOUND,
-//           Message = "No books found in this category.",
+//           Message = "No books found in this categories.",
 //         });
 //       }
 //
@@ -581,7 +581,7 @@
 //       {
 //         Status = HttpStatus.OK.GetDescription(),
 //         StatusCode = HttpStatus.OK,
-//         Message = "Books by category retrieved successfully.",
+//         Message = "Books by categories retrieved successfully.",
 //         Data = books
 //       });
 //     }

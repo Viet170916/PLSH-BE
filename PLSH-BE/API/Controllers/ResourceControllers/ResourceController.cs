@@ -13,8 +13,8 @@ using Model.helper;
 using Newtonsoft.Json;
 
 namespace API.Controllers.ResourceControllers;
-[Authorize("LibrarianPolicy")]
 
+[Authorize("LibrarianPolicy")]
 [Route("api/v1/resource")]
 [ApiController]
 public partial class ResourceController(
@@ -22,6 +22,7 @@ public partial class ResourceController(
   ILogger<ResourceController> logger,
   IMapper mapper,
   IGgServices ggServices,
+  IEpubParserService epubParserService,
   GoogleCloudStorageHelper googleCloudStorageHelper
 ) : Controller
 {
@@ -66,6 +67,7 @@ public partial class ResourceController(
         context.Resources.Add(resourceEntity);
         await context.SaveChangesAsync();
         book.EpubResourceId = resourceEntity.Id;
+        await epubParserService.ParseAndSaveEpubFromFileAsync(resource.File, bookId);
         break;
       case "audio":
         var audioFileUrl = await googleCloudStorageHelper.UploadFileAsync(resource.File.OpenReadStream(),
@@ -85,8 +87,6 @@ public partial class ResourceController(
     await context.SaveChangesAsync();
     return Ok(new { Message = "Resource uploaded", BookId = bookId, resource = resourceEntity, });
   }
-
-
 }
 
 public class ResourceDto

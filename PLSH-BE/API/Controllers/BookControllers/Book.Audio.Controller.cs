@@ -42,14 +42,14 @@ public partial class BookController
     if (!response.IsSuccessStatusCode)
     {
       return StatusCode((int)response.StatusCode,
-        new BaseResponse<string> { status = "fail", message = "Failed to call ElevenLabs API", data = null });
+        new BaseResponse<string> { Status = "fail", Message = "Failed to call ElevenLabs API", Data = null });
     }
 
     var json = await response.Content.ReadAsStringAsync();
     var result = Converter.ParseTtsResponse(json);
     return Ok(new BaseResponse<TtsResponseDto>
     {
-      status = "success", message = "Successfully generated speech", data = result,
+      Status = "success", Message = "Successfully generated speech", Data = result,
     });
   }
 
@@ -60,11 +60,11 @@ public partial class BookController
   )
   {
     var book = await context.Books.Include(b => b.EpubResource).FirstOrDefaultAsync(b => bookId == b.Id);
-    if (book is null) { return NotFound(new BaseResponse<string> { message = "Book not found.", data = null }); }
+    if (book is null) { return NotFound(new BaseResponse<string> { Message = "Book not found.", Data = null }); }
 
     if (book.EpubResource?.LocalUrl is null)
     {
-      return NotFound(new BaseResponse<string> { message = "Book Preview Resource not found.", data = null });
+      return NotFound(new BaseResponse<string> { Message = "Book Preview Resource not found.", Data = null });
     }
 
     try
@@ -99,10 +99,10 @@ public partial class BookController
             {
               return Ok(new BaseResponse<List<TextPhaseChunks>>
               {
-                pageCount = allChapters.Count,
-                message = "Lấy nội dung chương thành công.",
-                data = data,
-                page = currentChapter
+                PageCount = allChapters.Count,
+                Message = "Lấy nội dung chương thành công.",
+                Data = data,
+                Page = currentChapter
               });
             }
 
@@ -115,11 +115,11 @@ public partial class BookController
               return StatusCode(500,
                 new BaseResponse<string?>
                 {
-                  pageCount = allChapters.Count,
-                  message = "Có lỗi xảy ra khi xử lý nội dung. Vui lòng thử lại.",
-                  data = null,
-                  status = "error",
-                  page = currentChapter
+                  PageCount = allChapters.Count,
+                  Message = "Có lỗi xảy ra khi xử lý nội dung. Vui lòng thử lại.",
+                  Data = null,
+                  Status = "error",
+                  Page = currentChapter
                 });
             }
           }
@@ -130,17 +130,17 @@ public partial class BookController
 
       return NotFound(new BaseResponse<string?>
       {
-        pageCount = allChapters.Count,
-        message = "Không tìm thấy nội dung phù hợp.",
-        data = null,
-        status = "error",
-        page = chapter + chapterAttempts - 1
+        PageCount = allChapters.Count,
+        Message = "Không tìm thấy nội dung phù hợp.",
+        Data = null,
+        Status = "error",
+        Page = chapter + chapterAttempts - 1
       });
     }
     catch
     {
       return StatusCode(500,
-        new BaseResponse<string?> { message = "Lỗi khi xử lý EPUB", data = null, status = "error" });
+        new BaseResponse<string?> { Message = "Lỗi khi xử lý EPUB", Data = null, Status = "error" });
     }
   }
 

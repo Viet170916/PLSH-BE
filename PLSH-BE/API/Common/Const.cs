@@ -19,7 +19,7 @@ type Book = {
   publishDate: string;
   publisher: string;
   version: string;
-  category: {
+  categories: {
     name: string;
     description: string | null;
   };
@@ -57,4 +57,7 @@ trong nội dung nhận được là text lấy từ epub nên có thể chứa 
 dữ liệu trả về là 1 json hợp lệ là mảng {text: string, p: number}[] với text là nội dung đoạn, p là thứ tự vị trí đoạn, môi đoạn tạo ra 1 phần tử mảng rồi add vào mảng này, và trả ra kết quả cuối cùng là chuỗi json, đây là 1 chức năng phần mềm nên không được thêm bất cứ mesage hay text nào không liên quan đến kết quả trả ra làm ảnh hưởng đến việc parse json, không để dấu phẩy thừa ở các thuộc tính cuối cùng của object hay phần tử cuối của mảng tránh .net parse lỗi.
 sau đây là phần text nội dung chapter sách cần chia đoạn: ""{{text}}""
 ";
+
+  public const string TODAY_QUOTE_PROMT =
+    "hãy trích dẫn 1 câu nói nổi tiếng của một nhà văn bất kỳ, trả về dạng json {title: string, content:string, author: string}, đây là 1 chức năng hiển thị trên phần giới thiệu của app, không trả lời bất kỳ lời nhắn thừa, chỉ trả ra đúng json như yêu cầu, không để thừa dấu phẩy cuối của thuộc tính cuối";
 }

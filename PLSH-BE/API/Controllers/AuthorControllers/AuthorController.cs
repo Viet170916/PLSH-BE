@@ -49,13 +49,14 @@ public partial class AuthorController(AppDbContext context, GoogleCloudStorageHe
 
   [HttpGet] public async Task<IActionResult> SearchAuthors([FromQuery] string? keyword)
   {
+    var trimedKeyword = keyword?.ToLower().Trim();
     var query = context.Authors.AsQueryable();
-    if (!string.IsNullOrWhiteSpace(keyword))
+    if (!string.IsNullOrWhiteSpace(trimedKeyword))
     {
       query = query.Where(a =>
-        a.FullName.Contains(keyword) ||
-        (a.BirthYear != null && a.BirthYear.Contains(keyword)) ||
-        (a.BirthYear != null && a.BirthYear.Contains(keyword)));
+        a.FullName.Contains(trimedKeyword) ||
+        (a.BirthYear != null && a.BirthYear.Contains(trimedKeyword)) ||
+        (a.BirthYear != null && a.BirthYear.Contains(trimedKeyword)));
     }
 
     query = query.Select(author => new Author()

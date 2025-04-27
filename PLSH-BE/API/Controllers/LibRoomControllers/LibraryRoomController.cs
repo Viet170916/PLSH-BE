@@ -41,7 +41,6 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
                                     .FirstOrDefaultAsync();
     if (existingRoom is null)
     {
-      // Thêm mới nếu chưa có phòng
       var room = await context.LibraryRooms.AddAsync(request);
       await context.SaveChangesAsync();
       request.Shelves.ForEach(s => s.RoomId = room.Entity.Id);
@@ -49,20 +48,16 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
     }
     else
     {
-      // Cập nhật kích thước phòng
       existingRoom.ColumnSize = request.ColumnSize;
       existingRoom.RowSize = request.RowSize;
-
-      // Lấy danh sách các shelf hiện tại theo RoomId
       var existingShelves = existingRoom.Shelves.ToDictionary(s => s.Id);
-
-      // Duyệt qua danh sách mới, nếu shelf đã tồn tại thì chỉ cập nhật vị trí x, y
       foreach (var shelf in request.Shelves)
       {
         if (existingShelves.TryGetValue(shelf.Id, out var existingShelf))
         {
           existingShelf.X = shelf.X;
           existingShelf.Y = shelf.Y;
+          existingShelf.Angle = shelf.Angle;
         }
         else
         {
@@ -74,14 +69,13 @@ public partial class LibraryRoomController(AppDbContext context, ILogger<Library
       await context.SaveChangesAsync();
     }
 
-    // Kiểm tra các shelves chưa có RowShelves và thêm mới
     var newShelves = await context.Shelves
                                   .Where(s => s.RoomId == existingRoom.Id &&
                                               !context.RowShelves.Any(rs => rs.ShelfId == s.Id))
                                   .ToListAsync();
-    foreach (var sh in newShelves)
+    foreach (var sh in newShelves.Where(sh => sh.Type is "SHELF_SMALL" or "SHELF_LARGE"))
     {
-      context.RowShelves.Add(new RowShelf { MaxCol = 10, Position = 0, ShelfId = sh.Id });
+      context.RowShelves.Add(new RowShelf { MaxCol = 10, Position = 0, ShelfId = sh.Id, });
     }
 
     await context.SaveChangesAsync();

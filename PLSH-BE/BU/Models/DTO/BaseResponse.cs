@@ -1,14 +1,15 @@
+#nullable enable
 namespace BU.Models.DTO;
 
 public class BaseResponse<TDataType>
 {
-  public string message { get; set; }
-  public TDataType data { get; set; }
-  public string? status { get; set; }
-  public int? count { get; set; }
-  public int? page { get; set; }
-  public int? limit { get; set; }
-  public int? currenPage { get; set; }
-  public int? pageCount { get; set; }
+  public string Message { get; set; }
+  public TDataType Data { get; set; }
+  public string? Status { get; set; }
+  public int? Count { get; set; }
+  public int? Page { get; set; }
+  public int? Limit { get; set; }
+  public int? CurrentPage { get; set; }
+  public int? PageCount { get; set; }
 
 }

@@ -21,7 +21,7 @@ public partial class ReviewController
     {
       return BadRequest(new BaseResponse<string>
       {
-        message = "Nội dung tin nhắn không được để trống.", status = "error",
+        Message = "Nội dung tin nhắn không được để trống.", Status = "error",
       });
     }
 
@@ -91,7 +91,7 @@ public partial class ReviewController
 
     return Ok(new BaseResponse<MessageDto>
     {
-      message = "Gửi tin nhắn thành công.", data = messageDto, status = "success"
+      Message = "Gửi tin nhắn thành công.", Data = messageDto, Status = "success"
     });
   }
 
@@ -120,21 +120,21 @@ public partial class ReviewController
     {
       return NotFound(new BaseResponse<string>
       {
-        message = "Không tìm thấy tin nhắn nào cho đánh giá này.", status = "error"
+        Message = "Không tìm thấy tin nhắn nào cho đánh giá này.", Status = "error"
       });
     }
 
     var messageDtos = mapper.Map<List<MessageDto>>(messages, opt => { opt.Items["CurrentUserId"] = accountId; });
     return Ok(new BaseResponse<List<MessageDto>>
     {
-      message = "Lấy danh sách tin nhắn thành công.",
-      status = "success",
-      page = page,
-      currenPage = page,
-      limit = limit,
-      pageCount = totalPage,
-      count = totalMessageCount,
-      data = messageDtos,
+      Message = "Lấy danh sách tin nhắn thành công.",
+      Status = "success",
+      Page = page,
+      CurrentPage = page,
+      Limit = limit,
+      PageCount = totalPage,
+      Count = totalMessageCount,
+      Data = messageDtos,
     });
   }
 }

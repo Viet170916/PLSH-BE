@@ -1,6 +1,10 @@
+using System.Collections.Generic;
+using BU.Models.DTO;
+using EFCore.BulkExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Model.Entity.book;
 using Model.Entity.book.Dto;
 using Model.Entity.LibraryRoom;
 
@@ -43,6 +47,7 @@ public partial class LibraryRoomController
     public string? Name { get; set; }
     public string? Description { get; set; }
     public int MaxCol { get; set; }
+    public List<LibraryRoomDto.BookInstanceDto> BookInstances { get; set; } = [];
   }
 
   [HttpPut("shelf/row/update/{id}")]
@@ -53,9 +58,22 @@ public partial class LibraryRoomController
     rowShelf.Name = updatedRowShelf.Name;
     rowShelf.Description = updatedRowShelf.Description;
     rowShelf.MaxCol = updatedRowShelf.MaxCol;
+    var updatedDict = updatedRowShelf.BookInstances
+                                     .ToDictionary(b => b.Id, b => b.Position);
+    var bookInstancesToUpdate = await context.BookInstances
+                                             .Where(b => updatedDict.Keys.Contains(b.Id))
+                                             .ToListAsync();
+    foreach (var instance in bookInstancesToUpdate)
+    {
+      instance.Position = updatedDict[instance.Id];
+    }
+
+    await context.BulkUpdateAsync(bookInstancesToUpdate);
+
+    // rowShelf.BookInstances = updatedRowShelf.BookInstances.Select(i => new BookInstance { Id = i.Id, Position = i.Position}).ToList();
     await context.SaveChangesAsync();
     var rowMap = mapper.Map<LibraryRoomDto.RowShelfDto>(rowShelf);
-    return Ok(rowMap);
+    return Ok(new BaseResponse<LibraryRoomDto.RowShelfDto> { Data = rowMap, Message = "Lưu thành công", });
   }
 
   [HttpGet("shelf/row/has-books/{rowShelfId}")]
@@ -64,4 +82,43 @@ public partial class LibraryRoomController
     var hasBooks = await context.BookInstances.AnyAsync(b => b.RowShelfId == rowShelfId);
     return Ok(new { rowShelfId, hasBooks });
   }
+
+  [HttpGet("shelf/rows/selection")]
+  public async Task<IActionResult> GetRowShelvesWithEmptyPositions(
+    [FromQuery] string? name,
+    [FromQuery] long? shelfId)
+  {
+    var query = context.RowShelves.AsQueryable();
+
+    if (!string.IsNullOrEmpty(name))
+    {
+      query = query.Where(r => r.Name != null && r.Name.Contains(name));
+    }
+
+    if (shelfId.HasValue)
+    {
+      query = query.Where(r => r.ShelfId == shelfId.Value);
+    }
+
+    var rowShelves = await query
+                           .Select(r => new
+                           {
+                             r.Id,
+                             Name =r.Name??$"Chưa được đặt tên",
+                             r.ShelfId,
+                             r.MaxCol,
+                             EmptyPositions = r.BookInstances != null
+                               ? Enumerable.Range(0, r.MaxCol)
+                                           .Except(r.BookInstances.Select(bi => bi.Position ?? -1))
+                                           .ToList()
+                               : Enumerable.Range(0, r.MaxCol).ToList(),
+                           })
+                           .ToListAsync();
+
+    return Ok(new BaseResponse<object>
+    {
+      Data = rowShelves,
+    });
+  }
+
 }

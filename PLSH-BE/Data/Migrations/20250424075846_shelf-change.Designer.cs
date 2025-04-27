@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250424075846_shelf-change")]
+    partial class shelfchange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,13 +363,13 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("AddedDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BorrowerId")
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
@@ -685,10 +688,10 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BookBorrowingAfterId")
+                    b.Property<int?>("BookBorrowingId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BookBorrowingBeforeId")
+                    b.Property<int?>("BookBorrowingId1")
                         .HasColumnType("int");
 
                     b.Property<string>("FileType")
@@ -713,44 +716,11 @@ namespace Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookBorrowingAfterId");
+                    b.HasIndex("BookBorrowingId");
 
-                    b.HasIndex("BookBorrowingBeforeId");
+                    b.HasIndex("BookBorrowingId1");
 
                     b.ToTable("Resources");
-                });
-
-            modelBuilder.Entity("Model.Entity.ShareLink", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("EnablePlatform")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ShareUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ShortenUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ShareLinks");
                 });
 
             modelBuilder.Entity("Model.Entity.ShortBookInfo", b =>
@@ -1684,17 +1654,13 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Model.Entity.Resource", b =>
                 {
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowingAfter")
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
                         .WithMany("BookImagesAfterBorrow")
-                        .HasForeignKey("BookBorrowingAfterId");
+                        .HasForeignKey("BookBorrowingId");
 
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowingBefore")
+                    b.HasOne("Model.Entity.Borrow.BookBorrowing", null)
                         .WithMany("BookImagesBeforeBorrow")
-                        .HasForeignKey("BookBorrowingBeforeId");
-
-                    b.Navigation("BookBorrowingAfter");
-
-                    b.Navigation("BookBorrowingBefore");
+                        .HasForeignKey("BookBorrowingId1");
                 });
 
             modelBuilder.Entity("Model.Entity.User.Account", b =>

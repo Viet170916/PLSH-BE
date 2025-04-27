@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Security.Claims;
@@ -32,12 +33,12 @@ public partial class AccountController(AppDbContext context, IEmailService email
                                .FirstOrDefaultAsync(m => m.Id == accountId);
     if (account == null)
     {
-      return BadRequest(new BaseResponse<AccountGDto> { message = "Account not found", status = "error" });
+      return BadRequest(new BaseResponse<AccountGDto> { Message = "Account not found", Status = "error" });
     }
 
     return Ok(new BaseResponse<AccountGDto>
     {
-      message = "Account retrieved successfully", data = mapper.Map<AccountGDto>(account), status = "success"
+      Message = "Account retrieved successfully", Data = mapper.Map<AccountGDto>(account), Status = "success"
     });
   }
 
@@ -61,19 +62,19 @@ public partial class AccountController(AppDbContext context, IEmailService email
         var payload = await GoogleJsonWebSignature.ValidateAsync(GgToken);
         if (payload is null)
         {
-          return Unauthorized(new BaseResponse<string> { message = "Token Google không hợp lệ." });
+          return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
         }
 
         email = payload.Email;
         fullName = payload.Name;
       }
-      else { return BadRequest(new BaseResponse<string> { message = "No field required found is incorrect." }); }
+      else { return BadRequest(new BaseResponse<string> { Message = "No field required found is incorrect." }); }
 
     var user = await context.Accounts.FirstOrDefaultAsync(acc => acc.Email == email);
     return Ok(new BaseResponse<VerifiedResponse>
     {
-      message = "Request success",
-      data = new VerifiedResponse
+      Message = "Request success",
+      Data = new VerifiedResponse
       {
         IsVerified = user is not null && user.IsVerified,
         EmailExisted = user is not null,
@@ -83,12 +84,20 @@ public partial class AccountController(AppDbContext context, IEmailService email
     });
   }
 
-  [HttpPost("login")] public async Task<IActionResult> Login([FromBody] LoginRequest request)
+  [HttpPost("login")]
+  public async Task<IActionResult> Login([FromBody] LoginRequest request)
   {
-    var account = await context.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Email == request.Email);
     if (account == null || !BCrypt.Net.BCrypt.Verify(request.Password, account.Password))
     {
-      return Unauthorized(new BaseResponse<string> { message = "Email hoặc mật khẩu không đúng." });
+      return Unauthorized(new BaseResponse<string> { Message = "Email hoặc mật khẩu không đúng." });
+    }
+
+    if (account.Role?.Name != "librarian")
+    {
+      return Unauthorized(new BaseResponse<string> { Message = "Chỉ thủ thư mới được phép đăng nhập." });
     }
 
     var token = string.Empty;
@@ -97,62 +106,76 @@ public partial class AccountController(AppDbContext context, IEmailService email
       token = GenerateJwtToken(account, "notVerifiedUser", TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        data = token, message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
+        Data = token,
+        Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
       });
     }
 
-    var role = context.Roles.FirstOrDefault(r => r.Id == account.RoleId)?.Name;
     var tokenExpiration = TimeSpan.FromDays(7);
-    token = GenerateJwtToken(account, role, tokenExpiration);
-    return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập thành công." });
+    token = GenerateJwtToken(account, account.Role.Name, tokenExpiration);
+    return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập thành công." });
   }
 
-  [HttpPost("login/google")] public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest_ request)
-  {
+
+ [HttpPost("login/google")]
+public async Task<IActionResult> LoginWithGoogle([FromBody] GoogleLoginRequest_ request)
+{
     try
     {
-      var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
-      var email = payload.Email;
-      var fullName = payload.Name;
-      var googleUserId = payload.Subject;
-      var avatarUrl = payload.Picture;
-      var account = await context.Accounts
-                                 .Include(ac => ac.Role)
-                                 .FirstOrDefaultAsync(a => a.Email == email);
-      var roleId = context.Roles.FirstOrDefault(r => r.Name == request.Role)?.Id;
-      if (account == null)
-      {
-        if (roleId is null)
+        var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
+        var email = payload.Email;
+        var fullName = payload.Name;
+        var googleUserId = payload.Subject;
+        var avatarUrl = payload.Picture;
+
+        var account = await context.Accounts
+                                   .Include(a => a.Role)
+                                   .FirstOrDefaultAsync(a => a.Email == email);
+
+        if (account != null)
         {
-          return BadRequest(new BaseResponse<string> { message = $"Không hỗ trợ người dùng: {request.Role}" });
+            if (account.Role?.Name != "librarian")
+            {
+                return Unauthorized(new BaseResponse<string> { Message = "Chỉ thủ thư mới được phép đăng nhập." });
+            }
+        }
+        else
+        {
+            var librarianRoleId = await context.Roles
+                                               .Where(r => r.Name == "librarian")
+                                               .Select(r => r.Id)
+                                               .FirstOrDefaultAsync();
+            if (librarianRoleId == 0)
+            {
+                return BadRequest(new BaseResponse<string> { Message = "Không tìm thấy role thủ thư trong hệ thống." });
+            }
+
+            account = new Account
+            {
+                FullName = request.FullName ?? fullName,
+                Email = email,
+                PhoneNumber = request.PhoneNumber,
+                Address = request.Address,
+                GoogleUserId = googleUserId,
+                ClassRoom = request.ClassRoom,
+                IdentityCardNumber = request.IdentityCardNumber,
+                RoleId = librarianRoleId,
+                IsVerified = true,
+                AvatarUrl = avatarUrl,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.Accounts.Add(account);
+            await context.SaveChangesAsync();
         }
 
-        account = new Account
-        {
-          FullName = request.FullName ?? fullName,
-          Email = email,
-          PhoneNumber = request.PhoneNumber,
-          Address = request.Address,
-          GoogleUserId = googleUserId,
-          ClassRoom = request.ClassRoom,
-          IdentityCardNumber = request.IdentityCardNumber,
-          RoleId = (int)roleId,
-          IsVerified = true,
-          AvatarUrl = avatarUrl,
-          CreatedAt = DateTime.UtcNow
-        };
-        context.Accounts.Add(account);
-        await context.SaveChangesAsync();
-      }
-
-      var token = GenerateJwtToken(account, account?.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
-      return Ok(new BaseResponse<string> { data = token, message = "Đăng nhập bằng Google thành công." });
+        var token = GenerateJwtToken(account, account.Role?.Name ?? "librarian", TimeSpan.FromDays(1));
+        return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
     {
-      return Unauthorized(new BaseResponse<string> { message = "Token Google không hợp lệ." });
+        return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
     }
-  }
+}
 
   private static string GenerateJwtToken(Account account, string role, TimeSpan expiration)
   {
@@ -180,6 +203,53 @@ public partial class AccountController(AppDbContext context, IEmailService email
     var httpClient = new HttpClient();
     var response = await httpClient.GetAsync($"https://oauth2.googleapis.com/tokeninfo?id_token={googleToken}");
     return response.IsSuccessStatusCode;
+  }
+  [Authorize] [HttpGet("validate")]
+  public async Task<ActionResult<BaseResponse<string>>> ValidateThisAccount()
+  {
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+    var account = await context.Accounts
+                               .Include(a => a.Role)
+                               .FirstOrDefaultAsync(a => a.Id == accountId);
+    if (account == null)
+    {
+      return NotFound(new BaseResponse<string>
+      {
+        Message = "Không tìm thấy tài khoản", Data = "invalid", Status = "error"
+      });
+    }
+
+    var errorMessages = new List<string>();
+    if (account.CardMemberExpiredDate < DateTime.UtcNow)
+    {
+      return Ok(new BaseResponse<string> { Message = "Thẻ đã hết hạn", Data = "expired", Status = "error" });
+    }
+
+    if (string.IsNullOrWhiteSpace(account.FullName)) errorMessages.Add("Thiếu họ tên");
+    if (string.IsNullOrWhiteSpace(account.PhoneNumber)) errorMessages.Add("Thiếu số điện thoại");
+    if (string.IsNullOrWhiteSpace(account.Email)) errorMessages.Add("Thiếu email");
+    if (!account.IsVerified) errorMessages.Add("Tài khoản chưa được xác minh");
+    if (account.CardMemberStatus == 0) errorMessages.Add("Thẻ không ở trạng thái hợp lệ");
+    if (account.Role.Name != "student" && account.Role.Name != "teacher") errorMessages.Add("Vai trò không hợp lệ");
+    switch (account.Role.Name)
+    {
+      case "student":
+        if (string.IsNullOrWhiteSpace(account.ClassRoom)) errorMessages.Add("Sinh viên phải có thông tin lớp học");
+        break;
+      case "teacher":
+        if (string.IsNullOrWhiteSpace(account.IdentityCardNumber)) errorMessages.Add("Giảng viên phải có số căn cước công dân");
+        break;
+    }
+
+    if (errorMessages.Count != 0)
+    {
+      return Ok(new BaseResponse<string>
+      {
+        Message = "Thông tin không hợp lệ: " + string.Join("; ", errorMessages), Data = "invalid", Status = "error"
+      });
+    }
+
+    return Ok(new BaseResponse<string> { Message = "Tài khoản hợp lệ", Data = "valid", Status = "success" });
   }
 
   public class GoogleLoginRequest_
