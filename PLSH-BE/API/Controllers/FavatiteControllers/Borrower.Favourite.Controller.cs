@@ -28,6 +28,7 @@ namespace API.Controllers.FavatiteControllers
         : ControllerBase
     {
         [HttpPost("toggle")]
+        [Authorize]
         public async Task<IActionResult> ToggleFavorite(int bookId, string note = null)
         {
             try
@@ -110,6 +111,7 @@ namespace API.Controllers.FavatiteControllers
         }
 
         [HttpGet("list")]
+        [Authorize]
         public async Task<IActionResult> GetFavorites()
         {
             try
@@ -147,6 +149,7 @@ namespace API.Controllers.FavatiteControllers
             }
         }
 
+        // Check Favorite Status
         [HttpGet("check/{bookId}")]
         public async Task<IActionResult> CheckFavoriteStatus(int bookId)
         {

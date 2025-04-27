@@ -8,9 +8,9 @@ namespace Common.Enums
 {
     public enum FavoriteStatus
     {
-        WantToRead,  // Muốn đọc
-        Reading,     // Đang đọc
-        Read,        // Đã đọc
-        Favorite     // Yêu thích đặc biệt
+        WantToRead = 1,  // Muốn đọc
+        Reading = 2,     // Đang đọc
+        Read =3,        // Đã đọc
+        Favorite=4     // Yêu thích đặc biệt
     }
 }
