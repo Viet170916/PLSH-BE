@@ -63,10 +63,9 @@ public class Account
 
   public int FailedLoginAttempts { get; set; } = 0;
   public DateTime? LockoutEnd { get; set; } = null;
-
   public Role Role { get; set; }
-  [JsonIgnore]
 
+  [JsonIgnore]
   public string? ClassRoom { get; set; }
 
   [InverseProperty("Account")]
@@ -74,4 +73,6 @@ public class Account
 
   [InverseProperty("Librarian")]
   public ICollection<ResourceAccess> ApprovedResources { get; set; } = new List<ResourceAccess>();
+
+  public ICollection<Favorite.Favorite> Favorites { get; set; } = new List<Favorite.Favorite>();
 }

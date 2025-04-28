@@ -7,8 +7,10 @@ using Model.Entity.Authentication;
 using Model.Entity.book;
 using Model.Entity.Book.e_book;
 using Model.Entity.Borrow;
+using Model.Entity.Favorite;
 using Model.Entity.LibraryRoom;
 using Model.Entity.Notification;
+using Model.Entity.System;
 using Model.Entity.User;
 
 namespace Data.DatabaseContext;
@@ -59,6 +61,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
   public DbSet<EBookChapter> EBookChapters { get; set; }
   public DbSet<ResourceAccess> ResourceAccesses { get; set; }
   public DbSet<ShareLink> ShareLinks { get; set; }
+  public DbSet<ApiKey> ApiKeys { get; set; }
 
 
   // public IQueryable<Author> FindSimilarAuthors(IQueryable<Author> , string fullName)

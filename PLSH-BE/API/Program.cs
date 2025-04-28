@@ -107,8 +107,9 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 // builder.Services.AddIdentity<AccountControllers, Role>()
 //        .AddEntityFrameworkStores<AppDbContext>()
 //        .AddDefaultTokenProviders();
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 //DI
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IUserIdProvider, AppUserIdProvider>();
 builder.Services.AddSingleton(StorageClient.Create());

@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using API.Common;
 using API.Controllers.ResourceControllers;
 using BU.Models.DTO.Account.AccountDTO;
 using BU.Models.DTO.Book;
 using BU.Models.DTO.Loan;
 using BU.Models.DTO.Notification;
+using Microsoft.AspNetCore.Http;
 using Model.Entity;
 using Model.Entity.book;
 using Model.Entity.Book.e_book;
@@ -18,6 +20,7 @@ namespace API.Configs;
 
 public class MappingProfile : Profile
 {
+
   public MappingProfile()
   {
     CreateMap<EBookChapter, EBookChapterDto.EBookChapterFulltDto>();
@@ -37,6 +40,7 @@ public class MappingProfile : Profile
     // opt => opt.MapFrom(src => src.BookInstances != null ? src.BookInstances.Count : 0))
     // .ForMember(dest => dest.PublishDate, opt => opt.MapFrom(src => src.PublishDate));
     CreateMap<Book, BookNewDto>()
+
       .ForMember(dest => dest.Thumbnail,
         opt => opt.MapFrom(src =>
           src.Thumbnail ??
@@ -185,4 +189,5 @@ public class MappingProfile : Profile
       }))
       .ReverseMap();
   }
+
 }

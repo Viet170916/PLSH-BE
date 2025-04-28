@@ -101,4 +101,5 @@ public class Book
 
   public ICollection<Review>? Reviews { get; set; } = new List<Review>();
   public ICollection<EBookChapter>? EBookChapters { get; set; } = new List<EBookChapter>();
+  public ICollection<Favorite.Favorite> Favorites { get; set; } = new List<Favorite.Favorite>();
 }
