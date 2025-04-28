@@ -162,7 +162,16 @@ builder.Services.AddControllers()
          options.JsonSerializerOptions.ReferenceHandler =
            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
        });
+
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddHttpClient("VietQR", client =>
+{
+    client.BaseAddress = new Uri("https://api.vietqr.io/v2/");
+    client.DefaultRequestHeaders.Add("x-client-id", builder.Configuration["VietQR:ClientId"]);
+    client.DefaultRequestHeaders.Add("x-api-key", builder.Configuration["VietQR:ApiKey"]);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.ConfigureEmailService();
 var app = builder.Build();
 

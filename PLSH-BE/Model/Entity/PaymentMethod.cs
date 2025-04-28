@@ -22,7 +22,7 @@ public class PaymentMethod
   [MaxLength(10)]
   public required string PaymentType { get; set; }
 
-  public DateTime CreateAt { get; set; }
-  public DateTime UpdateAt { get; set; }
-  public DateTime DeleteAt { get; set; }
+  public DateTime? CreateAt { get; set; }
+  public DateTime? UpdateAt { get; set; }
+  public DateTime? DeleteAt { get; set; }
 }
