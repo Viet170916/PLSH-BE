@@ -80,8 +80,9 @@ public partial class BookController
     if (!string.IsNullOrWhiteSpace(trimmedKeyword))
     {
       query = query.Where(b =>
-        (b.Title != null && b.Title.Contains(trimmedKeyword, StringComparison.CurrentCultureIgnoreCase)) ||
-        b.Authors.Any(a => a.FullName.Contains(trimmedKeyword, StringComparison.CurrentCultureIgnoreCase)));
+        (b.Title != null && b.Title.ToLower().Contains(trimmedKeyword)) ||
+        b.Authors.Any(a => a.FullName.ToLower().Contains(trimmedKeyword)));
+
     }
 
     if (categories?.Any(c => !string.IsNullOrWhiteSpace(c)) == true)
