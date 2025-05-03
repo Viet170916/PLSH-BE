@@ -21,7 +21,7 @@ public class BookBorrowing
     public string? NoteBeforeBorrow { get; set; }
     public string? NoteAfterBorrow { get; set; }
     public int LoanId { get; set; }
-
+    
     public string BorrowingStatus { get; set; } = "undefined";
     public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -31,7 +31,7 @@ public class BookBorrowing
 
     [Column(TypeName = "text")]
     public string ExtendDatesJson { get; set; } = "[]";
-
+    
     [NotMapped]
     public List<DateTime> ReturnDates
     {

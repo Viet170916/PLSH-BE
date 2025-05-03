@@ -129,7 +129,48 @@ public class EmailService(IOptions<EmailSettings> emailSettings) : IEmailService
     await SendEmailAsync(email, subject, htmlBody);
   }
 
-  private string GetExtendConfirmationTemplate()
+    public async Task SendFineNotificationEmailAsync(string email, string borrowerName, double amount, string note, int borrowId, string fineLink)
+    {
+        var subject = "Thông báo phí phạt mới";
+        var htmlBody = $@"
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset='UTF-8'></head>
+            <body>
+                <p>Chào <strong>{borrowerName}</strong>,</p>
+                <p>Bạn đã bị phạt <strong>{amount} VNĐ</strong> do: {note}.</p>
+                <p>Mã mượn: <strong>{borrowId}</strong></p>
+                <p>Xem chi tiết tại: <a href='{fineLink}'>{fineLink}</a></p>
+            </body>
+            </html>";
+        await SendEmailAsync(email, subject, htmlBody);
+    }
+
+    public async Task SendFineStatusUpdateEmailAsync(string email, string borrowerName, double amount, string note, int status, string fineLink)
+    {
+        var statusText = status switch
+        {
+            0 => "Chờ",
+            1 => "Đã hủy",
+            2 => "Thất bại",
+            3 => "Hoàn thành",
+            _ => "Không xác định"
+        };
+        var subject = "Cập nhật trạng thái phí phạt";
+        var htmlBody = $@"
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset='UTF-8'></head>
+            <body>
+                <p>Chào <strong>{borrowerName}</strong>,</p>
+                <p>Trạng thái phí phạt <strong>{amount} VNĐ</strong> (do: {note}) đã được cập nhật thành: <strong>{statusText}</strong>.</p>
+                <p>Xem chi tiết tại: <a href='{fineLink}'>{fineLink}</a></p>
+            </body>
+            </html>";
+        await SendEmailAsync(email, subject, htmlBody);
+    }
+
+    private string GetExtendConfirmationTemplate()
   {
     return @"<!DOCTYPE html>
 <html>
@@ -376,6 +417,58 @@ public class EmailService(IOptions<EmailSettings> emailSettings) : IEmailService
             </body>
             </html>";
   }
+    public async Task SendReturnReminderEmailAsync(
+    string email,
+    string borrowerName,
+    string bookTitle,
+    int borrowId,
+    DateTime returnDate,
+    string borrowLink)
+    {
+        var subject = "Nhắc nhở trả sách";
+        var htmlBody = GetReturnReminderTemplate()
+                       .Replace("{{BorrowerName}}", borrowerName)
+                       .Replace("{{BookTitle}}", bookTitle)
+                       .Replace("{{BorrowId}}", borrowId.ToString())
+                       .Replace("{{ReturnDate}}", returnDate.ToString("dd/MM/yyyy"))
+                       .Replace("{{BorrowLink}}", borrowLink);
+        await SendEmailAsync(email, subject, htmlBody);
+    }
+
+    private string GetReturnReminderTemplate()
+    {
+        return @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1); }
+        .header { background-color: #FFC107; color: #000; padding: 15px; font-size: 18px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { padding: 20px; color: #333; line-height: 1.5; }
+        .button { display: inline-block; background: #FFC107; color: #000; text-decoration: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
+        .footer { font-size: 12px; color: #777; text-align: center; padding: 10px; border-top: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>Nhắc nhở trả sách</div>
+        <div class='content'>
+            <p>Chào <strong>{{BorrowerName}}</strong>,</p>
+            <p>Hạn trả sách <strong>{{BookTitle}}</strong> của bạn còn một ngày.</p>
+            <p><strong>Ngày trả dự kiến:</strong> {{ReturnDate}}</p>
+            <p><strong>Mã mượn:</strong> {{BorrowId}}</p>
+            <p>Vui lòng mang sách đến trả đúng hạn để tránh bị phạt.</p>
+            <p>Bạn có thể xem chi tiết đơn mượn tại đường link bên dưới:</p>
+            <p><a href='{{BorrowLink}}' class='button'>Xem chi tiết</a></p>
+        </div>
+        <div class='footer'>
+            <p>Thư viện BookHive | Hỗ trợ: support@library.com</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
 }
 
 public class EmailSettings

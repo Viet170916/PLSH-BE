@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,13 +10,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Data.DatabaseContext;
 using Model.Entity;
-using Model.Entity.Borrow;
+using Microsoft.AspNetCore.Cors;
 
 namespace API.Controllers.PaymentControllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class PaymentController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -28,8 +23,6 @@ namespace API.Controllers.PaymentControllers
         private readonly ILogger<PaymentController> _logger;
         private readonly string _vietQrClientId;
         private readonly string _vietQrApiKey;
-        private readonly int _transactionTimeoutHours;
-        private Dictionary<string, string> _bankCodes;
 
         public PaymentController(
             AppDbContext context,
@@ -37,258 +30,243 @@ namespace API.Controllers.PaymentControllers
             IConfiguration configuration,
             ILogger<PaymentController> logger)
         {
-            _context = context;
-            _httpClient = httpClientFactory.CreateClient("VietQR");
-            _logger = logger;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _httpClient = httpClientFactory.CreateClient("VietQR") ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _vietQrClientId = configuration["VietQR:ClientId"] ?? throw new ArgumentNullException("VietQR:ClientId");
             _vietQrApiKey = configuration["VietQR:ApiKey"] ?? throw new ArgumentNullException("VietQR:ApiKey");
-            _transactionTimeoutHours = configuration.GetValue<int>("PaymentSettings:TransactionTimeoutHours", 24);
             _httpClient.DefaultRequestHeaders.Add("x-client-id", _vietQrClientId);
             _httpClient.DefaultRequestHeaders.Add("x-api-key", _vietQrApiKey);
         }
-
-        [HttpPost("create-qr/{fineId}")]
-        public async Task<IActionResult> CreateVietQR(int fineId)
+        public class FineDto
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var fine = await _context.Fines
-                .FirstOrDefaultAsync(f => f.Id == fineId && f.BorrowerId == int.Parse(userId));
-
-            if (fine == null || !fine.IsFined || fine.Status == 3)
-                return BadRequest("Phí phạt không hợp lệ hoặc đã thanh toán.");
-
-            var paymentMethod = await _context.PaymentMethods
-                .FirstOrDefaultAsync(pm => pm.PaymentType == "Bank" && pm.DeleteAt == null);
-
-            if (paymentMethod == null)
-                return BadRequest("Không tìm thấy phương thức thanh toán ngân hàng.");
-
-            if (fine.FineByDate <= 0 || fine.FineByDate > 100000000)
-                return BadRequest("Số tiền phạt không hợp lệ.");
-
-            var amount = (int)Math.Round(fine.FineByDate);
-            var referenceId = Guid.NewGuid().ToString("N").ToLower();
-            var transaction = new Transaction
-            {
-                AccountId = int.Parse(userId),
-                PaymentMethodId = paymentMethod.Id,
-                Amount = amount,
-                Currency = "VND",
-                Status = 1,
-                TransactionDate = DateTime.UtcNow,
-                ReferenceId = referenceId,
-                TransactionType = 1,
-                Note = $"Thanh toán phí phạt {fineId}"
-            };
-
-            _context.Transactions.Add(transaction);
-            fine.TransactionId = transaction.Id;
-            fine.Status = 1;
-            await _context.SaveChangesAsync();
-
-            var requestBody = new
-            {
-                accountNo = paymentMethod.BankAccount,
-                accountName = "BUI SY DAN",
-                acqId = await GetBankAcqId(paymentMethod.BankName),
-                amount,
-                addInfo = $"Phi phat {fineId} {referenceId}",
-                template = "compact"
-            };
-
-            for (int attempt = 1; attempt <= 3; attempt++)
-            {
-                try
-                {
-                    var json = JsonConvert.SerializeObject(requestBody);
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
-                    var response = await _httpClient.PostAsync("https://api.vietqr.io/v2/generate", content);
-
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        _logger.LogWarning("VietQR API failed, attempt {Attempt}: {StatusCode}", attempt, response.StatusCode);
-                        continue;
-                    }
-
-                    var result = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
-                    string qrDataUrl = result?.data?.qrDataURL;
-                    if (string.IsNullOrEmpty(qrDataUrl))
-                        throw new Exception("Invalid VietQR response");
-
-                    return Ok(new
-                    {
-                        QrCodeImageUrl = qrDataUrl,
-                        transaction.Id,
-                        Amount = amount,
-                        transaction.ReferenceId,
-                        paymentMethod.BankAccount,
-                        paymentMethod.BankName
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "VietQR attempt {Attempt} failed", attempt);
-                    if (attempt == 3)
-                    {
-                        _context.Transactions.Remove(transaction);
-                        fine.TransactionId = null;
-                        fine.Status = 0;
-                        await _context.SaveChangesAsync();
-                        return StatusCode(500, "Không thể tạo mã VietQR.");
-                    }
-                    await Task.Delay(1000 * attempt);
-                }
-            }
-
-            return StatusCode(500, "Không thể tạo mã VietQR.");
+            public int Id { get; set; }
+            public string? FineDate { get; set; }
+            public int FineType { get; set; }
+            public decimal? Amount { get; set; }
+            public int Status { get; set; }
+            public string? Note { get; set; }
+            public string? BookTitle { get; set; }
+            public string? BookImage { get; set; }
+            public string? BookCode { get; set; }
+            public string? BorrowDate { get; set; }
+            public string? ActualReturnDate { get; set; }
+            public List<string>? ReturnDates { get; set; }
+            public string? ExtendDate { get; set; }
         }
 
-        [HttpPost("webhook/vietqr")]
-        [AllowAnonymous]
-        public async Task<IActionResult> VietQRWebhook([FromBody] VietQRWebhookModel model)
+        public class PaymentResponseDto
         {
-            if (!ValidateSignature(model, Request.Headers["x-signature"], _vietQrApiKey))
-            {
-                _logger.LogWarning("Invalid VietQR webhook signature");
-                return Unauthorized();
-            }
-
-            var transaction = await _context.Transactions
-                .Include(t => t.Fine)
-                .FirstOrDefaultAsync(t => t.ReferenceId == model.ReferenceId);
-
-            if (transaction == null)
-            {
-                _logger.LogWarning("Transaction not found: {ReferenceId}", model.ReferenceId);
-                return NotFound();
-            }
-
-            if (model.Amount != transaction.Amount)
-            {
-                _logger.LogWarning("Amount mismatch: {TransactionId}, Expected: {Expected}, Actual: {Actual}",
-                    transaction.Id, transaction.Amount, model.Amount);
-                return BadRequest("Số tiền không khớp.");
-            }
-
-            if (transaction.Status != 1)
-            {
-                _logger.LogInformation("Transaction {TransactionId} already processed", transaction.Id);
-                return Ok();
-            }
-
-            if (model.Status == "success")
-            {
-                transaction.Status = 2;
-                transaction.TransactionDate = DateTime.UtcNow;
-                if (transaction.Fine != null)
-                    transaction.Fine.Status = 3;
-                _logger.LogInformation("Payment confirmed: {TransactionId}", transaction.Id);
-            }
-            else
-            {
-                transaction.Status = 3;
-                if (transaction.Fine != null)
-                    transaction.Fine.Status = 0;
-                _logger.LogInformation("Payment failed: {TransactionId}", transaction.Id);
-            }
-
-            if (transaction.TransactionDate < DateTime.UtcNow.AddHours(-_transactionTimeoutHours))
-            {
-                transaction.Status = 3;
-                if (transaction.Fine != null)
-                    transaction.Fine.Status = 0;
-                _logger.LogInformation("Transaction {TransactionId} timed out", transaction.Id);
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok();
+            public bool Success { get; set; }
+            public object? Data { get; set; }
+            public string? Message { get; set; }
         }
 
-        [HttpGet("status/{transactionId}")]
-        public async Task<IActionResult> GetPaymentStatus(int transactionId)
+        public class QrCodeDataDto
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var transaction = await _context.Transactions
-                .FirstOrDefaultAsync(t => t.Id == transactionId && t.AccountId ==int.Parse (userId));
-
-            if (transaction == null)
-                return NotFound();
-
-            return Ok(new
-            {
-                transaction.Status,
-                StatusText = transaction.Status switch
-                {
-                    1 => "Chờ thanh toán",
-                    2 => "Đã thanh toán",
-                    3 => "Đã hủy",
-                    _ => "Không xác định"
-                },
-                transaction.Amount,
-                transaction.Currency,
-                PaidDate = transaction.Status == 2 ? transaction.TransactionDate : (DateTime?)null,
-                transaction.ReferenceId
-            });
+            public string? QrCode { get; set; }
+            public string? ReferenceId { get; set; }
+            public decimal? Amount { get; set; }
+            public string? Description { get; set; }
         }
 
-        private async Task<string> GetBankAcqId(string bankName)
+        public class PaymentRequest
         {
-            _bankCodes ??= await InitializeBankCodes();
-            return _bankCodes.TryGetValue(bankName, out var code) ? code : "970418";
+            public int BorrowerId { get; set; }
+            public List<int>? FineIds { get; set; }
         }
 
-        private async Task<Dictionary<string, string>> InitializeBankCodes()
+        public class SheetTransaction
+        {
+            public string? Description { get; set; }
+            public decimal Amount { get; set; }
+            public DateTime Date { get; set; }
+        }
+        [HttpGet("borrower/{borrowerId}")]
+        public async Task<IActionResult> GetUnpaidFines(int borrowerId)
         {
             try
             {
-                var response = await _httpClient.GetAsync("https://api.vietqr.io/v2/banks");
-                if (response.IsSuccessStatusCode)
-                {
-                    var banks = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
-                    var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var bank in banks.data)
+                var fines = await _context.Fines
+                    .Where(f => f.BorrowerId == borrowerId && f.IsFined && f.Status == 0)
+                    .Include(f => f.BookBorrowing)
+                        .ThenInclude(bb => bb.BookInstance)
+                            .ThenInclude(bi => bi.Book)
+                    .Select(f => new FineDto
                     {
-                        dict[(string)bank.name] = (string)bank.code;
-                    }
-                    return dict;
-                }
+                        Id = f.Id,
+                        FineDate = f.FineDate.ToString("o"),
+                        FineType = f.FineType ?? 0,
+                        Amount = (decimal)f.Amount,
+                        Status = f.Status,
+                        Note = f.Note,
+                        BookTitle = f.BookBorrowing.BookInstance.Book.Title,
+                        BookCode = f.BookBorrowing.BookInstance.Code,
+                        BookImage = f.BookBorrowing.BookInstance.Book.Thumbnail,
+                        BorrowDate = f.BookBorrowing.BorrowDate.ToString("o"),
+                        ActualReturnDate = f.BookBorrowing.ActualReturnDate.HasValue
+                            ? f.BookBorrowing.ActualReturnDate.Value.ToString("o")
+                            : null,
+                        ReturnDates = f.BookBorrowing.ReturnDates != null
+                            ? f.BookBorrowing.ReturnDates.Select(rd => rd.ToString("o")).ToList()
+                            : new List<string>(),
+                        ExtendDate = f.BookBorrowing.ReturnDates != null && f.BookBorrowing.ReturnDates.Any()
+                            ? f.BookBorrowing.ReturnDates.Last().ToString("o")
+                            : null
+                    })
+                    .ToListAsync();
+                return Ok(new PaymentResponseDto
+                {
+                    Success = true,
+                    Data = fines,
+                    Message = "Unpaid fines retrieved successfully"
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to load bank codes");
+                _logger.LogError(ex, "Error getting unpaid fines for borrower ID: {BorrowerId}", borrowerId);
+                return StatusCode(500, new PaymentResponseDto
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Internal server error while retrieving unpaid fines"
+                });
             }
-
-            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["BIDV"] = "970418",
-                ["Vietcombank"] = "970436",
-                ["MB Bank"] = "970415"
-            };
         }
 
-        private bool ValidateSignature(VietQRWebhookModel model, string signature, string apiKey)
+
+        [HttpPost("create-qr")]
+        public async Task<IActionResult> CreatePaymentQR([FromBody] PaymentRequest request)
         {
-            if (string.IsNullOrEmpty(signature))
-                return false;
-
-            var payload = JsonConvert.SerializeObject(model, new JsonSerializerSettings
+            try
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-            });
+                if (request == null || request.FineIds == null || request.FineIds.Count == 0)
+                {
+                    return BadRequest(new PaymentResponseDto
+                    {
+                        Success = false,
+                        Data = null, 
+                        Message = "No fines selected"
+                    });
+                }
+                var fines = await _context.Fines
+                    .Where(f => request.FineIds.Contains(f.Id) && f.BorrowerId == request.BorrowerId)
+                    .ToListAsync();
 
-            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(apiKey));
-            var computed = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)));
-            return computed.Equals(signature, StringComparison.OrdinalIgnoreCase);
+                if (fines.Count != request.FineIds.Count)
+                {
+                    return BadRequest(new PaymentResponseDto
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Some fines not found or do not belong to this borrower"
+                    });
+                }
+                var totalAmount = fines.Sum(f => f.Amount ?? 0);
+
+                if (totalAmount <= 0)
+                {
+                    return BadRequest(new PaymentResponseDto
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Invalid total amount"
+                    });
+                }
+                var transaction = new Transaction
+                {
+                    AccountId = 1,
+                    Amount = (decimal)totalAmount,
+                    Currency = "VND",
+                    Status = 1,
+                    TransactionDate = DateTime.UtcNow,
+                    ReferenceId = Guid.NewGuid().ToString(),
+                    TransactionType = 1,
+                    Note = $"Fine payment for fines: {string.Join(",", request.FineIds)}"
+                };
+                _context.Transactions.Add(transaction);
+                await _context.SaveChangesAsync();
+
+                foreach (var fine in fines)
+                {
+                    fine.TransactionId = transaction.Id;
+                }
+                await _context.SaveChangesAsync();
+                var qrCodeUrl = $"https://img.vietqr.io/image/970422-0346716550-compact2.png?amount={totalAmount}&addInfo=FINE_{transaction.ReferenceId}";
+
+                return Ok(new PaymentResponseDto
+                {
+                    Success = true,
+                    Data = new QrCodeDataDto
+                    {
+                        QrCode = qrCodeUrl,
+                        ReferenceId = transaction.ReferenceId,
+                        Amount = (decimal)totalAmount,
+                        Description = $"FINE {transaction.ReferenceId}"
+                    },
+                    Message = "QR code created successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating QR for payment");
+                return StatusCode(500, new PaymentResponseDto
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Internal server error while creating payment QR"
+                });
+            }
+        }
+        [HttpPut("update-status/{referenceId}")]
+        public async Task<IActionResult> UpdatePaymentStatus(string referenceId)
+        {
+            try
+            {
+                var transaction = await _context.Transactions
+                    .Include(t => t.Fines)
+                    .FirstOrDefaultAsync(t => t.ReferenceId == referenceId);
+
+                if (transaction == null)
+                {
+                    return NotFound(new PaymentResponseDto
+                    {
+                        Success = false,
+                        Data = null,
+                        Message = "Transaction not found"
+                    });
+                }
+                transaction.Status = 2;
+                transaction.TransactionDate = DateTime.UtcNow;
+                foreach (var fine in transaction.Fines)
+                {
+                    fine.IsFined = false;
+                    fine.FineType = 3; 
+                    fine.Status = 3; 
+                }
+                await _context.SaveChangesAsync();
+
+                return Ok(new PaymentResponseDto
+                {
+                    Success = true,
+                    Data = new
+                    {
+                        TransactionId = transaction.Id,
+                        UpdatedFines = transaction.Fines.Select(f => f.Id).ToList()
+                    },
+                    Message = "Payment status updated successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating payment status for reference ID: {ReferenceId}", referenceId);
+                return StatusCode(500, new PaymentResponseDto
+                {
+                    Success = false,
+                    Data = null,
+                    Message = "Internal server error while updating payment status"
+                });
+            }
         }
     }
-
-    public class VietQRWebhookModel
-    {
-        public string ReferenceId { get; set; }
-        public decimal Amount { get; set; }
-        public string Status { get; set; }
-        public DateTime TransactionDate { get; set; }
-    }
-
 }

@@ -41,7 +41,7 @@ public partial class BookController
                        .ThenInclude(b => b.CoverImageResource)
                        .Include(b => b.RowShelf)
                        .ThenInclude(r => r.Shelf)
-                       .Where(bi => bi.DeletedAt == null);
+                       .Where(bi => bi.DeletedAt == null && bi.Book.Status != "deactive");
     if (!string.IsNullOrEmpty(isbnOrBookCode))
     {
       query = query.Where(bi =>
@@ -85,7 +85,8 @@ public partial class BookController
   [Authorize("LibrarianPolicy")] [HttpDelete("book-instance/{id}")]
   public async Task<IActionResult> SoftDeleteBookInstance([FromRoute] int id)
   {
-    var bookInstance = await context.BookInstances.FindAsync(id);
+    var bookInstance = await context.BookInstances.Include(b => b.Book)
+            .Where(x => x.Book.Status != "deactive").FirstOrDefaultAsync(x => x.Id == id);
     if (bookInstance == null) { return NotFound(new { message = "Book instance not found", }); }
 
     bookInstance.DeletedAt = DateTime.UtcNow;

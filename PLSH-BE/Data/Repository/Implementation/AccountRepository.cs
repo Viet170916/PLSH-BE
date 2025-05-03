@@ -32,7 +32,6 @@ public class AccountRepository: GenericRepository<Account>, IAccountRepository
                           RoleId = acc.RoleId,
                           FullName = pro != null ? pro.FullName : null,
                           Address = pro != null ? pro.Address : null,
-                          //RoleName = role != null ? role.Name : null
                       }).FirstOrDefaultAsync();
     }
 

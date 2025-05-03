@@ -33,7 +33,6 @@ public class AuthController(
   AppDbContext context,
   IEmailService emailService,
   IOTPService otpService,
-  RedisService redisService,
   IConfiguration configuration
 ) : Controller
 {
@@ -128,26 +127,21 @@ public class AuthController(
       var isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
       if (!isPasswordValid)
       {
-        // Tăng số lần đăng nhập sai
         user.FailedLoginAttempts++;
-
-        // Xử lý khóa tài khoản theo số lần đăng nhập sai
         switch (user.FailedLoginAttempts)
         {
           case 3:
-            user.LockoutEnd = DateTime.UtcNow.AddMinutes(5); // Khóa 5 phút
+            user.LockoutEnd = DateTime.UtcNow.AddMinutes(5); 
             break;
           case 4:
-            user.LockoutEnd = DateTime.UtcNow.AddMinutes(20); // Khóa 20 phút
+            user.LockoutEnd = DateTime.UtcNow.AddMinutes(20);
             break;
           case 5:
-            user.LockoutEnd = DateTime.MaxValue; // Khóa vĩnh viễn
+            user.LockoutEnd = DateTime.MaxValue;
             break;
         }
 
         await accountService.UpdateUserAsync(user);
-
-        // Trả về thông báo tùy theo số lần đăng nhập sai
         if (user.FailedLoginAttempts >= 5)
         {
           return Ok(new ErrorResponse
@@ -180,8 +174,6 @@ public class AuthController(
             });
           }
       }
-
-      // 🔥 KIỂM TRA NẾU MẬT KHẨU QUÁ 90 NGÀY 🔥
       if (await accountService.IsPasswordExpiredAsync(user.Id))
       {
         return Ok(new ErrorResponse
@@ -192,16 +184,12 @@ public class AuthController(
           Data = new { IsPasswordExpired = true }
         });
       }
-
-      // Đăng nhập thành công: Reset số lần thử và mở khóa (nếu có)
       user.FailedLoginAttempts = 0;
       user.LockoutEnd = null;
       await accountService.UpdateUserAsync(user);
 
       var accessToken = GenerateJwt(user);
       var refreshToken = GenerateRefreshToken();
-
-      //user.Token = accessToken;
       user.RefreshToken = refreshToken;
       user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
       await accountService.UpdateUserAsync(user);
@@ -209,19 +197,6 @@ public class AuthController(
       otpService.StoreOtp(request.Email, otp);
       await emailService.SendOtpEmailAsync(request.Email, otp);
       return Ok(new { RequiresOtp = true, Message = "Vui lòng kiểm tra email để lấy OTP" });
-      return Ok(new OkResponse
-      {
-        Status = HttpStatus.OK.GetDescription(),
-        StatusCode = HttpStatus.OK,
-        Message = "Login successful.",
-        Data = new
-        {
-          IsAuthenticated = true,
-          Account = user.RemoveNullProperties(),
-          AccessToken = accessToken,
-          RefreshToken = refreshToken,
-        }
-      });
     }
     catch (Exception ex)
     {
@@ -236,49 +211,48 @@ public class AuthController(
   }
 
   //SendOTP
-  [AllowAnonymous] [HttpPost("send-otp")]
-  public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request, [FromServices] RedisService redisService)
-  {
-    if (string.IsNullOrEmpty(request.Email)) return BadRequest("Email không được để trống");
-    var user = await accountService.GetUserByEmailAsync(request.Email);
-    if (user == null) return NotFound("Người dùng không tồn tại");
-    var otp = otpService.GenerateOtp();
-    await redisService.SetOtpAsync(request.Email, otp);
-    await emailService.SendOtpEmailAsync(request.Email, otp);
-    Console.WriteLine($"OTP gửi đến {request.Email}: {otp}");
-    return Ok(new { Message = "Đã gửi OTP qua email" });
-  }
+  //[AllowAnonymous] [HttpPost("send-otp")]
+  //public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request, [FromServices] EmailService Service)
+  //{
+  //  if (string.IsNullOrEmpty(request.Email)) return BadRequest("Email không được để trống");
+  //  var user = await accountService.GetUserByEmailAsync(request.Email);
+  //  if (user == null) return NotFound("Người dùng không tồn tại");
+  //  var otp = otpService.GenerateOtp();
+  //  await redisService.SetOtpAsync(request.Email, otp);
+  //  await emailService.SendOtpEmailAsync(request.Email, otp);
+  //  Console.WriteLine($"OTP gửi đến {request.Email}: {otp}");
+  //  return Ok(new { Message = "Đã gửi OTP qua email" });
+  //}
 
-  [AllowAnonymous] [HttpPost("verify-otp")]
-  public async Task<IActionResult> VerifyOtp(
-    [FromBody] VerifyOtpRequestDto request,
-    [FromServices] RedisService redisService
-  )
-  {
-    if (string.IsNullOrEmpty(request.Email)) return Unauthorized("Không tìm thấy email, vui lòng đăng nhập lại.");
-    var storedOtp = await redisService.GetOtpAsync(request.Email);
-    if (string.IsNullOrEmpty(storedOtp)) return BadRequest("OTP đã hết hạn hoặc không tồn tại.");
-    if (storedOtp != request.Otp) return BadRequest("OTP không chính xác.");
+  //[AllowAnonymous] [HttpPost("verify-otp")]
+  //public async Task<IActionResult> VerifyOtp(
+  //  [FromBody] VerifyOtpRequestDto request
+  //)
+  //{
+  //  if (string.IsNullOrEmpty(request.Email)) return Unauthorized("Không tìm thấy email, vui lòng đăng nhập lại.");
+  //  var storedOtp = await emailService.GetOtpAsync(request.Email);
+  //  if (string.IsNullOrEmpty(storedOtp)) return BadRequest("OTP đã hết hạn hoặc không tồn tại.");
+  //  if (storedOtp != request.Otp) return BadRequest("OTP không chính xác.");
 
-    // Xóa OTP sau khi xác minh thành công
-    await redisService.RemoveOtpAsync(request.Email);
-    var user = await accountService.GetUserByEmailAsync(request.Email);
-    if (user == null) return NotFound("Người dùng không tồn tại");
-    var token = GenerateJwt(user);
-    return Ok(new OkResponse
-    {
-      Status = HttpStatus.OK.GetDescription(),
-      StatusCode = HttpStatus.OK,
-      Message = "Login successful.",
-      Data = new
-      {
-        IsAuthenticated = true,
-        Account = user.RemoveNullProperties(),
-        AccessToken = token,
-        RefreshToken = GenerateRefreshToken()
-      }
-    });
-  }
+  //  // Xóa OTP sau khi xác minh thành công
+  //  await emailService.RemoveOtpAsync(request.Email);
+  //  var user = await accountService.GetUserByEmailAsync(request.Email);
+  //  if (user == null) return NotFound("Người dùng không tồn tại");
+  //  var token = GenerateJwt(user);
+  //  return Ok(new OkResponse
+  //  {
+  //    Status = HttpStatus.OK.GetDescription(),
+  //    StatusCode = HttpStatus.OK,
+  //    Message = "Login successful.",
+  //    Data = new
+  //    {
+  //      IsAuthenticated = true,
+  //      Account = user.RemoveNullProperties(),
+  //      AccessToken = token,
+  //      RefreshToken = GenerateRefreshToken()
+  //    }
+  //  });
+  //}
 
 
   [AllowAnonymous] [HttpPost("refresh-token")]

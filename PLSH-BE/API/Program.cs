@@ -95,6 +95,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials());
+
 });
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -147,7 +148,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
            }
          };
        });
-// builder.Services.Configure<GeminiService.GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.AddAuthorizationBuilder()
        .AddPolicy("AdminPolicy", policy => policy.RequireRole("admin"))
        .AddPolicy("BorrowerPolicy", policy => policy.RequireRole("student", "teacher"))
@@ -155,6 +155,7 @@ builder.Services.AddAuthorizationBuilder()
        .AddPolicy("NotVerifiedPolicy", policy => policy.RequireRole("notVerifiedUser"));
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient<HttpClientWrapper>(c => c.BaseAddress = new Uri("https://localhost:44353/"));
+builder.Services.AddHostedService<ReturnDateNotificationService>();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers()
        .AddJsonOptions(options =>
@@ -170,20 +171,17 @@ builder.Services.AddHttpClient("VietQR", client =>
     client.BaseAddress = new Uri("https://api.vietqr.io/v2/");
     client.DefaultRequestHeaders.Add("x-client-id", builder.Configuration["VietQR:ClientId"]);
     client.DefaultRequestHeaders.Add("x-api-key", builder.Configuration["VietQR:ApiKey"]);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(300);
 });
 builder.Services.ConfigureEmailService();
-var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
+builder.Services.AddScoped<FineAutoCreationService>();
+builder.Services.AddScoped<IOTPService, OTPService>();
+
+var app = builder.Build();
 app.UseCors("AllowSpecificOrigins");
 app.UseSwagger();
 app.UseSwaggerUI();
-// }
-
-// app.UseRouting();
 app.Use(async (context, next) =>
 {
   if (context.Request.Path == "/")

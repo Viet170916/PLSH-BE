@@ -77,6 +77,9 @@ public class Book
 
   [NotMapped]
   public List<AvailabilityDto>? Availabilities { get; set; } = [];
+    
+
+  public string? Status { get; set; }
 
   [NotMapped]
   public BookAvailabilityDto? BookStatus { get; set; }

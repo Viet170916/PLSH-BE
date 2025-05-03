@@ -18,14 +18,12 @@ public class Transaction
   public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
   [MaxLength(255)]
-  public required string ReferenceId { get; set; } // ID tham chiếu từ Payment Gateway
+  public required string ReferenceId { get; set; }
 
   public int TransactionType { get; set; } //(nộp phạt)
 
-    public int? FineId { get; set; }
-    [ForeignKey("FineId")]
-    public virtual Fine? Fine { get; set; }
+  public virtual ICollection<Fine> Fines { get; set; } = new List<Fine>();
 
-    [MaxLength(255)]
+  [MaxLength(255)]
   public string? Note { get; set; }
 }

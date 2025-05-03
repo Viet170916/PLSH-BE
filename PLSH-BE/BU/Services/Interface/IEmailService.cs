@@ -45,5 +45,8 @@ namespace BU.Services.Interface
       int loanId,
       string link
     );
-  }
+        Task SendReturnReminderEmailAsync(string email, string borrowerName, string bookTitle, int borrowId, DateTime returnDate, string borrowLink);
+        Task SendFineNotificationEmailAsync(string email, string borrowerName, double amount, string note, int borrowId, string fineLink);
+        Task SendFineStatusUpdateEmailAsync(string email, string borrowerName, double amount, string note, int status, string fineLink);
+    }
 }

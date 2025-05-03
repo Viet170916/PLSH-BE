@@ -70,6 +70,7 @@ public partial class BookController
                        .Include(b => b.Category)
                        .Include(b => b.Reviews)
                        .Include(b => b.Authors)
+                       .Where(x => x.Status != "deactive")
                        .AsQueryable();
     if (!string.IsNullOrWhiteSpace(trimmedKeyword))
     {

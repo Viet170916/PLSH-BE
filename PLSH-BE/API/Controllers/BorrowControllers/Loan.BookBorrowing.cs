@@ -5,6 +5,7 @@ using BU.Models.DTO.Loan;
 using Common.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Model.Entity.Borrow;
 
 namespace API.Controllers.BorrowControllers;
 
@@ -44,7 +45,6 @@ public partial class LoanController
       query = query.Where(bb => bb.BorrowingStatus.Equals(status, StringComparison.CurrentCultureIgnoreCase));
 
     }
-
     var totalItems = await query.CountAsync();
     var borrowings = await query
                            .OrderByDescending(bb => bb.BorrowDate)
@@ -52,7 +52,25 @@ public partial class LoanController
                            .Take(limit)
                            .ProjectTo<BookBorrowingDetailDto>(mapper.ConfigurationProvider)
                            .ToListAsync();
-    return Ok(new BaseResponse<List<BookBorrowingDetailDto>>()
+        await CalculateAndUpdateFines(borrowings);
+        foreach (var borrowing in borrowings)
+        {
+            var loan = await context.Loans
+                                    .Include(l => l.BookBorrowings)
+                                    .FirstOrDefaultAsync(l => l.Id == borrowing.LoanId);
+
+            if (loan != null)
+            {
+                var allReturned = loan.BookBorrowings.All(bb => bb.BorrowingStatus == "returned");
+                if (allReturned)
+                {
+                    loan.AprovalStatus = "return-all"; 
+                    context.Loans.Update(loan);
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+        return Ok(new BaseResponse<List<BookBorrowingDetailDto>>()
     {
       Count = totalItems,
       Page = page,
@@ -61,4 +79,45 @@ public partial class LoanController
       Data = borrowings
     });
   }
+    private async Task CalculateAndUpdateFines(List<BookBorrowingDetailDto> borrowings)
+    {
+        foreach (var borrowing in borrowings)
+        {
+            var bookBorrowing = await context.BookBorrowings
+                                             .Include(bb => bb.Loan)
+                                             .FirstOrDefaultAsync(bb => bb.Id == borrowing.Id);
+
+            if (bookBorrowing == null || bookBorrowing.ActualReturnDate == null ||
+                bookBorrowing.ReturnDates == null || !bookBorrowing.ReturnDates.Any())
+                continue;
+            var lastReturnDate = bookBorrowing.ReturnDates.Last();
+            var daysLate = (bookBorrowing.ActualReturnDate.Value - lastReturnDate).Days;
+            if (daysLate <= 0) continue; 
+            var fine = await context.Fines
+                                    .Where(f => f.BookBorrowingId == borrowing.Id && f.Status != 3) 
+                                    .Include(f => f.BookBorrowing)
+                                    .FirstOrDefaultAsync();
+            if (fine == null)
+            {
+                fine = new Fine
+                {
+                    FineDate = DateTime.UtcNow,
+                    IsFined = true,
+                    FineType = 0, 
+                    FineByDate = 5000, 
+                    Amount = 0,
+                    Note = $"Phí ph?t t? ??ng t?o do tr? h?n {daysLate} ngày",
+                    BookBorrowingId = borrowing.Id,
+                    BorrowerId = bookBorrowing.Loan!.BorrowerId,
+                    Status = 0
+                };
+                context.Fines.Add(fine);
+                await context.SaveChangesAsync();
+            }
+            var fineAmount = fine.FineByDate * daysLate;
+            fine.Amount = (fine.Amount ?? 0) + fineAmount;
+            context.Fines.Update(fine);
+            await context.SaveChangesAsync();
+        }
+    }
 }
