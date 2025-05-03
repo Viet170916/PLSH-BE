@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 namespace API.Controllers.AnalyticControllers;
 
 [Route("api/v1/analytic")]
-
 public partial class AnalyticAccountController(AppDbContext context) : Controller
 {
   [Authorize("LibrarianPolicy")] [HttpGet("account/{accountId}")]
@@ -125,4 +124,63 @@ public partial class AnalyticAccountController(AppDbContext context) : Controlle
     public string Thumbnail { get; set; }
   }
 
+  [Authorize("LibrarianPolicy")] [HttpGet("account/all")]
+  public async Task<ActionResult<BaseResponse<MemberAnalytic>>> GetMemberAnalytics()
+  {
+    try
+    {
+      var totalMembers = await context.Accounts.CountAsync();
+      var totalStudents = await context.Accounts
+                                       .Include(a => a.Role)
+                                       .CountAsync(a => a.Role.Name == "Student");
+      var totalTeachers = await context.Accounts
+                                       .Include(a => a.Role)
+                                       .CountAsync(a => a.Role.Name == "Teacher");
+      var totalLibrarians = await context.Accounts
+                                         .Include(a => a.Role)
+                                         .CountAsync(a => a.Role.Name == "Librarian");
+      var verifiedAccounts = await context.Accounts.CountAsync(a => a.IsVerified);
+      var unverifiedAccounts = await context.Accounts.CountAsync(a => !a.IsVerified);
+      var firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+      var newThisMonth = await context.Accounts
+                                      .CountAsync(a => a.CreatedAt >= firstDayOfMonth);
+      var deactivatedAccounts = await context.Accounts
+                                             .CountAsync(a => a.Status == "inactive" || a.Status == "deleted");
+      var analytics = new MemberAnalytic
+      {
+        TotalMembers = totalMembers,
+        TotalStudents = totalStudents,
+        TotalTeachers = totalTeachers,
+        TotalLibrarians = totalLibrarians,
+        VerifiedAccounts = verifiedAccounts,
+        UnverifiedAccounts = unverifiedAccounts,
+        NewThisMonth = newThisMonth,
+        DeactivatedAccounts = deactivatedAccounts
+      };
+      return Ok(new BaseResponse<MemberAnalytic>
+      {
+        Message = "Member analytics retrieved successfully", Data = analytics, Status = "success"
+      });
+    }
+    catch (Exception ex)
+    {
+      return StatusCode(500,
+        new BaseResponse<MemberAnalytic>
+        {
+          Message = $"An error occurred: {ex.Message}", Data = new MemberAnalytic(), Status = "error"
+        });
+    }
+  }
+
+  public class MemberAnalytic
+  {
+    public int TotalMembers { get; set; }
+    public int TotalStudents { get; set; }
+    public int TotalTeachers { get; set; }
+    public int TotalLibrarians { get; set; }
+    public int VerifiedAccounts { get; set; }
+    public int UnverifiedAccounts { get; set; }
+    public int NewThisMonth { get; set; }
+    public int DeactivatedAccounts { get; set; }
+  }
 }

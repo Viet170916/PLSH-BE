@@ -46,7 +46,8 @@ public partial class AccountController
         if (string.IsNullOrWhiteSpace(account.ClassRoom)) errorMessages.Add("Sinh viên phải có thông tin lớp học");
         break;
       case "teacher":
-        if (string.IsNullOrWhiteSpace(account.IdentityCardNumber)) errorMessages.Add("Giảng viên phải có số căn cước công dân");
+        if (string.IsNullOrWhiteSpace(account.IdentityCardNumber))
+          errorMessages.Add("Giảng viên phải có số căn cước công dân");
         break;
     }
 
@@ -110,8 +111,8 @@ public partial class AccountController
   )
   {
     var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
-    var roleToken = (await context.Accounts.Include(a => a.Role).FirstOrDefaultAsync(a => a.Id == accountId))?.Role
-      .Name;
+    var roleToken = (await context.Accounts.Include(a => a.Role)
+                                  .FirstOrDefaultAsync(a => a.Id == accountId))?.Role.Name;
     var trimedKeyword = keyword?.ToLower().Trim();
     if (page < 1) page = 1;
     if (limit < 1) limit = 10;
@@ -122,8 +123,7 @@ public partial class AccountController
       return BadRequest(new { Message = $"orderBy phải là một trong: {string.Join(", ", allowedOrderFields)}" });
     }
 
-    var query = context.Accounts.Include(a => a.Role)
-                       .AsQueryable();
+    var query = context.Accounts.Include(a => a.Role).AsQueryable();
     if (roleToken is not ("librarian" or "admin")) { return Forbid(); }
 
     if (roleToken == "librarian") { query = query.Where(a => a.Role.Name == "student" || a.Role.Name == "teacher"); }
@@ -131,12 +131,11 @@ public partial class AccountController
     if (!string.IsNullOrEmpty(trimedKeyword))
     {
       query = query.Where(a =>
-        (a.FullName != null && a.FullName.Contains(trimedKeyword))
-        || (a.Email != null && a.Email.Contains(trimedKeyword))
-        || a.IdentityCardNumber == trimedKeyword
-        || a.CardMemberNumber.Contains(trimedKeyword)
-        || (a.PhoneNumber != null &&
-            a.PhoneNumber.Contains(trimedKeyword)));
+        (a.FullName != null && a.FullName.Contains(trimedKeyword)) ||
+        (a.Email != null && a.Email.Contains(trimedKeyword)) ||
+        a.IdentityCardNumber == trimedKeyword ||
+        a.CardMemberNumber.Contains(trimedKeyword) ||
+        (a.PhoneNumber != null && a.PhoneNumber.Contains(trimedKeyword)));
     }
 
     if (!string.IsNullOrEmpty(role)) { query = query.Where(a => a.Role.Name == role); }
@@ -154,9 +153,20 @@ public partial class AccountController
     // if (!string.IsNullOrEmpty(approveStatus)) { query = query.Where(a => a.Status == approveStatus); }
     query = query.OrderBy($"{orderBy} {orderDirection}");
     var totalCount = await query.CountAsync();
+    var pageCount = (int)Math.Ceiling((double)totalCount / limit);
+
+    if (page > pageCount && pageCount > 0) { page = 1; }
+
     var members = await query.Skip((page - 1) * limit).Take(limit).ToListAsync();
     var membersDto = mapper.Map<List<AccountGDto>>(members);
-    var result = new { Data = membersDto, Count = totalCount, Page = page, Limit = limit };
+    var result = new BaseResponse<List<AccountGDto>>
+    {
+      Data = membersDto,
+      Count = totalCount,
+      Page = page,
+      Limit = limit,
+      PageCount = pageCount
+    };
     return Ok(result);
   }
 

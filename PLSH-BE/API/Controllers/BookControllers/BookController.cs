@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using API.Common;
 using AutoMapper;
+using BU.Models.DTO;
 using BU.Models.DTO.Book;
 using BU.Services.Interface;
 using Common.Enums;
@@ -33,11 +34,9 @@ namespace API.Controllers.BookControllers
     IGeminiService geminiService,
     IEpubParserService epubParserService,
     GoogleCloudStorageHelper helper
-
   )
     : ControllerBase
   {
-
     [HttpPost("add")] public async Task<IActionResult> AddOrUpdateBook([FromBody] BookNewDto? bookDto)
     {
       logger.LogInformation($"{nameof(AddOrUpdateBook)} called.");
@@ -130,7 +129,10 @@ namespace API.Controllers.BookControllers
 
         await context.SaveChangesAsync();
         var bookAdded = mapper.Map<BookNewDto>(book);
-        return Ok(bookAdded);
+        return Ok(new BaseResponse < BookNewDto >{
+          Data = bookAdded,
+          Message = "Thêm thành công",
+        });
       }
       catch (Exception ex)
       {
