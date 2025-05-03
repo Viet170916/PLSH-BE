@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Linq.Dynamic.Core;
+using System.Security.Claims;
 using System.Text.Json;
 using API.Common;
 using API.DTO;
 using AutoMapper.QueryableExtensions;
 using BU.Models.DTO;
 using BU.Models.DTO.Book;
+using Common.Enums;
 using Common.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,26 +20,29 @@ namespace API.Controllers.BookControllers;
 
 public partial class BookController
 {
-  [HttpGet("{id}")]
-  public async Task<IActionResult> GetBookById(int id)
+  [HttpGet("{id}")] public async Task<IActionResult> GetBookById(int id)
   {
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
     var book = await context.Books
                             .Where(b => b.Id == id)
-                            .ProjectTo<BookNewDto>(mapper.ConfigurationProvider)
+                            .ProjectTo<BookNewDto>(mapper.ConfigurationProvider, new { UserId = accountId })
                             .FirstOrDefaultAsync();
-
     if (book == null) return NotFound();
+    if (accountId != 0)
+    {
+      book.IsFavorite =
+        await context.Favorites.FirstOrDefaultAsync(f =>
+          f.BookId == book.Id && f.BorrowerId == accountId && f.Status == FavoriteStatus.Favorite) is not null;
+    }
 
     var counts = await context.BookInstances
                               .Where(i => i.BookId == id)
                               .GroupBy(i => i.BookId)
                               .Select(g => new
                               {
-                                Quantity = g.Count(),
-                                AvailableBookCount = g.Count(i => !i.IsInBorrowing)
+                                Quantity = g.Count(), AvailableBookCount = g.Count(i => !i.IsInBorrowing)
                               })
                               .FirstOrDefaultAsync();
-
     if (counts != null)
     {
       book.Quantity = counts.Quantity;
@@ -51,7 +57,6 @@ public partial class BookController
     return Ok(book);
   }
 
-
   [HttpGet] public async Task<IActionResult> SearchBooks(
     [FromQuery] string? keyword,
     [FromQuery] List<string>? categories,
@@ -63,6 +68,7 @@ public partial class BookController
     [FromQuery] bool descending = false
   )
   {
+    var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
     var trimmedKeyword = keyword?.Trim().ToLower();
     limit = Math.Clamp(limit, 1, 40);
     var query = context.Books
@@ -77,6 +83,7 @@ public partial class BookController
       query = query.Where(b =>
         (b.Title != null && b.Title.ToLower().Contains(trimmedKeyword)) ||
         b.Authors.Any(a => a.FullName.ToLower().Contains(trimmedKeyword)));
+
     }
 
     if (categories?.Any(c => !string.IsNullOrWhiteSpace(c)) == true)
@@ -119,6 +126,12 @@ public partial class BookController
                       .Take(limit)
                       .ProjectTo<BookMinimalDto>(mapper.ConfigurationProvider)
                       .ToListAsync();
+    var bookFavorites =
+      await context.Favorites.Where(f => f.BorrowerId == accountId && f.Status == FavoriteStatus.Favorite)
+                   .Select(f => f.BookId)
+                   .ToListAsync();
+    foreach (var book in books.Where(book => bookFavorites.Contains(book.Id ?? 0))) { book.IsFavorite = true; }
+
     var response = new BaseResponse<List<BookMinimalDto>>
     {
       PageCount = (int)Math.Ceiling((double)totalRecords / limit),

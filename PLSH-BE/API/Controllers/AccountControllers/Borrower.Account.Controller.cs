@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using API.DTO;
 using BU.Models.DTO;
+using BU.Models.DTO.Account.AccountDTO;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
@@ -12,8 +13,7 @@ namespace API.Controllers.AccountControllers;
 
 public partial class AccountController
 {
-  [HttpPost("b-login")]
-  public async Task<IActionResult> BorrowerLogin([FromBody] LoginRequest request)
+  [HttpPost("b-login")] public async Task<IActionResult> BorrowerLogin([FromBody] LoginRequest request)
   {
     var account = await context.Accounts
                                .Include(a => a.Role)
@@ -26,7 +26,10 @@ public partial class AccountController
     if (account.Role == null ||
         (account.Role.Name != "student" && account.Role.Name != "teacher"))
     {
-      return Unauthorized(new BaseResponse<string> { Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập." });
+      return Unauthorized(new BaseResponse<string>
+      {
+        Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập."
+      });
     }
 
     var token = string.Empty;
@@ -35,8 +38,7 @@ public partial class AccountController
       token = GenerateJwtToken(account, "notVerifiedUser", TimeSpan.FromDays(10));
       return Ok(new BaseResponse<string>
       {
-        Data = token,
-        Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
+        Data = token, Message = "Vui lòng đổi mật khẩu để hoàn tất xác minh tài khoản."
       });
     }
 
@@ -114,72 +116,110 @@ public partial class AccountController
   }
 
   [HttpPost("b-login/google")]
-public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
-{
+  public async Task<IActionResult> BorrowerLoginWithGoogle([FromBody] GoogleLoginRequest_ request)
+  {
     try
     {
-        var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
-        var email = payload.Email;
-        var fullName = payload.Name;
-        var googleUserId = payload.Subject;
-        var avatarUrl = payload.Picture;
-
-        var account = await context.Accounts
-                                   .Include(ac => ac.Role)
-                                   .FirstOrDefaultAsync(a => a.Email == email);
-
-        if (account != null)
+      var payload = await GoogleJsonWebSignature.ValidateAsync(request.GoogleToken);
+      var email = payload.Email;
+      var fullName = payload.Name;
+      var googleUserId = payload.Subject;
+      var avatarUrl = payload.Picture;
+      var account = await context.Accounts
+                                 .Include(ac => ac.Role)
+                                 .FirstOrDefaultAsync(a => a.Email == email);
+      if (account != null)
+      {
+        // Tài khoản đã tồn tại, kiểm tra role
+        if (account.Role == null ||
+            (account.Role.Name != "student" && account.Role.Name != "teacher"))
         {
-            // Tài khoản đã tồn tại, kiểm tra role
-            if (account.Role == null ||
-                (account.Role.Name != "student" && account.Role.Name != "teacher"))
-            {
-                return Unauthorized(new BaseResponse<string> { Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập." });
-            }
+          return Unauthorized(new BaseResponse<string>
+          {
+            Message = "Chỉ học sinh hoặc giáo viên mới được phép đăng nhập."
+          });
         }
-        else
+      }
+      else
+      {
+        // Tài khoản chưa có, phải chọn role là student hoặc teacher
+        if (request.Role != "student" && request.Role != "teacher")
         {
-            // Tài khoản chưa có, phải chọn role là student hoặc teacher
-            if (request.Role != "student" && request.Role != "teacher")
-            {
-                return BadRequest(new BaseResponse<string> { Message = "Chỉ hỗ trợ vai trò học sinh hoặc giáo viên." });
-            }
-
-            var roleId = await context.Roles
-                                      .Where(r => r.Name == request.Role)
-                                      .Select(r => r.Id)
-                                      .FirstOrDefaultAsync();
-
-            if (roleId == 0)
-            {
-                return BadRequest(new BaseResponse<string> { Message = $"Không tìm thấy vai trò {request.Role} trong hệ thống." });
-            }
-
-            account = new Account
-            {
-                FullName = request.FullName ?? fullName,
-                Email = email,
-                PhoneNumber = request.PhoneNumber,
-                Address = request.Address,
-                GoogleUserId = googleUserId,
-                ClassRoom = request.ClassRoom,
-                IdentityCardNumber = request.IdentityCardNumber,
-                RoleId = roleId,
-                IsVerified = true,
-                AvatarUrl = avatarUrl,
-                CreatedAt = DateTime.UtcNow
-            };
-            context.Accounts.Add(account);
-            await context.SaveChangesAsync();
+          return BadRequest(new BaseResponse<string> { Message = "Chỉ hỗ trợ vai trò học sinh hoặc giáo viên." });
         }
 
-        var token = GenerateJwtToken(account, account.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
-        return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
+        var roleId = await context.Roles
+                                  .Where(r => r.Name == request.Role)
+                                  .Select(r => r.Id)
+                                  .FirstOrDefaultAsync();
+        if (roleId == 0)
+        {
+          return BadRequest(new BaseResponse<string>
+          {
+            Message = $"Không tìm thấy vai trò {request.Role} trong hệ thống."
+          });
+        }
+
+        account = new Account
+        {
+          FullName = request.FullName ?? fullName,
+          Email = email,
+          PhoneNumber = request.PhoneNumber,
+          Address = request.Address,
+          GoogleUserId = googleUserId,
+          ClassRoom = request.ClassRoom,
+          IdentityCardNumber = request.IdentityCardNumber,
+          RoleId = roleId,
+          IsVerified = true,
+          AvatarUrl = avatarUrl,
+          CreatedAt = DateTime.UtcNow
+        };
+        context.Accounts.Add(account);
+        await context.SaveChangesAsync();
+      }
+
+      var token = GenerateJwtToken(account, account.Role?.Name ?? request.Role, TimeSpan.FromDays(1));
+      return Ok(new BaseResponse<string> { Data = token, Message = "Đăng nhập bằng Google thành công." });
     }
     catch (InvalidJwtException)
     {
-        return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
+      return Unauthorized(new BaseResponse<string> { Message = "Token Google không hợp lệ." });
     }
-}
+  }
 
+  [Authorize] [HttpPut("borrower/update")]
+  public async Task<IActionResult> UpdateBorrowerAccountAsync(
+    [FromBody] AccountGDto updateDto
+  )
+  {
+    var account = await context.Accounts.FindAsync(updateDto.Id);
+    if (account == null)
+    {
+      return BadRequest(new BaseResponse<AccountGDto> { Message = "Account not found", Status = "error" });
+    }
+
+    if (!string.IsNullOrEmpty(updateDto.Email) && updateDto.Email != account.Email)
+    {
+      var existingAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Email == updateDto.Email);
+      if (existingAccount != null)
+      {
+        return BadRequest(new BaseResponse<AccountGDto> { Message = "Email is already in use", Status = "error" });
+      }
+
+      var generatedPassword = GenerateRandomPassword();
+      account.Email = updateDto.Email;
+      account.Password = BCrypt.Net.BCrypt.HashPassword(generatedPassword);
+      var appLink = "https://book-hive.space/login";
+      await emailService.SendWelcomeEmailAsync(account.FullName, account.Email, generatedPassword, appLink);
+    }
+
+    mapper.Map(updateDto, account);
+    account.UpdatedAt = DateTime.UtcNow;
+    context.Accounts.Update(account);
+    await context.SaveChangesAsync();
+    return Ok(new BaseResponse<AccountGDto>
+    {
+      Message = "Account updated successfully", Data = mapper.Map<AccountGDto>(account), Status = "success",
+    });
+  }
 }

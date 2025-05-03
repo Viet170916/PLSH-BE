@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250427200143_favorite")]
+    partial class favorite
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -302,20 +305,13 @@ namespace Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int?>("TransactionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BookBorrowingId");
-
-                    b.HasIndex("BorrowerId");
-
-                    b.HasIndex("TransactionId");
 
                     b.ToTable("Fines");
                 });
@@ -367,6 +363,9 @@ namespace Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("AddedDate")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("AddedDate");
@@ -387,6 +386,8 @@ namespace Data.Migrations
                         .HasColumnName("Status");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
 
                     b.HasIndex("BookId");
 
@@ -792,23 +793,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShortBookInfos");
-                });
-
-            modelBuilder.Entity("Model.Entity.System.ApiKey", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ApiKeys");
                 });
 
             modelBuilder.Entity("Model.Entity.Transaction", b =>
@@ -1663,29 +1647,6 @@ namespace Data.Migrations
                     b.Navigation("Loan");
                 });
 
-            modelBuilder.Entity("Model.Entity.Borrow.Fine", b =>
-                {
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowing")
-                        .WithMany()
-                        .HasForeignKey("BookBorrowingId");
-
-                    b.HasOne("Model.Entity.User.Account", "Borrower")
-                        .WithMany()
-                        .HasForeignKey("BorrowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId");
-
-                    b.Navigation("BookBorrowing");
-
-                    b.Navigation("Borrower");
-
-                    b.Navigation("Transaction");
-                });
-
             modelBuilder.Entity("Model.Entity.Borrow.Loan", b =>
                 {
                     b.HasOne("Model.Entity.User.Account", "Borrower")
@@ -1705,14 +1666,18 @@ namespace Data.Migrations
 
             modelBuilder.Entity("Model.Entity.Favorite.Favorite", b =>
                 {
+                    b.HasOne("Model.Entity.User.Account", null)
+                        .WithMany("Favorites")
+                        .HasForeignKey("AccountId");
+
                     b.HasOne("Model.Entity.book.Book", "Book")
                         .WithMany("Favorites")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Model.Entity.User.Account", "Borrower")
-                        .WithMany("Favorites")
+                    b.HasOne("Model.Entity.User.Borrower", "Borrower")
+                        .WithMany()
                         .HasForeignKey("BorrowerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

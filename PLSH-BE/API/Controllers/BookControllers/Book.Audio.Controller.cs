@@ -28,6 +28,17 @@ public partial class BookController
   [HttpPost("speak")] public async Task<IActionResult> Speak([FromBody] TtsRequestDto request)
   {
     var httpClient = httpClientFactory.CreateClient();
+    string apiKey = null;
+    try
+    {
+      // Lấy API Key hợp lệ
+      apiKey = await GetValidApiKeyAsync();
+    }
+    catch (Exception ex)
+    {
+      return StatusCode(500, new BaseResponse<string> { Status = "fail", Message = ex.Message, Data = null });
+    }
+
     var url =
       $"https://api.elevenlabs.io/v1/text-to-speech/{request.VoiceId ?? "9BWtsMINqrJLrRacOk9x"}/with-timestamps";
     var payload = JsonSerializer.Serialize(new
@@ -36,13 +47,30 @@ public partial class BookController
     });
     var content = new StringContent(payload, Encoding.UTF8, "application/json");
     httpClient.DefaultRequestHeaders.Clear();
-    httpClient.DefaultRequestHeaders.Add("xi-api-key", ApiKey);
+    httpClient.DefaultRequestHeaders.Add("xi-api-key", apiKey);
     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     var response = await httpClient.PostAsync(url, content);
     if (!response.IsSuccessStatusCode)
     {
-      return StatusCode((int)response.StatusCode,
-        new BaseResponse<string> { Status = "fail", Message = "Failed to call ElevenLabs API", Data = null });
+      await RemoveInvalidApiKeyAsync(apiKey);
+
+      try
+      {
+        apiKey = await GetValidApiKeyAsync();
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("xi-api-key", apiKey);
+        response = await httpClient.PostAsync(url, content);
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, new BaseResponse<string> { Status = "fail", Message = ex.Message, Data = null });
+      }
+
+      if (!response.IsSuccessStatusCode)
+      {
+        return StatusCode((int)response.StatusCode,
+          new BaseResponse<string> { Status = "fail", Message = "Failed to call ElevenLabs API", Data = null });
+      }
     }
 
     var json = await response.Content.ReadAsStringAsync();
@@ -51,6 +79,47 @@ public partial class BookController
     {
       Status = "success", Message = "Successfully generated speech", Data = result,
     });
+    // var httpClient = httpClientFactory.CreateClient();
+    // var url =
+    //   $"https://api.elevenlabs.io/v1/text-to-speech/{request.VoiceId ?? "9BWtsMINqrJLrRacOk9x"}/with-timestamps";
+    // var payload = JsonSerializer.Serialize(new
+    // {
+    //   text = request.Text, model_id = "eleven_flash_v2_5", output_format = "mp3_44100_128",
+    // });
+    // var content = new StringContent(payload, Encoding.UTF8, "application/json");
+    // httpClient.DefaultRequestHeaders.Clear();
+    // httpClient.DefaultRequestHeaders.Add("xi-api-key", ApiKey);
+    // httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    // var response = await httpClient.PostAsync(url, content);
+    // if (!response.IsSuccessStatusCode)
+    // {
+    //   return StatusCode((int)response.StatusCode,
+    //     new BaseResponse<string> { Status = "fail", Message = "Failed to call ElevenLabs API", Data = null });
+    // }
+    //
+    // var json = await response.Content.ReadAsStringAsync();
+    // var result = Converter.ParseTtsResponse(json);
+    // return Ok(new BaseResponse<TtsResponseDto>
+    // {
+    //   Status = "success", Message = "Successfully generated speech", Data = result,
+    // });
+  }
+
+  private async Task RemoveInvalidApiKeyAsync(string apiKey)
+  {
+    var invalidApiKey = await context.ApiKeys.FirstOrDefaultAsync(a => a.Key == apiKey);
+    if (invalidApiKey != null)
+    {
+      context.ApiKeys.Remove(invalidApiKey);
+      await context.SaveChangesAsync();
+    }
+  }
+
+  private async Task<string> GetValidApiKeyAsync()
+  {
+    var apiKey = await context.ApiKeys.FirstOrDefaultAsync();
+    if (apiKey == null) throw new InvalidOperationException("Không có API key hợp lệ.");
+    return apiKey.Key;
   }
 
   [HttpGet("{bookId}/to-text")] public async Task<IActionResult> GetEpubText(

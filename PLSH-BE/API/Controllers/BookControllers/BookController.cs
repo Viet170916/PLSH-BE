@@ -21,7 +21,7 @@ namespace API.Controllers.BookControllers
 {
   // [Authorize("LibrarianPolicy")]
 
-  [Route("api/v1/Book")]
+  [Route("api/v1/book")]
   [ApiController]
   public partial class BookController(
     AppDbContext context,

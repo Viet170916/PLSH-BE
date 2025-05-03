@@ -11,7 +11,7 @@ namespace Model.Entity
 
         public bool IsPublic { get; set; } = false; //Mặc định không công khai
 
-        public virtual ICollection<Favorite> SharedBooks { get; set; } = new List<Favorite>();
+        public virtual ICollection<Favorite.Favorite> SharedBooks { get; set; } = new List<Favorite.Favorite>();
         //public virtual Borrower Owner { get; set; }
         //public virtual Borrower? SharedWithUser { get; set; }
     }

@@ -4,6 +4,7 @@ using Data.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250428100906_ApiKey")]
+    partial class ApiKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -302,20 +305,13 @@ namespace Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int?>("TransactionId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BookBorrowingId");
-
-                    b.HasIndex("BorrowerId");
-
-                    b.HasIndex("TransactionId");
 
                     b.ToTable("Fines");
                 });
@@ -1661,29 +1657,6 @@ namespace Data.Migrations
                     b.Navigation("BookInstance");
 
                     b.Navigation("Loan");
-                });
-
-            modelBuilder.Entity("Model.Entity.Borrow.Fine", b =>
-                {
-                    b.HasOne("Model.Entity.Borrow.BookBorrowing", "BookBorrowing")
-                        .WithMany()
-                        .HasForeignKey("BookBorrowingId");
-
-                    b.HasOne("Model.Entity.User.Account", "Borrower")
-                        .WithMany()
-                        .HasForeignKey("BorrowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Model.Entity.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId");
-
-                    b.Navigation("BookBorrowing");
-
-                    b.Navigation("Borrower");
-
-                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("Model.Entity.Borrow.Loan", b =>

@@ -10,17 +10,17 @@ namespace API.Controllers.AnalyticControllers;
 
 [ApiController]
 [Route("api/v1/analytic")]
-public partial class AnalyticController(AppDbContext _context) : Controller
+public partial class AnalyticController(AppDbContext context) : Controller
 {
     [HttpGet("dashboard-stats")]
     public async Task<IActionResult> GetDashboardStats()
     {
-        var totalBooks = await _context.Books.CountAsync();
-        var totalMembers = await _context.Borrowers.CountAsync();
-        var totalBorrowedBooks = await _context.BookBorrowings
+        var totalBooks = await context.Books.CountAsync();
+        var totalMembers = await context.Borrowers.CountAsync();
+        var totalBorrowedBooks = await context.BookBorrowings
             .Where(bb => bb.BorrowingStatus != "returned")
             .CountAsync();
-        var totalAccounts = await _context.Accounts.CountAsync();
+        var totalAccounts = await context.Accounts.CountAsync();
 
         var stats = new
         {
@@ -36,7 +36,7 @@ public partial class AnalyticController(AppDbContext _context) : Controller
     [HttpGet("book-stats")]
     public async Task<IActionResult> GetBookStats()
     {
-        var bookStats = await _context.BookInstances
+        var bookStats = await context.BookInstances
             .Include(bi => bi.Book)
                 .ThenInclude(b => b.Authors)
             .Include(bi => bi.Book)
@@ -76,7 +76,7 @@ public partial class AnalyticController(AppDbContext _context) : Controller
         var currentDate = DateTime.UtcNow;
         var currentYear = currentDate.Year;
 
-        var borrowerStats = await _context.Loans
+        var borrowerStats = await context.Loans
             .Include(l => l.Borrower)
                 .ThenInclude(b => b.Role)
             .Include(l => l.BookBorrowings)
@@ -99,9 +99,9 @@ public partial class AnalyticController(AppDbContext _context) : Controller
                 BookBorrow = x.BookBorrowing.BookInstance.Book.Title,
                 Status = x.BookBorrowing.BorrowingStatus == "on-loan"
                     ? (x.BookBorrowing.ReturnDates.Any() && x.BookBorrowing.ReturnDates.Last() < currentDate
-                        ? "Quá H?n"
+                        ? "Quï¿½ H?n"
                         : (x.BookBorrowing.ExtendDates.Any() ? "Gia h?n" : "?ang m??n"))
-                    : (x.BookBorrowing.BorrowingStatus == "returned" ? "?ã tr?" : "?ang ch? xét duy?t"),
+                    : (x.BookBorrowing.BorrowingStatus == "returned" ? "?ï¿½ tr?" : "?ang ch? xï¿½t duy?t"),
                 IsFine = x.BookBorrowing.ReturnDates.Any() && x.BookBorrowing.ReturnDates.Last() < currentDate && x.BookBorrowing.BorrowingStatus != "returned"
                     ? "Checked"
                     : "Not Checked",

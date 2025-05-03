@@ -1,11 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Model.Entity.Borrow;
 using Model.Entity.LibraryRoom;
 
 namespace Model.Entity.book;
-
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 public sealed class BookInstance
 {
