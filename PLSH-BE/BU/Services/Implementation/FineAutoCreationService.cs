@@ -42,12 +42,12 @@ namespace BU.Services.Implementation
                         {
                             FineDate = DateTime.UtcNow,
                             IsFined = true,
-                            FineType = 0, 
+                            FineType = 0,
                             FineByDate = 5000,
                             Amount = 5000.0 * daysLate,
                             BookBorrowingId = bb.Id,
                             BorrowerId = bb.Loan?.BorrowerId ?? 0,
-                            Status = 0, 
+                            Status = "incomplete",
                             Note = $"Trả muộn {daysLate} ngày"
                         };
                         _context.Fines.Add(fine);
