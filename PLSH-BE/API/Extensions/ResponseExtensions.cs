@@ -9,9 +9,9 @@ namespace API.Extensions
     {
         public static void AddApplicationError(this HttpResponse response, string message)
         {
-            response.Headers.Add(Constants.ApplicationError, message);
+            response.Headers.Append(Constants.ApplicationError, message);
             // CORS
-            response.Headers.Add(Constants.AccessControlExposeHeaders, Constants.ApplicationError);
+            response.Headers.Append(Constants.AccessControlExposeHeaders, Constants.ApplicationError);
         }
     }
 }

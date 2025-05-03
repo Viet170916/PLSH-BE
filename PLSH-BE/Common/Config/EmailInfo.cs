@@ -28,7 +28,7 @@ namespace Common.Config
     {
         public string To { get; set; }
         public string Status { get; set; }
-        public DateTime Time = DateTime.Now;
+        public DateTime Time = DateTime.UtcNow;
 
         public override string ToString()
         {

@@ -11,24 +11,17 @@ namespace BU.Extensions
   {
     public static void AddBusinessLayer(this IServiceCollection services)
     {
-      // add automapper auto binding
+      services.AddHttpClient<GeminiService>();
       services.AddAutoMapper(Assembly.GetExecutingAssembly());
       services.AddTransient<IAccountService, AccountService>();
-      // // Get options from app settings
-      // var configuration = ServiceLocator.Current.GetInstance<Microsoft.Extensions.Configuration.IConfiguration>();
-      //
-      // var appSettingOptions = configuration.GetSection(nameof(AppConfigSection));
-      // services.Configure<AppConfigSection>(options =>
-      // {
-      //     options.DebugAccount = appSettingOptions[nameof(AppConfigSection.DebugAccount)];
-      //     options.DomainCrsApiUrl = appSettingOptions[nameof(AppConfigSection.DomainCrsApiUrl)];
-      //     options.DomainBrpUrl = appSettingOptions[nameof(AppConfigSection.DomainBrpUrl)];
-      //     options.DomainCrsUrl = appSettingOptions[nameof(AppConfigSection.DomainCrsUrl)];
-      //     options.TimeToUnLock = int.Parse(appSettingOptions[nameof(AppConfigSection.TimeToUnLock)]);
-      // });
-      // // Read email settings
-      // services.Configure<EmailConfig>(configuration.GetSection("EmailConfiguration"));
-      // services.AddLockBusinessLayer();
+      services.AddTransient<IBookInstanceService, BookInstanceService>();
+      services.AddTransient<IAuthorService, AuthorService>();
+      services.AddTransient<INotificationService, NotificationService>();
+      services.AddTransient<ILoanService, LoanService>();
+      services.AddTransient<IGeminiService, GeminiService>();
+      services.AddTransient<IGgServices, GgServices>();
+      services.AddTransient<IChatGptService, ChatGptService>();
+      services.AddTransient<IEpubParserService, EpubParserService>();
     }
   }
 }

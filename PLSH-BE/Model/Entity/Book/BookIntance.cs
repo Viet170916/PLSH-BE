@@ -1,0 +1,34 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using Model.Entity.Borrow;
+using Model.Entity.LibraryRoom;
+
+namespace Model.Entity.book;
+
+public sealed class BookInstance
+{
+  [Key]
+  public int Id { get; set; }
+
+  [MaxLength(10)]
+  public string? Code { get; set; }
+
+  public long? RowShelfId { get; set; }
+  public int? BookId { get; set; }
+  public int? Position { get; set; }
+  public bool IsInBorrowing { get; set; } = false;
+  public DateTime? DeletedAt { get; set; }
+  public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+  public int? BookIdRestore { get; set; }
+  public string BookStatus { get; set; } = "normal";
+  public ICollection<BookBorrowing> BookBorrowings { get; set; } = new List<BookBorrowing>();
+
+  [JsonIgnore]
+  [ForeignKey("BookId")]
+  public Book Book { get; set; } = null!;
+
+  [JsonIgnore]
+  [ForeignKey("RowShelfId")]
+  public RowShelf? RowShelf { get; set; }
+}

@@ -8,5 +8,5 @@ public class ErrorResponse
   public string StackTrace { get; set; }
   public HttpStatus StatusCode { get; set; }
   public string Status { get; set; }
-  public object Data { get; set; }
+  public object? Data { get; set; }
 }
