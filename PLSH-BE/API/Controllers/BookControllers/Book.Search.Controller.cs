@@ -65,7 +65,8 @@ public partial class BookController
     [FromQuery] int page = 1,
     [FromQuery] int limit = 18,
     [FromQuery] string orderBy = "createdate",
-    [FromQuery] bool descending = false
+    [FromQuery] bool descending = false,
+    [FromQuery] bool isEBook = false
   )
   {
     var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -76,14 +77,20 @@ public partial class BookController
                        .Include(b => b.Category)
                        .Include(b => b.Reviews)
                        .Include(b => b.Authors)
-                       .Where(x => x.Status != "deactive")
+                       .Where(x => x.Status != "deactivate")
                        .AsQueryable();
+    if (isEBook)
+    {
+      query = query
+              .Include(b => b.EBookChapters)
+              .Where(b => b.EBookChapters != null && b.EBookChapters.Count >= 0);
+    }
+
     if (!string.IsNullOrWhiteSpace(trimmedKeyword))
     {
       query = query.Where(b =>
         (b.Title != null && b.Title.ToLower().Contains(trimmedKeyword)) ||
         b.Authors.Any(a => a.FullName.ToLower().Contains(trimmedKeyword)));
-
     }
 
     if (categories?.Any(c => !string.IsNullOrWhiteSpace(c)) == true)
