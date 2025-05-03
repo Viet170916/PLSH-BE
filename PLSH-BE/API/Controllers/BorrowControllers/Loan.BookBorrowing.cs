@@ -64,7 +64,7 @@ public partial class LoanController
                 var allReturned = loan.BookBorrowings.All(bb => bb.BorrowingStatus == "returned");
                 if (allReturned)
                 {
-                    loan.AprovalStatus = "return-all"; 
+                    loan.AprovalStatus = "return-all";
                     context.Loans.Update(loan);
                     await context.SaveChangesAsync();
                 }
@@ -92,9 +92,9 @@ public partial class LoanController
                 continue;
             var lastReturnDate = bookBorrowing.ReturnDates.Last();
             var daysLate = (bookBorrowing.ActualReturnDate.Value - lastReturnDate).Days;
-            if (daysLate <= 0) continue; 
+            if (daysLate <= 0) continue;
             var fine = await context.Fines
-                                    .Where(f => f.BookBorrowingId == borrowing.Id && f.Status != 3) 
+                                    .Where(f => f.BookBorrowingId == borrowing.Id && f.Status != "completed")
                                     .Include(f => f.BookBorrowing)
                                     .FirstOrDefaultAsync();
             if (fine == null)
@@ -103,13 +103,13 @@ public partial class LoanController
                 {
                     FineDate = DateTime.UtcNow,
                     IsFined = true,
-                    FineType = 0, 
-                    FineByDate = 5000, 
+                    FineType = 0,
+                    FineByDate = 5000,
                     Amount = 0,
-                    Note = $"Phí ph?t t? ??ng t?o do tr? h?n {daysLate} ngày",
+                    Note = $"Phï¿½ ph?t t? ??ng t?o do tr? h?n {daysLate} ngï¿½y",
                     BookBorrowingId = borrowing.Id,
                     BorrowerId = bookBorrowing.Loan!.BorrowerId,
-                    Status = 0
+                    Status = "completed"
                 };
                 context.Fines.Add(fine);
                 await context.SaveChangesAsync();

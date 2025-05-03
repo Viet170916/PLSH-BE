@@ -44,7 +44,7 @@ namespace API.Controllers.PaymentControllers
             public string? FineDate { get; set; }
             public int FineType { get; set; }
             public decimal? Amount { get; set; }
-            public int Status { get; set; }
+            public string Status { get; set; }
             public string? Note { get; set; }
             public string? BookTitle { get; set; }
             public string? BookImage { get; set; }
@@ -88,7 +88,7 @@ namespace API.Controllers.PaymentControllers
             try
             {
                 var fines = await _context.Fines
-                    .Where(f => f.BorrowerId == borrowerId && f.IsFined && f.Status == 0)
+                    .Where(f => f.BorrowerId == borrowerId && f.IsFined && f.Status == "incomplete")
                     .Include(f => f.BookBorrowing)
                         .ThenInclude(bb => bb.BookInstance)
                             .ThenInclude(bi => bi.Book)
@@ -145,7 +145,7 @@ namespace API.Controllers.PaymentControllers
                     return BadRequest(new PaymentResponseDto
                     {
                         Success = false,
-                        Data = null, 
+                        Data = null,
                         Message = "No fines selected"
                     });
                 }
@@ -241,8 +241,8 @@ namespace API.Controllers.PaymentControllers
                 foreach (var fine in transaction.Fines)
                 {
                     fine.IsFined = false;
-                    fine.FineType = 3; 
-                    fine.Status = 3; 
+                    fine.FineType = 3;
+                    fine.Status = "completed";
                 }
                 await _context.SaveChangesAsync();
 

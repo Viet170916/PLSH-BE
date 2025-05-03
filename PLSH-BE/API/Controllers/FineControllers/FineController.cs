@@ -55,7 +55,7 @@ public class FineController : ControllerBase
 
     public class UpdateFineStatusDto
     {
-        public int Status { get; set; } 
+        public int Status { get; set; }
     }
 
     public class ReturnInfoRequestDto
@@ -69,7 +69,7 @@ public class FineController : ControllerBase
         public int Id { get; set; }
         public DateTime FineDate { get; set; }
         public bool IsFined { get; set; }
-        public int? FineType { get; set; } 
+        public int? FineType { get; set; }
         public double? Amount { get; set; }
         public double FineByDate { get; set; }
         public string? Note { get; set; }
@@ -94,7 +94,7 @@ public class FineController : ControllerBase
 
         var fines = await _context.Fines
             .Include(f => f.BookBorrowing)
-            .Where(f => f.FineType == 0 && f.Status != 3)
+            .Where(f => f.FineType == 0 && f.Status != "completed")
             .ToListAsync();
 
         foreach (var fine in fines)
