@@ -102,7 +102,7 @@ public partial class AnalyticBookController(AppDbContext context) : Controller
     return Ok(new { normalBookCount, newBookCount, damageBookCount, totalBookCount });
   }
 
-  [HttpGet("loansortbycategory")] public async Task<IActionResult> GetLoanSortByCategoryAnalytics()
+  [HttpGet("loan-sort-by-category")] public async Task<IActionResult> GetLoanSortByCategoryAnalytics()
   {
     var books = await context.Books
                              .Where(b => b.DeletedAt == null && b.Category != null)
