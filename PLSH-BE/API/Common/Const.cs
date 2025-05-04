@@ -35,8 +35,11 @@ yêu cầu hãy tạo cho tôi 1 dữ liệu chuỗi dạng json có cấu trúc
     deathYear: number | null;
   }[];
 thumbnail: string;
-};, khi mà người dùng nhập promt yêu cầu làm một việc gì đấy thì hãy tạo teo yêu cầu của người dùng và đưa dữ liệu đó vào
-type Book = {
+}, khi mà người dùng nhập promt yêu cầu làm một việc gì đấy thì hãy tạo teo yêu cầu của người dùng và đưa dữ liệu đó vào
+type Book,
+sau đó chuyển dữ liệu này thành kiểu trả ra 1 dữ liệu chuỗi dạng json có cấu trúc như này {
+mesage:string,
+data:{
   id: number;
   title: string;
   description: string;
@@ -65,9 +68,7 @@ type Book = {
     deathYear: number | null;
   }[];
 thumbnail: string;
-};
-
-sau đó chuyển dữ liệu này thành kiểu trả ra 1 dữ liệu chuỗi dạng json có cấu trúc như này {mesage:string,data:<type Book>}, 
+}}, 
  value là giá trị mà bạn được người dùng yêu cầu phân tích, 
 nếu có yêu cầu về tác giả hãy tìm thông tin chính xác và trả vào trường authors với mảng các tác giả  {
     fullName: string;
