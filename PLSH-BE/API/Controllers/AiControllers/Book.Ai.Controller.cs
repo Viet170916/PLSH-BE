@@ -40,25 +40,25 @@ public partial class AiController
       var response = await geminiService.GetFromGeminiPromptAsync(fullPrompt);
       try
       {
-        var parsed = JsonSerializer.Deserialize<BaseResponse<BookNewDto>>(response,
+        var parsed = JsonSerializer.Deserialize<BaseResponse<BookNewDtoAiRes>>(response,
           new JsonSerializerOptions { PropertyNameCaseInsensitive = true, });
         if (parsed?.Data == null)
         {
-          return BadRequest(new BaseResponse<BookNewDto?> { Message = "Phản hồi từ AI không hợp lệ.", Data = null });
+          return Ok(new BaseResponse<BookNewDtoAiRes?> { Message = "Phản hồi từ AI không hợp lệ.", Data = null });
         }
 
-        return Ok(new BaseResponse<BookNewDto> { Message = parsed.Message, Data = parsed.Data });
+        return Ok(new BaseResponse<BookNewDtoAiRes> { Message = parsed.Message, Data = parsed.Data });
       }
       catch (JsonException)
       {
         attempt++;
         if (attempt >= maxRetries)
         {
-          return BadRequest(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi khi cố gắng phản hồi.", Data = null });
+          return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi khi cố gắng phản hồi.", Data = null });
         }
       }
     }
 
-    return BadRequest(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi không xác định.", Data = null });
+    return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi không xác định.", Data = null });
   }
 }

@@ -31,8 +31,8 @@ yêu cầu hãy tạo cho tôi 1 dữ liệu chuỗi dạng json có cấu trúc
     fullName: string;
     avatarUrl: string | null;
     description: string | null;
-    birthYear: number | null;
-    deathYear: number | null;
+    birthYear: string | null;
+    deathYear: string | null;
   }[];
 thumbnail: string;
 }, khi mà người dùng nhập promt yêu cầu làm một việc gì đấy thì hãy tạo teo yêu cầu của người dùng và đưa dữ liệu đó vào
