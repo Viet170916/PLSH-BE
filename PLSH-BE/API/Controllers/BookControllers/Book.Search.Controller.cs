@@ -83,7 +83,7 @@ public partial class BookController
     {
       query = query
               .Include(b => b.EBookChapters)
-              .Where(b => b.EBookChapters != null && b.EBookChapters.Count >= 0);
+              .Where(b => b.EBookChapters != null && b.EBookChapters.Any());
     }
 
     if (!string.IsNullOrWhiteSpace(trimmedKeyword))
