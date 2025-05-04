@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,8 @@ namespace API.Controllers.PaymentControllers
     private readonly AppDbContext _context;
     public TransactionController(AppDbContext context) { _context = context; }
 
-    [HttpGet("account/{accountId}")] public async Task<ActionResult> GetTransactionsByAccount(
+    [Authorize("BorrowerPolicy")] [HttpGet("account/{accountId}")]
+    public async Task<ActionResult> GetTransactionsByAccount(
       int accountId,
       [FromQuery] int page = 1,
       [FromQuery] int pageSize = 10,
@@ -35,6 +37,7 @@ namespace API.Controllers.PaymentControllers
     {
       try
       {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
         if (page < 1) page = 1;
         if (pageSize < 1 || pageSize > 100) pageSize = 10;
         if (toDate.HasValue && fromDate.HasValue && toDate < fromDate)
@@ -46,7 +49,7 @@ namespace API.Controllers.PaymentControllers
         }
 
         var query = _context.Transactions
-                            .Where(t => t.AccountId == accountId && t.TransactionType == 1)
+                            .Where(t => t.AccountId == userId && t.TransactionType == 1)
                             .Include(t => t.Fines)
                             .ThenInclude(f => f.BookBorrowing)
                             .ThenInclude(bb => bb.BookInstance)

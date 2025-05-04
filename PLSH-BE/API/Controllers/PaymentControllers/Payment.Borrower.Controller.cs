@@ -151,8 +151,6 @@ public class PaymentController : ControllerBase
     try
     {
       var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
-
-
       if (request.FineIds == null || request.FineIds.Count == 0)
       {
         return BadRequest(new PaymentResponseDto { Success = false, Data = null, Message = "No fines selected" });
@@ -177,7 +175,7 @@ public class PaymentController : ControllerBase
 
       var transaction = new Transaction
       {
-        AccountId = 1,
+        AccountId = accountId,
         Amount = (decimal)totalAmount,
         Currency = "VND",
         Status = 2,
@@ -326,8 +324,7 @@ public class PaymentController : ControllerBase
     public bool Error { get; set; }
   }
 
-  [HttpGet("fine-for-lib")]
-public async Task<IActionResult> GetAllFines(
+  [HttpGet("fine-for-lib")] public async Task<IActionResult> GetAllFines(
     [FromQuery] int page = 1,
     [FromQuery] int pageSize = 10,
     [FromQuery] string search = "",
@@ -339,145 +336,132 @@ public async Task<IActionResult> GetAllFines(
     [FromQuery] string sortBy = "fineDate",
     [FromQuery] bool sortDesc = true,
     [FromQuery] int? borrowerId = null,
-    [FromQuery] int? fineType = null)
-{
+    [FromQuery] int? fineType = null
+  )
+  {
     try
     {
-        // Validate input parameters
-        if (page < 1) page = 1;
-        if (pageSize < 1 || pageSize > 100) pageSize = 10;
-
-        if (toDate.HasValue && fromDate.HasValue && toDate < fromDate)
+      // Validate input parameters
+      if (page < 1) page = 1;
+      if (pageSize < 1 || pageSize > 100) pageSize = 10;
+      if (toDate.HasValue && fromDate.HasValue && toDate < fromDate)
+      {
+        return BadRequest(new PaymentResponseDto
         {
-            return BadRequest(new PaymentResponseDto
-            {
-                Success = false,
-                Message = "End date must be greater than or equal to start date"
-            });
-        }
-
-        // Build base query with includes
-        var query = _context.Fines
-            .Include(f => f.BookBorrowing)
-                .ThenInclude(bb => bb.BookInstance)
-                    .ThenInclude(bi => bi.Book)
-            .AsQueryable();
-
-        // Apply filters
-        if (borrowerId.HasValue)
-            query = query.Where(f => f.BorrowerId == borrowerId.Value);
-
-        if (fineType.HasValue)
-            query = query.Where(f => f.FineType == fineType.Value);
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            query = query.Where(f =>
-                f.Note.Contains(search) ||
-                (f.BookBorrowing != null &&
-                 f.BookBorrowing.BookInstance != null &&
-                 f.BookBorrowing.BookInstance.Book != null &&
-                 f.BookBorrowing.BookInstance.Book.Title.Contains(search)) ||
-                (f.BookBorrowing != null &&
-                 f.BookBorrowing.BookInstance != null &&
-                 f.BookBorrowing.BookInstance.Code.Contains(search)));
-        }
-
-        if (!string.IsNullOrWhiteSpace(status))
-            query = query.Where(f => f.Status == status);
-
-        if (fromDate.HasValue)
-            query = query.Where(f => f.FineDate >= fromDate.Value);
-
-        if (toDate.HasValue)
-            query = query.Where(f => f.FineDate <= toDate.Value);
-
-        if (minAmount.HasValue)
-            query = query.Where(f => f.Amount >= (double)minAmount.Value);
-
-        if (maxAmount.HasValue)
-            query = query.Where(f => f.Amount <= (double)maxAmount.Value);
-
-        // Apply sorting
-        query = sortBy.ToLower() switch
-        {
-            "amount" => sortDesc ? query.OrderByDescending(f => f.Amount) : query.OrderBy(f => f.Amount),
-            "finedate" => sortDesc ? query.OrderByDescending(f => f.FineDate) : query.OrderBy(f => f.FineDate),
-            "booktitle" => sortDesc ?
-                query.OrderByDescending(f => f.BookBorrowing.BookInstance.Book.Title) :
-                query.OrderBy(f => f.BookBorrowing.BookInstance.Book.Title),
-            _ => sortDesc ? query.OrderByDescending(f => f.FineDate) : query.OrderBy(f => f.FineDate)
-        };
-
-        // Get total count before pagination
-        var totalRecords = await query.CountAsync();
-
-        // Apply pagination and select only needed fields for database query
-        var finesData = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(f => new
-            {
-                Fine = f,
-                BookTitle = f.BookBorrowing != null &&
-                           f.BookBorrowing.BookInstance != null &&
-                           f.BookBorrowing.BookInstance.Book != null ?
-                    f.BookBorrowing.BookInstance.Book.Title : null,
-                BookImage = f.BookBorrowing != null &&
-                           f.BookBorrowing.BookInstance != null &&
-                           f.BookBorrowing.BookInstance.Book != null ?
-                    f.BookBorrowing.BookInstance.Book.Thumbnail : null,
-                BookCode = f.BookBorrowing != null &&
-                           f.BookBorrowing.BookInstance != null ?
-                    f.BookBorrowing.BookInstance.Code : null,
-                BorrowDate = f.BookBorrowing!.BorrowDate,
-                ActualReturnDate = f.BookBorrowing != null ? f.BookBorrowing.ActualReturnDate : null,
-                ReturnDates = f.BookBorrowing != null ? f.BookBorrowing.ReturnDates : null
-            })
-            .ToListAsync();
-
-        // Transform data in memory (client-side)
-        var fines = finesData.Select(x => new FineDto
-        {
-            Id = x.Fine.Id,
-            FineDate = x.Fine.FineDate.ToString("o"),
-            FineType = x.Fine.FineType ?? 0,
-            Amount = (decimal)(x.Fine.Amount ?? 0),
-            Status = x.Fine.Status,
-            Note = x.Fine.Note,
-            BookTitle = x.BookTitle ?? "Unknown",
-            BookImage = x.BookImage,
-            BookCode = x.BookCode,
-            BorrowDate = x.BorrowDate.ToString("o"),
-            ActualReturnDate = x.ActualReturnDate?.ToString("o"),
-            ReturnDates = x.ReturnDates?.Select(rd => rd.ToString("o")).ToList(),
-            ExtendDate = x.ReturnDates?.LastOrDefault().ToString("o")
-        }).ToList();
-
-        return Ok(new
-        {
-            Success = true,
-            Data = fines,
-            Pagination = new
-            {
-                CurrentPage = page,
-                PageSize = pageSize,
-                TotalRecords = totalRecords,
-                TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize)
-            },
-            Message = "Fines retrieved successfully"
+          Success = false, Message = "End date must be greater than or equal to start date"
         });
+      }
+
+      // Build base query with includes
+      var query = _context.Fines
+                          .Include(f => f.BookBorrowing)
+                          .ThenInclude(bb => bb.BookInstance)
+                          .ThenInclude(bi => bi.Book)
+                          .AsQueryable();
+
+      // Apply filters
+      if (borrowerId.HasValue) query = query.Where(f => f.BorrowerId == borrowerId.Value);
+      if (fineType.HasValue) query = query.Where(f => f.FineType == fineType.Value);
+      if (!string.IsNullOrWhiteSpace(search))
+      {
+        query = query.Where(f =>
+          f.Note.Contains(search) ||
+          (f.BookBorrowing != null &&
+           f.BookBorrowing.BookInstance != null &&
+           f.BookBorrowing.BookInstance.Book != null &&
+           f.BookBorrowing.BookInstance.Book.Title.Contains(search)) ||
+          (f.BookBorrowing != null &&
+           f.BookBorrowing.BookInstance != null &&
+           f.BookBorrowing.BookInstance.Code.Contains(search)));
+      }
+
+      if (!string.IsNullOrWhiteSpace(status)) query = query.Where(f => f.Status == status);
+      if (fromDate.HasValue) query = query.Where(f => f.FineDate >= fromDate.Value);
+      if (toDate.HasValue) query = query.Where(f => f.FineDate <= toDate.Value);
+      if (minAmount.HasValue) query = query.Where(f => f.Amount >= (double)minAmount.Value);
+      if (maxAmount.HasValue) query = query.Where(f => f.Amount <= (double)maxAmount.Value);
+
+      // Apply sorting
+      query = sortBy.ToLower() switch
+      {
+        "amount" => sortDesc ? query.OrderByDescending(f => f.Amount) : query.OrderBy(f => f.Amount),
+        "finedate" => sortDesc ? query.OrderByDescending(f => f.FineDate) : query.OrderBy(f => f.FineDate),
+        "booktitle" => sortDesc ?
+          query.OrderByDescending(f => f.BookBorrowing.BookInstance.Book.Title) :
+          query.OrderBy(f => f.BookBorrowing.BookInstance.Book.Title),
+        _ => sortDesc ? query.OrderByDescending(f => f.FineDate) : query.OrderBy(f => f.FineDate)
+      };
+
+      // Get total count before pagination
+      var totalRecords = await query.CountAsync();
+
+      // Apply pagination and select only needed fields for database query
+      var finesData = await query
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize)
+                            .Select(f => new
+                            {
+                              Fine = f,
+                              BookTitle = f.BookBorrowing != null &&
+                                          f.BookBorrowing.BookInstance != null &&
+                                          f.BookBorrowing.BookInstance.Book != null ?
+                                f.BookBorrowing.BookInstance.Book.Title :
+                                null,
+                              BookImage = f.BookBorrowing != null &&
+                                          f.BookBorrowing.BookInstance != null &&
+                                          f.BookBorrowing.BookInstance.Book != null ?
+                                f.BookBorrowing.BookInstance.Book.Thumbnail :
+                                null,
+                              BookCode = f.BookBorrowing != null &&
+                                         f.BookBorrowing.BookInstance != null ?
+                                f.BookBorrowing.BookInstance.Code :
+                                null,
+                              BorrowDate = f.BookBorrowing!.BorrowDate,
+                              ActualReturnDate = f.BookBorrowing != null ? f.BookBorrowing.ActualReturnDate : null,
+                              ReturnDates = f.BookBorrowing != null ? f.BookBorrowing.ReturnDates : null
+                            })
+                            .ToListAsync();
+
+      // Transform data in memory (client-side)
+      var fines = finesData.Select(x => new FineDto
+                           {
+                             Id = x.Fine.Id,
+                             FineDate = x.Fine.FineDate.ToString("o"),
+                             FineType = x.Fine.FineType ?? 0,
+                             Amount = (decimal)(x.Fine.Amount ?? 0),
+                             Status = x.Fine.Status,
+                             Note = x.Fine.Note,
+                             BookTitle = x.BookTitle ?? "Unknown",
+                             BookImage = x.BookImage,
+                             BookCode = x.BookCode,
+                             BorrowDate = x.BorrowDate.ToString("o"),
+                             ActualReturnDate = x.ActualReturnDate?.ToString("o"),
+                             ReturnDates = x.ReturnDates?.Select(rd => rd.ToString("o")).ToList(),
+                             ExtendDate = x.ReturnDates?.LastOrDefault().ToString("o")
+                           })
+                           .ToList();
+      return Ok(new
+      {
+        Success = true,
+        Data = fines,
+        Pagination = new
+        {
+          CurrentPage = page,
+          PageSize = pageSize,
+          TotalRecords = totalRecords,
+          TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize)
+        },
+        Message = "Fines retrieved successfully"
+      });
     }
     catch (Exception ex)
     {
-        _logger.LogError(ex, "Error getting all fines");
-        return StatusCode(500,
-            new PaymentResponseDto
-            {
-                Success = false,
-                Message = "Internal server error while retrieving fines",
-                Data = null
-            });
+      _logger.LogError(ex, "Error getting all fines");
+      return StatusCode(500,
+        new PaymentResponseDto
+        {
+          Success = false, Message = "Internal server error while retrieving fines", Data = null
+        });
     }
-}
+  }
 }
