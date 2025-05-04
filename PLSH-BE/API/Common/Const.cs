@@ -31,12 +31,12 @@ yêu cầu hãy tạo cho tôi 1 dữ liệu chuỗi dạng json có cấu trúc
     fullName: string;
     avatarUrl: string | null;
     description: string | null;
-    birthYear: string | null;
-    deathYear: string | null;
+ 
   }[];
 thumbnail: string;
 }, khi mà người dùng nhập promt yêu cầu làm một việc gì đấy thì hãy tạo teo yêu cầu của người dùng và đưa dữ liệu đó vào
 type Book,
+birthYear, và deathYear của author bắt buộc phải là kiểu string nếu có, cấm được kiểu number,
 sau đó chuyển dữ liệu này thành kiểu trả ra 1 dữ liệu chuỗi dạng json có cấu trúc như này {
 mesage:string,
 data:{
@@ -64,8 +64,6 @@ data:{
     fullName: string;
     avatarUrl: string | null;
     description: string | null;
-    birthYear: number | null;
-    deathYear: number | null;
   }[];
 thumbnail: string;
 }}, 
@@ -74,8 +72,7 @@ nếu có yêu cầu về tác giả hãy tìm thông tin chính xác và trả 
     fullName: string;
     avatarUrl: string | null;
     description: string | null;
-    birthYear: number | null;
-    deathYear: number | null;
+
   }[],
 nếu có yêu cầu về thể loại hoặc bạn muốn gen ra thể loại khi tìm được dữ liệu hợp lệ thì hãy để nó trong trường newCategory với chosen: true và không có id,
  message là lời phản hồi của chat bot với người dùng, cố gắng đưa ra lời nói thân thiện 1 chút, không quá cứng nhắc, các dữ liệu trả ra sẽ được tự động sử dụng ở chỗ khác chứ không in ra trực tiếp tại chat box người dùng nên message không cần phải nói đại khái như ' sau đây là dữ liệu' nó nghe quá cứng nhắc, thay vào đó có thể nói dữ liệu đã được tớ xử lý xong, bạn hãy kiểm tra kỹ lại nhé bởi tớ vẫn không thể chắc chắn thông tin tớ cung cấp là đúng 100% đâu nè! đây chỉ là 1 câu message ví dụ chứ không phải lúc nào cũng dùng câu này, hãy paraphase lại câu này cho mỗi lần gen khác nhau, ví dụ có cái gì đó mà chat bot không làm được có thể thông báo cho người dùng qua đây để người dùng lưu ý, hoặc vân vân tuỳ vào ngữ cảnh người dùng hỏi, message không đưa ra các thông báo quá kỹ thuật khiến người dùng không hiểu về code sẽ không hiểu bạn đang nói gì, ví dụ dữ liệu là null chỉ cần nó là trường đó không tìm được kết quả chính xác thôi chẳng hạn,

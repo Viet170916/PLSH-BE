@@ -70,7 +70,7 @@ public class BookNewDtoAiRes
   public string? IsbnNumber10 { get; set; }
   public string? OtherIdentifier { get; set; }
   public double? Price { get; set; }
-  public IList<AuthorAiDto>? Authors { get; set; }
+  public List<AuthorAiDto>? Authors { get; set; }
   public CategoryAiDto? Category { get; set; }
 
   public CategoryAiDto? NewCategory { get; set; }
