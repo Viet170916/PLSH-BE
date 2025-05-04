@@ -13,7 +13,7 @@ namespace API.Controllers.LibRoomControllers;
 
 public partial class LibraryRoomController
 {
-  [HttpPost("shelf/{shelfId}/row/add")] [HttpPost("add")]
+  [HttpPost("shelf/{shelfId}/row/add")]
   public async Task<IActionResult> AddRowShelf(long shelfId)
   {
     var shelf = await context.Shelves.FindAsync(shelfId);
