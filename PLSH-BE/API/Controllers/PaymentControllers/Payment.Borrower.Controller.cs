@@ -150,13 +150,16 @@ public class PaymentController : ControllerBase
   {
     try
     {
-      if (request == null || request.FineIds == null || request.FineIds.Count == 0)
+      var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "");
+
+
+      if (request.FineIds == null || request.FineIds.Count == 0)
       {
         return BadRequest(new PaymentResponseDto { Success = false, Data = null, Message = "No fines selected" });
       }
 
       var fines = await _context.Fines
-                                .Where(f => request.FineIds.Contains(f.Id) && f.BorrowerId == request.BorrowerId)
+                                .Where(f => request.FineIds.Contains(f.Id) && f.BorrowerId == accountId)
                                 .ToListAsync();
       if (fines.Count != request.FineIds.Count)
       {
