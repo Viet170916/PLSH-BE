@@ -11,11 +11,12 @@ namespace API.Controllers.LibRoomControllers;
 
 public partial class LibraryRoomController
 {
+  [HttpPut("put-books-on-shelf")]
   public async Task<IActionResult> PutBooksOnShelf([FromBody] List<LibraryRoomDto.BookInstanceDto> bookInstancesDto)
   {
     if (bookInstancesDto == null || bookInstancesDto.Count == 0)
     {
-      return BadRequest(new { Message = "List of Book instances cannot be empty." });
+      return BadRequest(new { Message = "Danh sách sách không được để trống." });
     }
 
     var updatedInstances = mapper.Map<List<BookInstance>>(bookInstancesDto);
@@ -33,7 +34,7 @@ public partial class LibraryRoomController
                                            .Where(b => b.RowShelfId == rowShelfId && b.Position.HasValue)
                                            .Select(b => b.Position.Value)
                                            .ToListAsync();
-      var availablePositions = Enumerable.Range(0, maxCol-1)
+      var availablePositions = Enumerable.Range(0, maxCol)
                                          .Except(occupiedPositions)
                                          .ToList();
       foreach (var instance in group)
@@ -71,15 +72,27 @@ public partial class LibraryRoomController
     var successfulInstances = updatedInstances
                               .Where(inst => !failedInstances.Any(f => f.Id == inst.Id))
                               .ToList();
-    await context.BulkUpdateAsync(successfulInstances);
+    if (successfulInstances.Any()) { await context.BulkUpdateAsync(successfulInstances); }
+
     var successfulDtos = mapper.Map<List<LibraryRoomDto.BookInstanceDto>>(successfulInstances);
+    string message;
+    if (failedInstances.Count == 0) { message = "Tất cả sách đã được thêm vào kệ thành công."; }
+    else
+      if (successfulInstances.Count == 0) { message = "Không có sách nào được thêm vào kệ do vị trí không hợp lệ."; }
+      else
+      {
+        message =
+          $"Thêm vào kệ thành công {successfulInstances.Count} cuốn, có {failedInstances.Count} cuốn sách có vị trí không hợp lệ.";
+      }
+
     return Ok(new
     {
-      Message = "Sách thêm vào kệ thành công",
-      Success = true,
+      Success = successfulInstances.Count > 0,
+      Message = message,
       Data = successfulDtos,
-      Failed = failedInstances,
-      FailedCount = failedInstances.Count
+      FailedInstances = failedInstances,
+      FailedCount = failedInstances.Count,
+      SuccessCount = successfulInstances.Count
     });
   }
 
