@@ -34,7 +34,7 @@ public partial class LibraryRoomController
                                            .Where(b => b.RowShelfId == rowShelfId && b.Position.HasValue)
                                            .Select(b => b.Position.Value)
                                            .ToListAsync();
-      var availablePositions = Enumerable.Range(0, maxCol)
+      var availablePositions = Enumerable.Range(0, maxCol-1)
                                          .Except(occupiedPositions)
                                          .ToList();
       foreach (var instance in group)
