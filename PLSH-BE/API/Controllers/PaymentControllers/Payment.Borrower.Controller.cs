@@ -180,7 +180,7 @@ public class PaymentController : ControllerBase
         AccountId = 1,
         Amount = (decimal)totalAmount,
         Currency = "VND",
-        Status = 1,
+        Status = 2,
         TransactionDate = DateTime.UtcNow,
         ReferenceId = Guid.NewGuid().ToString(),
         TransactionType = 1,
@@ -277,7 +277,7 @@ public class PaymentController : ControllerBase
           new PaymentResponseDto { Success = false, Message = "Invalid transaction date format from bank API" });
       }
 
-      transaction.Status = 2;
+      transaction.Status = 1;
       transaction.TransactionDate = parsedTransactionDate;
       if (transaction.Fines != null)
       {
