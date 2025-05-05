@@ -44,7 +44,7 @@ public partial class AiController
           new JsonSerializerOptions { PropertyNameCaseInsensitive = true, });
         if (parsed?.Data == null)
         {
-          return Ok(new BaseResponse<BookNewDtoAiRes?> { Message = "Phản hồi từ AI không hợp lệ.", Data = null });
+          return Ok(new BaseResponse<BookNewDtoAiRes?> { Message = "Xin lỗi bạn, tôi không trả lời được câu hỏi này. :((", Data = null });
         }
 
         return Ok(new BaseResponse<BookNewDtoAiRes> { Message = parsed.Message, Data = parsed.Data });
@@ -54,11 +54,11 @@ public partial class AiController
         attempt++;
         if (attempt >= maxRetries)
         {
-          return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi khi cố gắng phản hồi.", Data = null });
+          return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Tôi bị lỗi rồi :((((", Data = null });
         }
       }
     }
 
-    return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Lỗi không xác định.", Data = null });
+    return Ok(new BaseResponse<BookNewDtoAiRes> { Message = "Ahhh, tôi đang bị lỗi rồi", Data = null });
   }
 }
