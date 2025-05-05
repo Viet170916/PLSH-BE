@@ -12,6 +12,11 @@ yêu cầu hãy tạo cho tôi 1 dữ liệu chuỗi dạng json có cấu trúc
   description: string;
   language: string;
   pageCount: number;
+  width: number;
+  weight: number;
+  thickness: number;
+  height: number;
+
   isbnNumber10: string;
   isbnNumber13: string;
   otherIdentifier: string | null;
@@ -47,6 +52,10 @@ data:{
   pageCount: number;
   isbnNumber10: string;
   isbnNumber13: string;
+  width: number;
+  weight: number;
+  thickness: number;
+  height: number;
   otherIdentifier: string | null;
   publishDate: string;
   publisher: string;

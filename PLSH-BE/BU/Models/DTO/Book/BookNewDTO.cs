@@ -57,10 +57,10 @@ public class BookNewDtoAiRes
   public string? Title { get; set; }
   public string? Description { get; set; }
   public string? Thumbnail { get; set; }
-  public int? Width { get; set; }
-  public int? Weight { get; set; }
-  public int? Thickness { get; set; }
-  public int? Height { get; set; }
+  public double? Width { get; set; }
+  public double? Weight { get; set; }
+  public double? Thickness { get; set; }
+  public double? Height { get; set; }
   public string? Version { get; set; }
   public string? Publisher { get; set; }
   public string? PublishDate { get; set; }
